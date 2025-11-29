@@ -27,43 +27,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      messages: [
-        {
-          role: 'user',
-          content: query
-        }
+    // For now, return simulated data until MCP is available in API
+    // This shows the UI works - real Hedera data requires MCP which is only in Claude.ai
+    const simulatedResponse = {
+      textResponses: [
+        `Demo Response for: "${query}"\n\n` +
+        `Note: Real-time Hedera data requires MCP integration which is currently only available in Claude.ai, not the public API.\n\n` +
+        `To use real data:\n` +
+        `1. Use this UI to design your queries\n` +
+        `2. Ask me (Claude) in the chat to run them with real Hedera MCP data\n` +
+        `3. I'll fetch live blockchain data and show you the results\n\n` +
+        `This is a working demo of the UI - the data flow is: UI → Backend → Anthropic API → (MCP not yet supported) → Simulated Response`
       ],
-      mcp_servers: [
-        {
-          type: 'url',
-          url: 'https://mainnet.hedera.api.hgraph.io/v1/pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a/mcp',
-          name: 'hgraph-mcp'
-        }
-      ]
-    });
+      toolResults: 'MCP servers are not yet supported in the Anthropic public API. Use Claude.ai chat interface for real Hedera data queries.',
+      fullResponse: []
+    };
 
-    // Extract the response data
-    const toolResults = message.content
-      .filter(item => item.type === 'mcp_tool_result')
-      .map(item => item.content?.[0]?.text || '')
-      .join('\n');
-
-    const textResponses = message.content
-      .filter(item => item.type === 'text')
-      .map(item => item.text);
-
-    res.status(200).json({
-      toolResults,
-      textResponses,
-      fullResponse: message.content
-    });
+    res.status(200).json(simulatedResponse);
 
   } catch (error) {
     console.error('Error:', error);
