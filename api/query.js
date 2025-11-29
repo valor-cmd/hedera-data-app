@@ -1,6 +1,4 @@
-// api/query.js - Vercel Serverless Function
-import Anthropic from '@anthropic-ai/sdk';
-
+// api/query.js - Direct Hgraph API Integration
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -21,29 +19,143 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { query } = req.body;
+    const { query, queryType, accountId } = req.body;
 
-    if (!query) {
-      return res.status(400).json({ error: 'Query is required' });
+    const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
+    const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
+
+    let graphqlQuery = '';
+    let variables = {};
+
+    // Determine which query to run based on queryType
+    if (queryType === 'account') {
+      // Account query
+      const accountNum = parseInt(accountId.replace('0.0.', ''));
+      graphqlQuery = `
+        query GetAccount($accountNum: bigint!) {
+          entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+            num
+            balance
+            evm_address
+            created_timestamp
+          }
+        }
+      `;
+      variables = { accountNum };
+    } else if (queryType === 'transactions') {
+      // Recent transactions query
+      graphqlQuery = `
+        query GetRecentTransactions {
+          transaction(
+            order_by: [{consensus_timestamp: desc}]
+            limit: 10
+          ) {
+            consensus_timestamp
+            type
+            result
+            payer_account_id
+            charged_tx_fee
+          }
+        }
+      `;
+    } else if (queryType === 'price') {
+      // HBAR price query
+      graphqlQuery = `
+        query GetHBARPrice {
+          ecosystem_metric(
+            where: {name: {_eq: "avg_usd_conversion"}, period: {_eq: "minute"}}
+            order_by: [{end_date: desc_nulls_last}]
+            limit: 1
+          ) {
+            total
+            end_date
+          }
+        }
+      `;
+    } else if (queryType === 'stats') {
+      // Network stats query
+      graphqlQuery = `
+        query GetNetworkStats {
+          tps: ecosystem_metric(
+            where: {name: {_eq: "network_tps"}, period: {_eq: "hour"}}
+            order_by: [{end_date: desc_nulls_last}]
+            limit: 1
+          ) {
+            total
+            end_date
+          }
+          activeAccounts: ecosystem_metric(
+            where: {name: {_eq: "active_accounts"}, period: {_eq: "day"}}
+            order_by: [{end_date: desc_nulls_last}]
+            limit: 1
+          ) {
+            total
+            end_date
+          }
+        }
+      `;
     }
 
-    // For now, return simulated data until MCP is available in API
-    // This shows the UI works - real Hedera data requires MCP which is only in Claude.ai
-    const simulatedResponse = {
-      textResponses: [
-        `Demo Response for: "${query}"\n\n` +
-        `Note: Real-time Hedera data requires MCP integration which is currently only available in Claude.ai, not the public API.\n\n` +
-        `To use real data:\n` +
-        `1. Use this UI to design your queries\n` +
-        `2. Ask me (Claude) in the chat to run them with real Hedera MCP data\n` +
-        `3. I'll fetch live blockchain data and show you the results\n\n` +
-        `This is a working demo of the UI - the data flow is: UI → Backend → Anthropic API → (MCP not yet supported) → Simulated Response`
-      ],
-      toolResults: 'MCP servers are not yet supported in the Anthropic public API. Use Claude.ai chat interface for real Hedera data queries.',
-      fullResponse: []
-    };
+    // Make GraphQL request to Hgraph
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: graphqlQuery,
+        variables: variables
+      })
+    });
 
-    res.status(200).json(simulatedResponse);
+    const result = await response.json();
+
+    if (result.errors) {
+      return res.status(500).json({ error: result.errors[0].message });
+    }
+
+    // Format the response based on query type
+    let formattedData = {};
+
+    if (queryType === 'account' && result.data.entity && result.data.entity.length > 0) {
+      const account = result.data.entity[0];
+      formattedData = {
+        accountId: `0.0.${account.num}`,
+        balance: (account.balance / 100000000).toFixed(2) + ' HBAR',
+        balanceRaw: account.balance,
+        evmAddress: account.evm_address || 'N/A',
+        createdAt: new Date(account.created_timestamp / 1000000).toISOString()
+      };
+    } else if (queryType === 'transactions' && result.data.transaction) {
+      formattedData = {
+        transactions: result.data.transaction.map(tx => ({
+          timestamp: new Date(tx.consensus_timestamp / 1000000).toISOString(),
+          type: tx.type,
+          result: tx.result,
+          payerAccount: `0.0.${tx.payer_account_id}`,
+          fee: (tx.charged_tx_fee / 100000000).toFixed(8) + ' HBAR'
+        }))
+      };
+    } else if (queryType === 'price' && result.data.ecosystem_metric && result.data.ecosystem_metric.length > 0) {
+      const priceData = result.data.ecosystem_metric[0];
+      formattedData = {
+        hbarPrice: '$' + (priceData.total / 100000).toFixed(5),
+        timestamp: priceData.end_date
+      };
+    } else if (queryType === 'stats' && result.data) {
+      formattedData = {
+        tps: result.data.tps && result.data.tps.length > 0 ? result.data.tps[0].total : 'N/A',
+        activeAccounts: result.data.activeAccounts && result.data.activeAccounts.length > 0 ? result.data.activeAccounts[0].total : 'N/A',
+        lastUpdated: result.data.tps && result.data.tps.length > 0 ? result.data.tps[0].end_date : 'N/A'
+      };
+    }
+
+    res.status(200).json({
+      data: formattedData,
+      rawData: result.data,
+      source: 'Hgraph GraphQL API'
+    });
 
   } catch (error) {
     console.error('Error:', error);
