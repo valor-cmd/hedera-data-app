@@ -225,6 +225,122 @@
     margin-bottom:1rem;
   }
   .loading.active { display:block; }
+  
+  /* Rich List Styles */
+  .richlist-container {
+    width:90%;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .richlist-search {
+    text-align:center;
+    margin-bottom:3rem;
+  }
+  .rank-result {
+    margin-top:1.5rem;
+    padding:1.5rem;
+    border-radius:16px;
+    background:rgba(22,27,34,0.8);
+    border:1px solid #30363d;
+    display:none;
+  }
+  .rank-result.active {
+    display:block;
+  }
+  .rank-number {
+    font-size:3rem;
+    font-weight:800;
+    background:linear-gradient(135deg,#00d4ff,#8b5cf6);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin-bottom:0.5rem;
+  }
+  .rank-balance {
+    font-size:1.3rem;
+    color:#8b949e;
+    margin-bottom:1rem;
+  }
+  .rank-percentile {
+    font-size:1.1rem;
+    padding:0.5rem 1rem;
+    border-radius:20px;
+    display:inline-block;
+    font-weight:600;
+  }
+  .rank-percentile.top1 { background:linear-gradient(135deg,#ffd700,#ff8c00); color:#000; }
+  .rank-percentile.top5 { background:linear-gradient(135deg,#c0c0c0,#a0a0a0); color:#000; }
+  .rank-percentile.top10 { background:linear-gradient(135deg,#cd7f32,#8b4513); color:#fff; }
+  .rank-percentile.top25 { background:rgba(139,92,246,0.3); color:#8b5cf6; }
+  .rank-percentile.other { background:rgba(0,212,255,0.2); color:#00d4ff; }
+  
+  .richlist-subtitle {
+    font-size:1.5rem;
+    font-weight:700;
+    margin-bottom:1.5rem;
+    color:#8b949e;
+    text-align:center;
+  }
+  .richlist-table-container {
+    background:rgba(22,27,34,0.6);
+    border-radius:24px;
+    padding:2rem;
+    border:1px solid #30363d;
+    backdrop-filter:blur(12px);
+  }
+  .richlist-table {
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+    max-height:600px;
+    overflow-y:auto;
+    padding-right:0.5rem;
+  }
+  .richlist-table::-webkit-scrollbar {
+    width:6px;
+  }
+  .richlist-table::-webkit-scrollbar-track {
+    background:rgba(255,255,255,0.05);
+    border-radius:3px;
+  }
+  .richlist-table::-webkit-scrollbar-thumb {
+    background:rgba(139,92,246,0.5);
+    border-radius:3px;
+  }
+  .richlist-row {
+    display:flex;
+    align-items:center;
+    padding:1rem 1.5rem;
+    background:rgba(22,27,34,0.8);
+    border-radius:12px;
+    border:1px solid #30363d;
+    transition:all 0.2s ease;
+  }
+  .richlist-row:hover {
+    border-color:#8b5cf6;
+    transform:translateX(4px);
+  }
+  .richlist-rank {
+    font-size:1.2rem;
+    font-weight:800;
+    width:50px;
+    color:#8b5cf6;
+  }
+  .richlist-rank.gold { color:#ffd700; }
+  .richlist-rank.silver { color:#c0c0c0; }
+  .richlist-rank.bronze { color:#cd7f32; }
+  .richlist-address {
+    flex:1;
+    font-family:monospace;
+    font-size:1rem;
+    color:#8b949e;
+    margin-left:1rem;
+  }
+  .richlist-balance {
+    font-size:1.1rem;
+    font-weight:700;
+    color:#00d4ff;
+    text-align:right;
+  }
 </style>
 </head>
 <body>
@@ -260,7 +376,7 @@
   <section class="section" id="user">
     <div class="gradient-orb" style="top:-300px;left:-300px;background:radial-gradient(circle,rgba(139,92,246,0.18),transparent);"></div>
     <h2>USER DATA</h2>
-    <input type="text" id="accountInput" class="search-box" placeholder="Enter account ID · 0.0.123456">
+    <input type="text" id="accountInput" class="search-box" placeholder="Enter account ID · 0.0.123456" onkeypress="if(event.key === 'Enter') queryAccount()">
     <button class="search-btn" onclick="queryAccount()">Query Account</button>
     <div class="loading" id="accountLoading">Loading...</div>
     <div class="cards-wrapper">
@@ -275,18 +391,24 @@
     </div>
   </section>
   
-  <section class="section" id="token">
+  <section class="section" id="richlist" style="min-height:100vh;height:auto;padding:4rem 0;">
     <div class="gradient-orb" style="bottom:-300px;right:-300px;background:radial-gradient(circle,rgba(255,0,170,0.2),transparent);"></div>
-    <h2>RECENT TRANSACTIONS</h2>
-    <button class="search-btn" onclick="queryTransactions()">Load Recent Transactions</button>
-    <div class="loading" id="txLoading">Loading...</div>
-    <div class="cards-wrapper">
-      <div class="carousel-scroll">
-        <div class="carousel" id="txCarousel">
-          <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-          <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-          <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-        </div>
+    <h2>HBAR RICH LIST</h2>
+    
+    <div class="richlist-container">
+      <!-- Search Section -->
+      <div class="richlist-search">
+        <input type="text" id="richlistInput" class="search-box" placeholder="Check your rank · 0.0.123456" onkeypress="if(event.key === 'Enter') checkRank()">
+        <button class="search-btn" onclick="checkRank()">Check Rank</button>
+        <div class="loading" id="rankLoading">Loading...</div>
+        <div id="rankResult" class="rank-result"></div>
+      </div>
+      
+      <!-- Top 50 List -->
+      <div class="richlist-table-container">
+        <h3 class="richlist-subtitle">Top 50 HBAR Holders</h3>
+        <div class="loading" id="richlistLoading">Loading...</div>
+        <div class="richlist-table" id="richlistTable"></div>
       </div>
     </div>
   </section>
