@@ -402,14 +402,15 @@ function initCarousels() {
       }, 1000);
     }
     
-    // Mouse wheel - scroll down/right = cards move left (position decreases)
+    // Mouse wheel & trackpad - supports both vertical (mouse) and horizontal (trackpad) scrolling
     wrapper.addEventListener('wheel', e => {
       e.preventDefault();
       isInteracting = true;
       clearTimeout(timeout);
       
-      // Normalize scroll direction
-      const delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
+      // Use both deltaX (trackpad horizontal) and deltaY (mouse wheel / trackpad vertical)
+      // This allows natural scrolling on trackpads in any direction
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       position -= delta;
       
       wrapPosition();
