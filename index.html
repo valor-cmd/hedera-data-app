@@ -239,24 +239,6 @@
   
   <section class="section" id="s1"></section>
   
-  <section class="section" id="user">
-    <div class="gradient-orb" style="top:-300px;left:-300px;background:radial-gradient(circle,rgba(139,92,246,0.18),transparent);"></div>
-    <h2>USER DATA</h2>
-    <input type="text" id="accountInput" class="search-box" placeholder="Enter account ID · 0.0.123456">
-    <button class="search-btn" onclick="queryAccount()">Query Account</button>
-    <div class="loading" id="accountLoading">Loading...</div>
-    <div class="cards-wrapper">
-      <div class="carousel-scroll">
-        <div class="carousel" id="userCarousel">
-          <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
-          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
-          <div class="card"><div class="card-title">EVM Address</div><div class="card-value" id="evmAddr" style="font-size:1.2rem;">---</div></div>
-          <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
-        </div>
-      </div>
-    </div>
-  </section>
-  
   <section class="section" id="network">
     <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.5),rgba(139,92,246,0.35),transparent);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
     <h2 style="opacity:0;transform:scale(0.8);">NETWORK STATS</h2>
@@ -270,6 +252,24 @@
           <div class="card"><div class="card-title">Active Accounts</div><div class="card-value" id="activeAccounts">---</div></div>
           <div class="card"><div class="card-title">Total Accounts</div><div class="card-value" id="totalAccounts">---</div></div>
           <div class="card"><div class="card-title">24h Transactions</div><div class="card-value" id="transactions">---</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="section" id="user">
+    <div class="gradient-orb" style="top:-300px;left:-300px;background:radial-gradient(circle,rgba(139,92,246,0.18),transparent);"></div>
+    <h2>USER DATA</h2>
+    <input type="text" id="accountInput" class="search-box" placeholder="Enter account ID · 0.0.123456">
+    <button class="search-btn" onclick="queryAccount()">Query Account</button>
+    <div class="loading" id="accountLoading">Loading...</div>
+    <div class="cards-wrapper">
+      <div class="carousel-scroll">
+        <div class="carousel" id="userCarousel">
+          <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
+          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
+          <div class="card"><div class="card-title">EVM Address</div><div class="card-value" id="evmAddr" style="font-size:1.2rem;">---</div></div>
+          <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
         </div>
       </div>
     </div>
