@@ -342,23 +342,23 @@ function initCarousels() {
     const cards = Array.from(carousel.children);
     if (cards.length === 0) return;
     
-    // Set up each card with absolute positioning
     const gap = 40;
-    let totalWidth = 0;
     
-    cards.forEach((card, i) => {
-      card.style.position = 'absolute';
-      card.style.left = totalWidth + 'px';
-      totalWidth += card.offsetWidth + gap;
+    // Clone cards for seamless loop
+    cards.forEach(card => {
+      const clone = card.cloneNode(true);
+      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+      carousel.appendChild(clone);
     });
     
-    // Set carousel width to contain all cards
-    carousel.style.position = 'relative';
-    carousel.style.width = totalWidth + 'px';
-    carousel.style.height = cards[0].offsetHeight + 'px';
+    // Calculate set width
+    let setWidth = 0;
+    for (let i = 0; i < cards.length; i++) {
+      setWidth += carousel.children[i].offsetWidth + gap;
+    }
     
     // State
-    let scrollPos = 0;
+    let position = 0;
     let isInteracting = false;
     let isHovering = false;
     let isHoverReady = false;
@@ -368,44 +368,52 @@ function initCarousels() {
     let startX = 0;
     let dragStartPos = 0;
     
-    // Reposition cards for infinite loop
-    function repositionCards() {
-      cards.forEach(card => {
-        let cardLeft = parseFloat(card.style.left) - scrollPos;
-        
-        // If card is too far left (off screen), move it to the right
-        while (cardLeft < -card.offsetWidth - gap) {
-          cardLeft += totalWidth;
-          card.style.left = (parseFloat(card.style.left) + totalWidth) + 'px';
-        }
-        
-        // If card is too far right, move it to the left
-        while (cardLeft > wrapper.offsetWidth + gap) {
-          cardLeft -= totalWidth;
-          card.style.left = (parseFloat(card.style.left) - totalWidth) + 'px';
-        }
-      });
+    // Apply transform
+    function setPosition(x) {
+      carousel.style.transform = `translateX(${x}px)`;
     }
     
-    // Apply scroll position
-    function render() {
-      carousel.style.transform = `translateX(${-scrollPos}px)`;
+    // Wrap position for infinite loop
+    function wrapPosition() {
+      if (setWidth <= 0) return;
+      while (position <= -setWidth) {
+        position += setWidth;
+      }
+      while (position > 0) {
+        position -= setWidth;
+      }
+    }
+    
+    // Sync data from original cards to clones
+    function syncClonedCards() {
+      const allCards = carousel.querySelectorAll('.card');
+      const numOriginal = cards.length;
+      
+      for (let i = 0; i < numOriginal; i++) {
+        const originalValue = allCards[i].querySelector('.card-value');
+        const cloneValue = allCards[i + numOriginal]?.querySelector('.card-value');
+        if (originalValue && cloneValue && originalValue.textContent !== cloneValue.textContent) {
+          cloneValue.textContent = originalValue.textContent;
+        }
+      }
     }
     
     // Animation loop
     function animate() {
       if (!isInteracting && !isHovering) {
-        scrollPos += 0.5; // Auto-scroll speed
-        repositionCards();
-        render();
+        position -= 0.5;
+        wrapPosition();
+        setPosition(position);
       }
+      // Sync clones every frame
+      syncClonedCards();
       requestAnimationFrame(animate);
     }
     
     // Start animation
     requestAnimationFrame(animate);
     
-    // Hover delay for interaction
+    // Hover delay
     wrapper.addEventListener('mouseenter', () => {
       isHovering = true;
       hoverTimeout = setTimeout(() => {
@@ -434,9 +442,9 @@ function initCarousels() {
       clearTimeout(timeout);
       
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      scrollPos += delta;
-      repositionCards();
-      render();
+      position -= delta;
+      wrapPosition();
+      setPosition(position);
       
       timeout = setTimeout(() => { isInteracting = false; }, 1000);
     }, { passive: false });
@@ -448,7 +456,7 @@ function initCarousels() {
       dragging = true;
       isInteracting = true;
       startX = e.clientX;
-      dragStartPos = scrollPos;
+      dragStartPos = position;
       clearTimeout(timeout);
       wrapper.style.cursor = 'grabbing';
       e.preventDefault();
@@ -456,9 +464,9 @@ function initCarousels() {
     
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
-      scrollPos = dragStartPos + (startX - e.clientX);
-      repositionCards();
-      render();
+      position = dragStartPos + (e.clientX - startX);
+      wrapPosition();
+      setPosition(position);
     });
     
     document.addEventListener('mouseup', () => {
@@ -471,21 +479,21 @@ function initCarousels() {
       }
     });
     
-    // Touch support
+    // Touch
     wrapper.addEventListener('touchstart', e => {
       dragging = true;
       isInteracting = true;
-      isHoverReady = true; // Touch doesn't need hover delay
+      isHoverReady = true;
       startX = e.touches[0].clientX;
-      dragStartPos = scrollPos;
+      dragStartPos = position;
       clearTimeout(timeout);
     }, { passive: true });
     
     document.addEventListener('touchmove', e => {
       if (!dragging) return;
-      scrollPos = dragStartPos + (startX - e.touches[0].clientX);
-      repositionCards();
-      render();
+      position = dragStartPos + (e.touches[0].clientX - startX);
+      wrapPosition();
+      setPosition(position);
     }, { passive: true });
     
     document.addEventListener('touchend', () => {
