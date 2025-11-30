@@ -262,9 +262,12 @@
   }
   .rank-percentile {
     font-size:1.1rem;
-    padding:0.5rem 1rem;
-    border-radius:20px;
-    display:inline-block;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
     font-weight:600;
   }
   .rank-percentile.top1 { background:linear-gradient(135deg,#ffd700,#ff8c00); color:#000; }
@@ -286,6 +289,35 @@
     padding:2rem;
     border:1px solid #30363d;
     backdrop-filter:blur(12px);
+    position:relative;
+  }
+  .back-btn {
+    position:absolute;
+    top:2rem;
+    left:2rem;
+    padding:0.8rem 1.5rem;
+    background:rgba(139,92,246,0.2);
+    border:1px solid #8b5cf6;
+    border-radius:12px;
+    color:#8b5cf6;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.3s ease;
+    display:none;
+    align-items:center;
+    gap:0.5rem;
+  }
+  .back-btn.active {
+    display:flex;
+  }
+  .back-btn:hover {
+    background:rgba(139,92,246,0.4);
+    transform:translateX(-4px);
+  }
+  .back-btn::before {
+    content:'←';
+    font-size:1.2rem;
   }
   .richlist-table {
     display:flex;
@@ -319,6 +351,11 @@
     border-color:#8b5cf6;
     transform:translateX(4px);
   }
+  .richlist-row.user-account {
+    border:2px solid #00d4ff;
+    background:rgba(0,212,255,0.15);
+    box-shadow:0 0 20px rgba(0,212,255,0.3);
+  }
   .richlist-rank {
     font-size:1.2rem;
     font-weight:800;
@@ -334,6 +371,15 @@
     font-size:1rem;
     color:#8b949e;
     margin-left:1rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.25rem;
+  }
+  .account-name {
+    font-size:0.85rem;
+    color:#00d4ff;
+    font-family:system-ui,-apple-system,sans-serif;
+    font-weight:500;
   }
   .richlist-balance {
     font-size:1.1rem;
@@ -406,6 +452,7 @@
       
       <!-- Top 50 List -->
       <div class="richlist-table-container">
+        <button class="back-btn" id="backToTop50">Back to Top 50</button>
         <h3 class="richlist-subtitle">Top 50 HBAR Holders</h3>
         <div class="loading" id="richlistLoading">Loading...</div>
         <div class="richlist-table" id="richlistTable"></div>
@@ -788,6 +835,7 @@ async function loadRichList() {
             ) {
               num
               balance
+              memo
               evm_address
             }
           }
@@ -801,6 +849,10 @@ async function loadRichList() {
       const table = document.getElementById('richlistTable');
       table.innerHTML = '';
       
+      // Update subtitle and hide back button
+      document.querySelector('.richlist-subtitle').textContent = 'Top 50 HBAR Holders';
+      document.getElementById('backToTop50').classList.remove('active');
+      
       result.data.entity.forEach((account, index) => {
         const rank = index + 1;
         const balance = (account.balance / 100000000).toLocaleString(undefined, {
@@ -813,11 +865,16 @@ async function loadRichList() {
         else if (rank === 2) rankClass = 'silver';
         else if (rank === 3) rankClass = 'bronze';
         
+        const accountName = account.memo ? `<div class="account-name">${account.memo}</div>` : '';
+        
         const row = document.createElement('div');
         row.className = 'richlist-row';
         row.innerHTML = `
           <div class="richlist-rank ${rankClass}">#${rank}</div>
-          <div class="richlist-address">0.0.${account.num}</div>
+          <div class="richlist-address">
+            <div>0.0.${account.num}</div>
+            ${accountName}
+          </div>
           <div class="richlist-balance">${balance} ℏ</div>
         `;
         table.appendChild(row);
@@ -918,13 +975,13 @@ async function checkRank() {
     
     if (percentile <= 1) {
       badgeClass = 'top1';
-      badgeText = 'Top 1% 🏆';
+      badgeText = 'Top 1%';
     } else if (percentile <= 5) {
       badgeClass = 'top5';
-      badgeText = 'Top 5% 🥈';
+      badgeText = 'Top 5%';
     } else if (percentile <= 10) {
       badgeClass = 'top10';
-      badgeText = 'Top 10% 🥉';
+      badgeText = 'Top 10%';
     } else if (percentile <= 25) {
       badgeClass = 'top25';
       badgeText = 'Top 25%';
@@ -940,10 +997,100 @@ async function checkRank() {
     `;
     resultDiv.classList.add('active');
     
+    // Now load surrounding accounts (24 above, user, 25 below)
+    await loadSurroundingAccounts(rank, accountNum);
+    
   } catch (error) {
     alert('Error checking rank: ' + error.message);
   } finally {
     document.getElementById('rankLoading').classList.remove('active');
+  }
+}
+
+async function loadSurroundingAccounts(userRank, userAccountNum) {
+  document.getElementById('richlistLoading').classList.add('active');
+  
+  try {
+    // Calculate offset (24 accounts above the user)
+    const offset = Math.max(0, userRank - 25); // Start 24 above, or from rank 1 if user is in top 24
+    
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetSurroundingAccounts {
+            entity(
+              where: {type: {_eq: "ACCOUNT"}, balance: {_gt: "0"}}
+              order_by: [{balance: desc_nulls_last}]
+              limit: 50
+              offset: ${offset}
+            ) {
+              num
+              balance
+              memo
+              evm_address
+            }
+          }
+        `
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.data?.entity) {
+      const table = document.getElementById('richlistTable');
+      table.innerHTML = '';
+      
+      // Update subtitle to show context and show back button
+      document.querySelector('.richlist-subtitle').textContent = 
+        `Accounts Around Rank #${userRank.toLocaleString()}`;
+      document.getElementById('backToTop50').classList.add('active');
+      
+      result.data.entity.forEach((account, index) => {
+        const rank = offset + index + 1;
+        const balance = (account.balance / 100000000).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        
+        let rankClass = '';
+        if (rank === 1) rankClass = 'gold';
+        else if (rank === 2) rankClass = 'silver';
+        else if (rank === 3) rankClass = 'bronze';
+        
+        const isUserAccount = account.num === userAccountNum;
+        const userLabel = isUserAccount ? ' (You)' : '';
+        const accountName = account.memo ? `<div class="account-name">${account.memo}</div>` : '';
+        
+        const row = document.createElement('div');
+        row.className = `richlist-row${isUserAccount ? ' user-account' : ''}`;
+        row.innerHTML = `
+          <div class="richlist-rank ${rankClass}">#${rank}</div>
+          <div class="richlist-address">
+            <div>0.0.${account.num}${userLabel}</div>
+            ${accountName}
+          </div>
+          <div class="richlist-balance">${balance} ℏ</div>
+        `;
+        table.appendChild(row);
+      });
+      
+      // Scroll the user's account into view
+      setTimeout(() => {
+        const userRow = table.querySelector('.user-account');
+        if (userRow) {
+          userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  } catch (error) {
+    alert('Error loading surrounding accounts: ' + error.message);
+  } finally {
+    document.getElementById('richlistLoading').classList.remove('active');
   }
 }
 
@@ -966,6 +1113,9 @@ document.getElementById('richlistInput').addEventListener('keypress', (e) => {
     checkRank();
   }
 });
+
+// Add event listener for back to top 50 button
+document.getElementById('backToTop50').addEventListener('click', loadRichList);
 </script>
 </body>
 </html>
