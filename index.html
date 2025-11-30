@@ -111,14 +111,8 @@
   }
   .carousel-scroll {
     width:100%;
-    overflow-x:auto;
-    overflow-y:hidden;
+    overflow:hidden;
     padding:2rem 0;
-    -ms-overflow-style:none;
-    scrollbar-width:none;
-  }
-  .carousel-scroll::-webkit-scrollbar {
-    display:none;
   }
   .carousel {
     display:flex;
@@ -127,6 +121,7 @@
     user-select:none;
     cursor:grab;
     width:max-content;
+    will-change:transform;
   }
   .carousel:active {
     cursor:grabbing;
@@ -340,56 +335,70 @@ function initCarousels() {
       carousel.appendChild(card.cloneNode(true));
     });
     
-    // Calculate set width
+    // Calculate set width after a brief delay to ensure layout
     let setWidth = 0;
-    for (let i = 0; i < cards.length; i++) {
-      setWidth += cards[i].offsetWidth + gap;
-    }
+    setTimeout(() => {
+      for (let i = 0; i < cards.length; i++) {
+        setWidth += carousel.children[i].offsetWidth + gap;
+      }
+      
+      // Start animation after we have the width
+      startAnimation();
+    }, 50);
     
-    // State
+    // Position tracking
+    let position = 0;
     let isInteracting = false;
     let timeout = null;
     let dragging = false;
     let startX = 0;
-    let scrollStart = 0;
+    let dragStartPos = 0;
     
-    // Auto-scroll function
-    function autoScroll() {
-      if (!isInteracting && setWidth > 0) {
-        wrapper.scrollLeft += 0.5;
-        
-        // Wrap when reaching end
-        if (wrapper.scrollLeft >= setWidth) {
-          wrapper.scrollLeft = wrapper.scrollLeft - setWidth;
-        }
-      }
-      requestAnimationFrame(autoScroll);
+    // Apply transform
+    function setPosition(x) {
+      carousel.style.transform = `translateX(${x}px)`;
     }
     
-    // Start auto-scroll
-    autoScroll();
+    // Wrap position for infinite loop
+    function wrapPosition() {
+      if (setWidth <= 0) return;
+      while (position <= -setWidth) {
+        position += setWidth;
+      }
+      while (position > 0) {
+        position -= setWidth;
+      }
+    }
     
-    // Resume after interaction
+    // Animation loop
+    function animate() {
+      if (!isInteracting) {
+        position -= 0.5; // Move left slowly
+        wrapPosition();
+        setPosition(position);
+      }
+      requestAnimationFrame(animate);
+    }
+    
+    function startAnimation() {
+      requestAnimationFrame(animate);
+    }
+    
+    // Resume auto-scroll after interaction
     function resumeLater() {
       clearTimeout(timeout);
-      timeout = setTimeout(() => { isInteracting = false; }, 1500);
-    }
-    
-    // Wrap helper for user interaction
-    function wrapNow() {
-      if (wrapper.scrollLeft >= setWidth) {
-        wrapper.scrollLeft -= setWidth;
-      } else if (wrapper.scrollLeft <= 0) {
-        wrapper.scrollLeft += setWidth;
-      }
+      timeout = setTimeout(() => { 
+        isInteracting = false; 
+      }, 1500);
     }
     
     // Mouse wheel
     wrapper.addEventListener('wheel', e => {
       e.preventDefault();
       isInteracting = true;
-      wrapper.scrollLeft += e.deltaY || e.deltaX;
-      wrapNow();
+      position -= e.deltaY || e.deltaX;
+      wrapPosition();
+      setPosition(position);
       resumeLater();
     }, { passive: false });
     
@@ -397,16 +406,17 @@ function initCarousels() {
     wrapper.addEventListener('mousedown', e => {
       dragging = true;
       isInteracting = true;
-      startX = e.pageX;
-      scrollStart = wrapper.scrollLeft;
+      startX = e.clientX;
+      dragStartPos = position;
       clearTimeout(timeout);
       e.preventDefault();
     });
     
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
-      wrapper.scrollLeft = scrollStart + (startX - e.pageX);
-      wrapNow();
+      position = dragStartPos + (e.clientX - startX);
+      wrapPosition();
+      setPosition(position);
     });
     
     document.addEventListener('mouseup', () => {
@@ -420,15 +430,16 @@ function initCarousels() {
     wrapper.addEventListener('touchstart', e => {
       dragging = true;
       isInteracting = true;
-      startX = e.touches[0].pageX;
-      scrollStart = wrapper.scrollLeft;
+      startX = e.touches[0].clientX;
+      dragStartPos = position;
       clearTimeout(timeout);
     }, { passive: true });
     
     document.addEventListener('touchmove', e => {
       if (!dragging) return;
-      wrapper.scrollLeft = scrollStart + (startX - e.touches[0].pageX);
-      wrapNow();
+      position = dragStartPos + (e.touches[0].clientX - startX);
+      wrapPosition();
+      setPosition(position);
     }, { passive: true });
     
     document.addEventListener('touchend', () => {
@@ -440,7 +451,7 @@ function initCarousels() {
   });
 }
 
-// Run when page is fully loaded (including styles)
+// Run when page is fully loaded
 window.addEventListener('load', initCarousels);
 
 async function queryAccount() {
