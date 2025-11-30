@@ -51,8 +51,16 @@
     width:max-content;
     animation:scroll 60s linear infinite;
     padding:0 4rem;
+    cursor:grab;
+    user-select:none;
+  }
+  .carousel:active {
+    cursor:grabbing;
   }
   .carousel:hover { animation-play-state:paused; }
+  .carousel.dragging {
+    animation:none;
+  }
   @keyframes scroll {
     0%   { transform:translateX(0); }
     100% { transform:translateX(-50%); }
@@ -67,10 +75,11 @@
     backdrop-filter:blur(12px);
     box-shadow:0 30px 60px rgba(0,0,0,0.7);
     cursor:pointer;
-    transition:all 0.5s ease;
+    transition:transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     display:flex;
     flex-direction:column;
     justify-content:center;
+    will-change:transform;
   }
   .card:hover {
     transform:translateY(-30px) scale(1.06);
@@ -172,7 +181,6 @@
   <section class="section" id="network">
     <div class="gradient-orb" style="background:radial-gradient(circle,rgba(0,212,255,0.45),rgba(139,92,246,0.3),transparent);"></div>
     <h2 style="opacity:0;transform:scale(0.8);">NETWORK STATS</h2>
-    <button class="search-btn" onclick="queryNetwork()">Load Network Data</button>
     <div class="loading" id="networkLoading">Loading...</div>
     <div class="cards-wrapper">
       <div class="carousel" id="networkCarousel">
@@ -224,6 +232,49 @@ gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
 gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
   scrollTrigger: {trigger:"#network", start:"top 60%"}
 });
+
+// Auto-load network data when section comes into view
+ScrollTrigger.create({
+  trigger: "#network",
+  start: "top 80%",
+  once: true,
+  onEnter: () => queryNetwork()
+});
+
+// Draggable Carousel Logic
+function makeCarouselDraggable(carousel) {
+  let isDragging = false;
+  let startX;
+  let scrollLeft;
+  
+  carousel.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    carousel.classList.add('dragging');
+    startX = e.pageX - carousel.offsetLeft;
+    scrollLeft = carousel.scrollLeft;
+  });
+  
+  carousel.addEventListener('mouseleave', () => {
+    isDragging = false;
+    carousel.classList.remove('dragging');
+  });
+  
+  carousel.addEventListener('mouseup', () => {
+    isDragging = false;
+    carousel.classList.remove('dragging');
+  });
+  
+  carousel.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - carousel.offsetLeft;
+    const walk = (x - startX) * 2;
+    carousel.scrollLeft = scrollLeft - walk;
+  });
+}
+
+// Apply to all carousels
+document.querySelectorAll('.carousel').forEach(makeCarouselDraggable);
 
 // Query Account
 async function queryAccount() {
