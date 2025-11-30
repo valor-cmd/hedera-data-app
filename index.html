@@ -330,22 +330,11 @@ function initCarousels() {
     
     const gap = 40;
     
-    // Mark original card values with data-field attribute before cloning
-    cards.forEach(card => {
-      const valueEl = card.querySelector('.card-value');
-      if (valueEl && valueEl.id) {
-        valueEl.setAttribute('data-field', valueEl.id);
-      }
-    });
-    
-    // Clone cards for seamless loop
+    // Clone cards for seamless loop (clones will be updated via updateCardsByTitle)
     cards.forEach(card => {
       const clone = card.cloneNode(true);
-      // Remove id from cloned elements to avoid duplicates, but keep data-field
-      const clonedValue = clone.querySelector('.card-value');
-      if (clonedValue) {
-        clonedValue.removeAttribute('id');
-      }
+      // Remove IDs from cloned elements to avoid duplicates
+      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
       carousel.appendChild(clone);
     });
     
