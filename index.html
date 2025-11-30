@@ -350,7 +350,9 @@ function initCarousels() {
     let position = 0;
     let isInteracting = false;
     let isHovering = false;
+    let isHoverReady = false; // True after 1 second of hovering
     let timeout = null;
+    let hoverTimeout = null;
     let dragging = false;
     let startX = 0;
     let dragStartPos = 0;
@@ -385,10 +387,21 @@ function initCarousels() {
       requestAnimationFrame(animate);
     }
     
-    // Pause on hover
-    wrapper.addEventListener('mouseenter', () => { isHovering = true; });
+    // Pause on hover with 1 second delay for interaction
+    wrapper.addEventListener('mouseenter', () => { 
+      isHovering = true;
+      // Start 1 second timer before enabling interaction
+      hoverTimeout = setTimeout(() => {
+        isHoverReady = true;
+        wrapper.style.cursor = 'grab';
+      }, 1000);
+    });
+    
     wrapper.addEventListener('mouseleave', () => { 
       isHovering = false;
+      isHoverReady = false;
+      clearTimeout(hoverTimeout);
+      wrapper.style.cursor = 'default';
       if (!dragging) {
         resumeLater();
       }
@@ -402,14 +415,15 @@ function initCarousels() {
       }, 1000);
     }
     
-    // Mouse wheel & trackpad - supports both vertical (mouse) and horizontal (trackpad) scrolling
+    // Mouse wheel & trackpad - only works after 1 second hover
     wrapper.addEventListener('wheel', e => {
+      if (!isHoverReady) return; // Allow page scroll if not hover-ready
+      
       e.preventDefault();
       isInteracting = true;
       clearTimeout(timeout);
       
       // Use both deltaX (trackpad horizontal) and deltaY (mouse wheel / trackpad vertical)
-      // This allows natural scrolling on trackpads in any direction
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       position -= delta;
       
@@ -418,13 +432,16 @@ function initCarousels() {
       resumeLater();
     }, { passive: false });
     
-    // Mouse drag
+    // Mouse drag - only works after 1 second hover
     wrapper.addEventListener('mousedown', e => {
+      if (!isHoverReady) return;
+      
       dragging = true;
       isInteracting = true;
       startX = e.clientX;
       dragStartPos = position;
       clearTimeout(timeout);
+      wrapper.style.cursor = 'grabbing';
       e.preventDefault();
     });
     
@@ -438,6 +455,9 @@ function initCarousels() {
     document.addEventListener('mouseup', () => {
       if (dragging) {
         dragging = false;
+        if (isHoverReady) {
+          wrapper.style.cursor = 'grab';
+        }
         resumeLater();
       }
     });
