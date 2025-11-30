@@ -5,7 +5,7 @@
 <title>Hedera Mainnet Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root { --bg:#0a0e15; --card:#161b22; --accent:#00d4ff; }
+  :root { --bg:#050810; --card:#161b22; --accent:#00d4ff; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { 
     background:var(--bg); 
@@ -17,6 +17,56 @@
   html {
     overflow-x:hidden;
   }
+  
+  /* Subtle animated background orbs */
+  .bg-orbs {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:0;
+    overflow:hidden;
+  }
+  .bg-orb {
+    position:absolute;
+    border-radius:50%;
+    filter:blur(120px);
+    opacity:0.15;
+    animation:float 20s ease-in-out infinite;
+  }
+  .bg-orb:nth-child(1) {
+    width:600px;
+    height:600px;
+    background:radial-gradient(circle,#8b5cf6,transparent);
+    top:-200px;
+    left:-200px;
+    animation-delay:0s;
+  }
+  .bg-orb:nth-child(2) {
+    width:500px;
+    height:500px;
+    background:radial-gradient(circle,#00d4ff,transparent);
+    bottom:-150px;
+    right:-150px;
+    animation-delay:-7s;
+  }
+  .bg-orb:nth-child(3) {
+    width:400px;
+    height:400px;
+    background:radial-gradient(circle,#ff00aa,transparent);
+    top:50%;
+    left:50%;
+    animation-delay:-14s;
+  }
+  @keyframes float {
+    0%, 100% { transform:translate(0, 0) scale(1); }
+    25% { transform:translate(30px, -30px) scale(1.05); }
+    50% { transform:translate(-20px, 20px) scale(0.95); }
+    75% { transform:translate(20px, 10px) scale(1.02); }
+  }
+  
   .section {
     height:100vh;
     width:100%;
@@ -25,12 +75,16 @@
     align-items:center;
     justify-content:center;
     flex-direction:column;
+    overflow:visible;
+    z-index:1;
   }
   #fixed-title {
     position:fixed;
     top:38%;
-    left:50%;
-    transform:translate(-50%,-50%);
+    left:0;
+    right:0;
+    text-align:center;
+    transform:translateY(-50%);
     font-size:clamp(4rem,10vw,10rem);
     font-weight:900;
     z-index:100;
@@ -38,6 +92,7 @@
     background:linear-gradient(90deg,#00d4ff,#8b5cf6,#ff00aa);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
+    background-clip:text;
     white-space:nowrap;
   }
   h2 {
@@ -51,25 +106,33 @@
   }
   .cards-wrapper {
     width:100%;
-    padding:6rem 0;
-    overflow:hidden;
+    padding:4rem 0;
     position:relative;
+  }
+  .carousel-scroll {
+    width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:2rem 0;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+  .carousel-scroll::-webkit-scrollbar {
+    display:none;
   }
   .carousel {
     display:flex;
     gap:2.5rem;
-    width:max-content;
-    animation:scroll 60s linear infinite;
-    padding:0 4rem;
+    padding:1.5rem 4rem;
     user-select:none;
-    position:relative;
+    cursor:grab;
+    width:max-content;
   }
-  .carousel:hover { 
-    animation-play-state:paused;
+  .carousel:active {
+    cursor:grabbing;
   }
-  .carousel.dragging {
-    animation:none;
-    cursor:default;
+  .carousel .card {
+    flex-shrink:0;
   }
   @keyframes scroll {
     0%   { transform:translateX(0); }
@@ -83,18 +146,21 @@
     padding:2.2rem;
     border:1px solid #30363d;
     backdrop-filter:blur(12px);
-    box-shadow:0 30px 60px rgba(0,0,0,0.7);
+    box-shadow:0 8px 15px rgba(0,0,0,0.4);
     cursor:pointer;
     transition:transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     display:flex;
     flex-direction:column;
     justify-content:center;
     will-change:transform;
+    position:relative;
+    z-index:1;
   }
   .card:hover {
-    transform:translateY(-30px) scale(1.06);
-    box-shadow:0 60px 100px rgba(0,212,255,0.45);
+    transform:translateY(-8px) scale(1.02);
+    box-shadow:0 15px 25px rgba(0,212,255,0.12);
     border-color:var(--accent);
+    z-index:10;
   }
   .card-title { 
     font-size:0.9rem; 
@@ -121,6 +187,7 @@
     filter:blur(150px);
     opacity:0;
     pointer-events:none;
+    z-index:0;
   }
   .search-box {
     padding:1.5rem 2rem;
@@ -166,6 +233,13 @@
 </style>
 </head>
 <body>
+  <!-- Subtle animated background orbs -->
+  <div class="bg-orbs">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+  
   <h1 id="fixed-title">HEDERA</h1>
   
   <section class="section" id="s1"></section>
@@ -177,31 +251,31 @@
     <button class="search-btn" onclick="queryAccount()">Query Account</button>
     <div class="loading" id="accountLoading">Loading...</div>
     <div class="cards-wrapper">
-      <div class="carousel" id="userCarousel">
-        <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
-        <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
-        <div class="card"><div class="card-title">EVM Address</div><div class="card-value" id="evmAddr" style="font-size:1.2rem;">---</div></div>
-        <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
-        <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance2">---</div></div>
-        <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId2">---</div></div>
+      <div class="carousel-scroll">
+        <div class="carousel" id="userCarousel">
+          <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
+          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
+          <div class="card"><div class="card-title">EVM Address</div><div class="card-value" id="evmAddr" style="font-size:1.2rem;">---</div></div>
+          <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
+        </div>
       </div>
     </div>
   </section>
   
   <section class="section" id="network">
-    <div class="gradient-orb" style="background:radial-gradient(circle,rgba(0,212,255,0.45),rgba(139,92,246,0.3),transparent);"></div>
+    <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.5),rgba(139,92,246,0.35),transparent);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
     <h2 style="opacity:0;transform:scale(0.8);">NETWORK STATS</h2>
     <div class="loading" id="networkLoading">Loading...</div>
     <div class="cards-wrapper">
-      <div class="carousel" id="networkCarousel">
-        <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice">---</div></div>
-        <div class="card"><div class="card-title">Total Value Locked</div><div class="card-value" id="tvl">---</div></div>
-        <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div></div>
-        <div class="card"><div class="card-title">Active Accounts</div><div class="card-value" id="activeAccounts">---</div></div>
-        <div class="card"><div class="card-title">Total Accounts</div><div class="card-value" id="totalAccounts">---</div></div>
-        <div class="card"><div class="card-title">24h Transactions</div><div class="card-value" id="transactions">---</div></div>
-        <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice2">---</div></div>
-        <div class="card"><div class="card-title">Total Value Locked</div><div class="card-value" id="tvl2">---</div></div>
+      <div class="carousel-scroll">
+        <div class="carousel" id="networkCarousel">
+          <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice">---</div></div>
+          <div class="card"><div class="card-title">Total Value Locked</div><div class="card-value" id="tvl">---</div></div>
+          <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div></div>
+          <div class="card"><div class="card-title">Active Accounts</div><div class="card-value" id="activeAccounts">---</div></div>
+          <div class="card"><div class="card-title">Total Accounts</div><div class="card-value" id="totalAccounts">---</div></div>
+          <div class="card"><div class="card-title">24h Transactions</div><div class="card-value" id="transactions">---</div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -212,18 +286,17 @@
     <button class="search-btn" onclick="queryTransactions()">Load Recent Transactions</button>
     <div class="loading" id="txLoading">Loading...</div>
     <div class="cards-wrapper">
-      <div class="carousel" id="txCarousel">
-        <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-        <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-        <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-        <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-        <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
-        <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
+      <div class="carousel-scroll">
+        <div class="carousel" id="txCarousel">
+          <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
+          <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
+          <div class="card"><div class="card-title">Loading</div><div class="card-value">---</div></div>
+        </div>
       </div>
     </div>
   </section>
   
-  <section class="section" id="final" style="background:#05070f;">
+  <section class="section" id="final" style="background:transparent;">
     <h2>THE FUTURE IS HEDERA</h2>
     <p style="font-size:1.5rem;opacity:0.7;margin-top:2rem;">Powered by Hgraph API</p>
   </section>
@@ -234,7 +307,6 @@
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
 
-// GSAP Animations
 gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
 });
@@ -245,7 +317,6 @@ gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
   scrollTrigger: {trigger:"#network", start:"top 60%"}
 });
 
-// Auto-load network data when section comes into view
 ScrollTrigger.create({
   trigger: "#network",
   start: "top 80%",
@@ -253,80 +324,117 @@ ScrollTrigger.create({
   onEnter: () => queryNetwork()
 });
 
-// Draggable Carousel Logic
 function makeCarouselDraggable(carouselElement) {
-  const wrapper = carouselElement.parentElement;
+  const wrapper = carouselElement.closest('.carousel-scroll');
+  if (!wrapper) return;
+  
+  const cards = Array.from(carouselElement.children);
+  const gap = 40;
+  
+  // We need exactly 2 sets for the infinite illusion
+  cards.forEach(card => {
+    carouselElement.appendChild(card.cloneNode(true));
+  });
+  
+  // Get width of one complete set
+  let setWidth = 0;
+  function calculateSetWidth() {
+    setWidth = 0;
+    for (let i = 0; i < cards.length; i++) {
+      setWidth += carouselElement.children[i].offsetWidth + gap;
+    }
+  }
+  
+  // Recalculate on resize
+  calculateSetWidth();
+  window.addEventListener('resize', calculateSetWidth);
+  
+  // Set initial scroll to middle
+  wrapper.scrollLeft = setWidth;
+  
+  // Infinite scroll handler - repositions scroll when reaching boundaries
+  function handleScroll() {
+    const scrollPos = wrapper.scrollLeft;
+    
+    // If scrolled to the end (second set), jump to first set
+    if (scrollPos >= setWidth * 1.5) {
+      wrapper.scrollLeft = scrollPos - setWidth;
+    }
+    // If scrolled to the beginning, jump to second set
+    else if (scrollPos <= setWidth * 0.1) {
+      wrapper.scrollLeft = scrollPos + setWidth;
+    }
+  }
+  
+  wrapper.addEventListener('scroll', handleScroll);
+  
+  // Auto-scroll
+  let autoScrollSpeed = 1;
+  let isHovering = false;
   let isDragging = false;
+  let animationId;
+  
+  function autoScroll() {
+    if (!isHovering && !isDragging) {
+      wrapper.scrollLeft += autoScrollSpeed;
+    }
+    animationId = requestAnimationFrame(autoScroll);
+  }
+  autoScroll();
+  
+  // Pause on hover
+  wrapper.addEventListener('mouseenter', () => { isHovering = true; });
+  wrapper.addEventListener('mouseleave', () => { isHovering = false; });
+  
+  // Drag to scroll
   let startX;
-  let currentTranslate = 0;
-  let prevTranslate = 0;
-  let animationID;
+  let scrollLeft;
   
   wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
-    startX = e.clientX;
-    carouselElement.classList.add('dragging');
-    cancelAnimationFrame(animationID);
-    
-    // Get current transform value
-    const style = window.getComputedStyle(carouselElement);
-    const matrix = new DOMMatrix(style.transform);
-    prevTranslate = matrix.m41;
-  });
-  
-  wrapper.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
+    startX = e.pageX;
+    scrollLeft = wrapper.scrollLeft;
     e.preventDefault();
-    const currentX = e.clientX;
-    const diff = currentX - startX;
-    currentTranslate = prevTranslate + diff;
-    carouselElement.style.transform = `translateX(${currentTranslate}px)`;
   });
   
-  wrapper.addEventListener('mouseup', () => {
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const x = e.pageX;
+    const walk = (startX - x) * 1.5;
+    wrapper.scrollLeft = scrollLeft + walk;
+  });
+  
+  window.addEventListener('mouseup', () => {
     isDragging = false;
-    carouselElement.classList.remove('dragging');
-    prevTranslate = currentTranslate;
   });
   
-  wrapper.addEventListener('mouseleave', () => {
-    if (isDragging) {
-      isDragging = false;
-      carouselElement.classList.remove('dragging');
-      prevTranslate = currentTranslate;
-    }
-  });
-  
-  // Touch support for mobile
+  // Touch support
   wrapper.addEventListener('touchstart', (e) => {
     isDragging = true;
-    startX = e.touches[0].clientX;
-    carouselElement.classList.add('dragging');
-    
-    const style = window.getComputedStyle(carouselElement);
-    const matrix = new DOMMatrix(style.transform);
-    prevTranslate = matrix.m41;
+    startX = e.touches[0].pageX;
+    scrollLeft = wrapper.scrollLeft;
   });
   
-  wrapper.addEventListener('touchmove', (e) => {
+  window.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - startX;
-    currentTranslate = prevTranslate + diff;
-    carouselElement.style.transform = `translateX(${currentTranslate}px)`;
+    const x = e.touches[0].pageX;
+    const walk = (startX - x) * 1.5;
+    wrapper.scrollLeft = scrollLeft + walk;
   });
   
-  wrapper.addEventListener('touchend', () => {
+  window.addEventListener('touchend', () => {
     isDragging = false;
-    carouselElement.classList.remove('dragging');
-    prevTranslate = currentTranslate;
   });
+  
+  // Mouse wheel horizontal scroll
+  wrapper.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    wrapper.scrollLeft += e.deltaY + e.deltaX;
+  }, { passive: false });
 }
 
-// Apply to all carousels
 document.querySelectorAll('.carousel').forEach(makeCarouselDraggable);
 
-// Query Account
 async function queryAccount() {
   const accountInput = document.getElementById('accountInput').value;
   const accountNum = parseInt(accountInput.replace('0.0.', ''));
@@ -369,9 +477,7 @@ async function queryAccount() {
       const evmAddr = account.evm_address ? `0x${account.evm_address.slice(0, 8)}...` : 'N/A';
       
       document.getElementById('balance').textContent = `${balance} HBAR`;
-      document.getElementById('balance2').textContent = `${balance} HBAR`;
       document.getElementById('accountId').textContent = `0.0.${account.num}`;
-      document.getElementById('accountId2').textContent = `0.0.${account.num}`;
       document.getElementById('evmAddr').textContent = evmAddr;
       document.getElementById('created').textContent = created;
     } else {
@@ -384,7 +490,6 @@ async function queryAccount() {
   }
 }
 
-// Query Network Stats
 async function queryNetwork() {
   document.getElementById('networkLoading').classList.add('active');
   
@@ -448,7 +553,6 @@ async function queryNetwork() {
       const txs = result.data.transactions?.[0]?.total?.toLocaleString() || 'N/A';
       
       document.getElementById('hbarPrice').textContent = price;
-      document.getElementById('hbarPrice2').textContent = price;
       document.getElementById('tps').textContent = tps;
       document.getElementById('activeAccounts').textContent = active;
       document.getElementById('totalAccounts').textContent = total;
@@ -461,7 +565,6 @@ async function queryNetwork() {
   }
 }
 
-// Query Recent Transactions
 async function queryTransactions() {
   document.getElementById('txLoading').classList.add('active');
   
@@ -508,19 +611,8 @@ async function queryTransactions() {
         carousel.appendChild(card);
       });
       
-      // Duplicate for seamless scroll
-      result.data.transaction.forEach(tx => {
-        const fee = (tx.charged_tx_fee / 100000000).toFixed(4);
-        const time = new Date(tx.consensus_timestamp / 1000000).toLocaleTimeString();
-        
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="card-title">Type ${tx.type} • ${time}</div>
-          <div class="card-value" style="font-size:1.8rem;">${fee} HBAR</div>
-        `;
-        carousel.appendChild(card);
-      });
+      // Re-initialize the carousel with new cards
+      makeCarouselDraggable(carousel);
     }
   } catch (error) {
     alert('Error: ' + error.message);
