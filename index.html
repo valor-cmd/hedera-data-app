@@ -319,12 +319,18 @@ ScrollTrigger.create({
   onEnter: () => queryNetwork()
 });
 
+// Store references to card value elements for each field
+const cardValueElements = {
+  userCarousel: {},
+  networkCarousel: {},
+  txCarousel: {}
+};
+
 // Initialize carousels when DOM is fully ready
 let carouselsInitialized = false;
 
 function initCarousels() {
   if (carouselsInitialized) {
-    console.log('Carousels already initialized, skipping');
     return;
   }
   carouselsInitialized = true;
@@ -333,21 +339,48 @@ function initCarousels() {
     const wrapper = carousel.closest('.carousel-scroll');
     if (!wrapper) return;
     
+    const carouselId = carousel.id;
     const cards = Array.from(carousel.children);
     if (cards.length === 0) return;
     
     const gap = 40;
-    const numOriginalCards = cards.length;
     
-    // Clone cards for seamless loop (clones will be updated via updateCardsByTitle)
+    // Initialize storage for this carousel
+    if (!cardValueElements[carouselId]) {
+      cardValueElements[carouselId] = {};
+    }
+    
+    // Store references to original card values by title
     cards.forEach(card => {
-      const clone = card.cloneNode(true);
-      // Remove IDs from cloned elements to avoid duplicates
-      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-      carousel.appendChild(clone);
+      const titleEl = card.querySelector('.card-title');
+      const valueEl = card.querySelector('.card-value');
+      if (titleEl && valueEl) {
+        const title = titleEl.textContent.trim();
+        if (!cardValueElements[carouselId][title]) {
+          cardValueElements[carouselId][title] = [];
+        }
+        cardValueElements[carouselId][title].push(valueEl);
+      }
     });
     
-    console.log(`Carousel ${carousel.id}: ${numOriginalCards} original cards, ${carousel.children.length} total after cloning`);
+    // Clone cards for seamless loop
+    cards.forEach(card => {
+      const clone = card.cloneNode(true);
+      // Remove IDs from cloned elements
+      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+      carousel.appendChild(clone);
+      
+      // Store reference to cloned card's value element
+      const titleEl = clone.querySelector('.card-title');
+      const valueEl = clone.querySelector('.card-value');
+      if (titleEl && valueEl) {
+        const title = titleEl.textContent.trim();
+        if (!cardValueElements[carouselId][title]) {
+          cardValueElements[carouselId][title] = [];
+        }
+        cardValueElements[carouselId][title].push(valueEl);
+      }
+    });
     
     // Calculate set width after a brief delay to ensure layout
     let setWidth = 0;
