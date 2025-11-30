@@ -346,6 +346,7 @@
     border-radius:12px;
     border:1px solid #30363d;
     transition:all 0.2s ease;
+    gap:1rem;
   }
   .richlist-row:hover {
     border-color:#8b5cf6;
@@ -359,7 +360,8 @@
   .richlist-rank {
     font-size:1.2rem;
     font-weight:800;
-    width:50px;
+    min-width:70px;
+    flex-shrink:0;
     color:#8b5cf6;
   }
   .richlist-rank.gold { color:#ffd700; }
@@ -370,22 +372,33 @@
     font-family:monospace;
     font-size:1rem;
     color:#8b949e;
-    margin-left:1rem;
     display:flex;
     flex-direction:column;
     gap:0.25rem;
+    min-width:0;
+    overflow:hidden;
+  }
+  .account-id {
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .account-name {
     font-size:0.85rem;
     color:#00d4ff;
     font-family:system-ui,-apple-system,sans-serif;
     font-weight:500;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .richlist-balance {
     font-size:1.1rem;
     font-weight:700;
     color:#00d4ff;
     text-align:right;
+    min-width:150px;
+    flex-shrink:0;
   }
 </style>
 </head>
@@ -872,7 +885,7 @@ async function loadRichList() {
         row.innerHTML = `
           <div class="richlist-rank ${rankClass}">#${rank}</div>
           <div class="richlist-address">
-            <div>0.0.${account.num}</div>
+            <div class="account-id">0.0.${account.num}</div>
             ${accountName}
           </div>
           <div class="richlist-balance">${balance} ℏ</div>
@@ -1071,7 +1084,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
         row.innerHTML = `
           <div class="richlist-rank ${rankClass}">#${rank}</div>
           <div class="richlist-address">
-            <div>0.0.${account.num}${userLabel}</div>
+            <div class="account-id">0.0.${account.num}${userLabel}</div>
             ${accountName}
           </div>
           <div class="richlist-balance">${balance} ℏ</div>
