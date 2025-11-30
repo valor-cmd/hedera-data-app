@@ -312,11 +312,18 @@ gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
   scrollTrigger: {trigger:"#network", start:"top 60%"}
 });
 
+// Auto-load network data when section comes into view
 ScrollTrigger.create({
   trigger: "#network",
   start: "top 80%",
   once: true,
-  onEnter: () => queryNetwork()
+  onEnter: () => {
+    // Ensure carousels are initialized before querying
+    if (!carouselsInitialized) {
+      initCarousels();
+    }
+    queryNetwork();
+  }
 });
 
 // Store references to card value elements for each field
@@ -379,6 +386,12 @@ function initCarousels() {
           cardValueElements[carouselId][title] = [];
         }
         cardValueElements[carouselId][title].push(valueEl);
+        
+        // Copy current value from original card to clone
+        const originalValueEl = card.querySelector('.card-value');
+        if (originalValueEl) {
+          valueEl.textContent = originalValueEl.textContent;
+        }
       }
     });
     
@@ -534,7 +547,14 @@ function initCarousels() {
   });
 }
 
-// Run when page is fully loaded
+// Run carousel init immediately when DOM is ready, not on window load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCarousels);
+} else {
+  initCarousels();
+}
+
+// Also run on window load as backup
 window.addEventListener('load', initCarousels);
 
 async function queryAccount() {
