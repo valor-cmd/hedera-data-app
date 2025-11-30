@@ -422,10 +422,14 @@
       <div class="carousel-scroll">
         <div class="carousel" id="networkCarousel">
           <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice">---</div></div>
-          <div class="card"><div class="card-title">Total Value Locked</div><div class="card-value" id="tvl">---</div></div>
+          <div class="card"><div class="card-title">Market Cap</div><div class="card-value" id="marketCap">---</div></div>
           <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div></div>
+          <div class="card"><div class="card-title">Consensus Time</div><div class="card-value" id="consensusTime">---</div></div>
+          <div class="card"><div class="card-title">24h Network Fees</div><div class="card-value" id="networkFees">---</div></div>
+          <div class="card"><div class="card-title">HBAR Released</div><div class="card-value" id="hbarReleased">---</div></div>
           <div class="card"><div class="card-title">Active Accounts</div><div class="card-value" id="activeAccounts">---</div></div>
           <div class="card"><div class="card-title">Total Accounts</div><div class="card-value" id="totalAccounts">---</div></div>
+          <div class="card"><div class="card-title">24h New Accounts</div><div class="card-value" id="newAccounts">---</div></div>
           <div class="card"><div class="card-title">24h Transactions</div><div class="card-value" id="transactions">---</div></div>
         </div>
       </div>
@@ -772,8 +776,36 @@ async function queryNetwork() {
             ) {
               total
             }
+            marketCap: ecosystem_metric(
+              where: {name: {_eq: "hbar_market_cap"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
             tps: ecosystem_metric(
               where: {name: {_eq: "network_tps"}, period: {_eq: "hour"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            consensusTime: ecosystem_metric(
+              where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            networkFees: ecosystem_metric(
+              where: {name: {_eq: "network_fee"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            hbarReleased: ecosystem_metric(
+              where: {name: {_eq: "hbar_total_released"}, period: {_eq: "day"}}
               order_by: [{end_date: desc_nulls_last}]
               limit: 1
             ) {
@@ -788,6 +820,13 @@ async function queryNetwork() {
             }
             totalAccounts: ecosystem_metric(
               where: {name: {_eq: "total_accounts"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            newAccounts: ecosystem_metric(
+              where: {name: {_eq: "new_accounts"}, period: {_eq: "day"}}
               order_by: [{end_date: desc_nulls_last}]
               limit: 1
             ) {
@@ -808,16 +847,56 @@ async function queryNetwork() {
     const result = await response.json();
     
     if (result.data) {
+      // HBAR Price (÷100000 for USD)
       const price = result.data.price?.[0] ? `$${(result.data.price[0].total / 100000).toFixed(5)}` : 'N/A';
+      
+      // Market Cap (÷100 for USD)
+      const marketCap = result.data.marketCap?.[0] 
+        ? `$${(result.data.marketCap[0].total / 100 / 1000000000).toFixed(2)}B` 
+        : 'N/A';
+      
+      // Network TPS
       const tps = result.data.tps?.[0]?.total?.toLocaleString() || 'N/A';
+      
+      // Consensus Time (÷1000000000 for seconds)
+      const consensusTime = result.data.consensusTime?.[0] 
+        ? `${(result.data.consensusTime[0].total / 1000000000).toFixed(2)}s` 
+        : 'N/A';
+      
+      // Network Fees (÷100000000 for HBAR)
+      const networkFees = result.data.networkFees?.[0] 
+        ? `${(result.data.networkFees[0].total / 100000000).toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          })} ℏ`
+        : 'N/A';
+      
+      // HBAR Released (÷100000000 for HBAR, then show in billions)
+      const hbarReleased = result.data.hbarReleased?.[0] 
+        ? `${(result.data.hbarReleased[0].total / 100000000 / 1000000000).toFixed(2)}B ℏ` 
+        : 'N/A';
+      
+      // Active Accounts
       const active = result.data.activeAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+      
+      // Total Accounts
       const total = result.data.totalAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+      
+      // New Accounts (24h)
+      const newAccounts = result.data.newAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+      
+      // Transactions (24h)
       const txs = result.data.transactions?.[0]?.total?.toLocaleString() || 'N/A';
       
       document.getElementById('hbarPrice').textContent = price;
+      document.getElementById('marketCap').textContent = marketCap;
       document.getElementById('tps').textContent = tps;
+      document.getElementById('consensusTime').textContent = consensusTime;
+      document.getElementById('networkFees').textContent = networkFees;
+      document.getElementById('hbarReleased').textContent = hbarReleased;
       document.getElementById('activeAccounts').textContent = active;
       document.getElementById('totalAccounts').textContent = total;
+      document.getElementById('newAccounts').textContent = newAccounts;
       document.getElementById('transactions').textContent = txs;
     }
   } catch (error) {
