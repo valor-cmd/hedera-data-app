@@ -320,7 +320,15 @@ ScrollTrigger.create({
 });
 
 // Initialize carousels when DOM is fully ready
+let carouselsInitialized = false;
+
 function initCarousels() {
+  if (carouselsInitialized) {
+    console.log('Carousels already initialized, skipping');
+    return;
+  }
+  carouselsInitialized = true;
+  
   document.querySelectorAll('.carousel').forEach(carousel => {
     const wrapper = carousel.closest('.carousel-scroll');
     if (!wrapper) return;
@@ -329,6 +337,7 @@ function initCarousels() {
     if (cards.length === 0) return;
     
     const gap = 40;
+    const numOriginalCards = cards.length;
     
     // Clone cards for seamless loop (clones will be updated via updateCardsByTitle)
     cards.forEach(card => {
@@ -337,6 +346,8 @@ function initCarousels() {
       clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
       carousel.appendChild(clone);
     });
+    
+    console.log(`Carousel ${carousel.id}: ${numOriginalCards} original cards, ${carousel.children.length} total after cloning`);
     
     // Calculate set width after a brief delay to ensure layout
     let setWidth = 0;
