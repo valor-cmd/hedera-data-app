@@ -7,7 +7,16 @@
 <style>
   :root { --bg:#0a0e15; --card:#161b22; --accent:#00d4ff; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:white; font-family:system-ui,-apple-system,sans-serif; overflow-x:hidden; }
+  body { 
+    background:var(--bg); 
+    color:white; 
+    font-family:system-ui,-apple-system,sans-serif; 
+    overflow-x:hidden;
+    width:100vw;
+  }
+  html {
+    overflow-x:hidden;
+  }
   .section {
     height:100vh;
     width:100%;
@@ -43,7 +52,8 @@
   .cards-wrapper {
     width:100%;
     padding:6rem 0;
-    overflow:visible;
+    overflow:hidden;
+    position:relative;
   }
   .carousel {
     display:flex;
@@ -51,15 +61,15 @@
     width:max-content;
     animation:scroll 60s linear infinite;
     padding:0 4rem;
-    cursor:grab;
     user-select:none;
+    position:relative;
   }
-  .carousel:active {
-    cursor:grabbing;
+  .carousel:hover { 
+    animation-play-state:paused;
   }
-  .carousel:hover { animation-play-state:paused; }
   .carousel.dragging {
     animation:none;
+    cursor:default;
   }
   @keyframes scroll {
     0%   { transform:translateX(0); }
@@ -242,34 +252,72 @@ ScrollTrigger.create({
 });
 
 // Draggable Carousel Logic
-function makeCarouselDraggable(carousel) {
+function makeCarouselDraggable(carouselElement) {
+  const wrapper = carouselElement.parentElement;
   let isDragging = false;
   let startX;
-  let scrollLeft;
+  let currentTranslate = 0;
+  let prevTranslate = 0;
+  let animationID;
   
-  carousel.addEventListener('mousedown', (e) => {
+  wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
-    carousel.classList.add('dragging');
-    startX = e.pageX - carousel.offsetLeft;
-    scrollLeft = carousel.scrollLeft;
+    startX = e.clientX;
+    carouselElement.classList.add('dragging');
+    cancelAnimationFrame(animationID);
+    
+    // Get current transform value
+    const style = window.getComputedStyle(carouselElement);
+    const matrix = new DOMMatrix(style.transform);
+    prevTranslate = matrix.m41;
   });
   
-  carousel.addEventListener('mouseleave', () => {
-    isDragging = false;
-    carousel.classList.remove('dragging');
-  });
-  
-  carousel.addEventListener('mouseup', () => {
-    isDragging = false;
-    carousel.classList.remove('dragging');
-  });
-  
-  carousel.addEventListener('mousemove', (e) => {
+  wrapper.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    const x = e.pageX - carousel.offsetLeft;
-    const walk = (x - startX) * 2;
-    carousel.scrollLeft = scrollLeft - walk;
+    const currentX = e.clientX;
+    const diff = currentX - startX;
+    currentTranslate = prevTranslate + diff;
+    carouselElement.style.transform = `translateX(${currentTranslate}px)`;
+  });
+  
+  wrapper.addEventListener('mouseup', () => {
+    isDragging = false;
+    carouselElement.classList.remove('dragging');
+    prevTranslate = currentTranslate;
+  });
+  
+  wrapper.addEventListener('mouseleave', () => {
+    if (isDragging) {
+      isDragging = false;
+      carouselElement.classList.remove('dragging');
+      prevTranslate = currentTranslate;
+    }
+  });
+  
+  // Touch support for mobile
+  wrapper.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    startX = e.touches[0].clientX;
+    carouselElement.classList.add('dragging');
+    
+    const style = window.getComputedStyle(carouselElement);
+    const matrix = new DOMMatrix(style.transform);
+    prevTranslate = matrix.m41;
+  });
+  
+  wrapper.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    currentTranslate = prevTranslate + diff;
+    carouselElement.style.transform = `translateX(${currentTranslate}px)`;
+  });
+  
+  wrapper.addEventListener('touchend', () => {
+    isDragging = false;
+    carouselElement.classList.remove('dragging');
+    prevTranslate = currentTranslate;
   });
 }
 
