@@ -326,13 +326,6 @@ ScrollTrigger.create({
   }
 });
 
-// Store references to card value elements for each field
-const cardValueElements = {
-  userCarousel: {},
-  networkCarousel: {},
-  txCarousel: {}
-};
-
 // Initialize carousels when DOM is fully ready
 let carouselsInitialized = false;
 
@@ -346,160 +339,116 @@ function initCarousels() {
     const wrapper = carousel.closest('.carousel-scroll');
     if (!wrapper) return;
     
-    const carouselId = carousel.id;
     const cards = Array.from(carousel.children);
     if (cards.length === 0) return;
     
+    // Set up each card with absolute positioning
     const gap = 40;
+    let totalWidth = 0;
     
-    // Initialize storage for this carousel
-    if (!cardValueElements[carouselId]) {
-      cardValueElements[carouselId] = {};
-    }
-    
-    // Store references to original card values by title
-    cards.forEach(card => {
-      const titleEl = card.querySelector('.card-title');
-      const valueEl = card.querySelector('.card-value');
-      if (titleEl && valueEl) {
-        const title = titleEl.textContent.trim();
-        if (!cardValueElements[carouselId][title]) {
-          cardValueElements[carouselId][title] = [];
-        }
-        cardValueElements[carouselId][title].push(valueEl);
-      }
+    cards.forEach((card, i) => {
+      card.style.position = 'absolute';
+      card.style.left = totalWidth + 'px';
+      totalWidth += card.offsetWidth + gap;
     });
     
-    // Clone cards for seamless loop
-    cards.forEach(card => {
-      const clone = card.cloneNode(true);
-      // Remove IDs from cloned elements
-      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-      carousel.appendChild(clone);
-      
-      // Store reference to cloned card's value element
-      const titleEl = clone.querySelector('.card-title');
-      const valueEl = clone.querySelector('.card-value');
-      if (titleEl && valueEl) {
-        const title = titleEl.textContent.trim();
-        if (!cardValueElements[carouselId][title]) {
-          cardValueElements[carouselId][title] = [];
-        }
-        cardValueElements[carouselId][title].push(valueEl);
-        
-        // Copy current value from original card to clone
-        const originalValueEl = card.querySelector('.card-value');
-        if (originalValueEl) {
-          valueEl.textContent = originalValueEl.textContent;
-        }
-      }
-    });
+    // Set carousel width to contain all cards
+    carousel.style.position = 'relative';
+    carousel.style.width = totalWidth + 'px';
+    carousel.style.height = cards[0].offsetHeight + 'px';
     
-    // Calculate set width after a brief delay to ensure layout
-    let setWidth = 0;
-    setTimeout(() => {
-      for (let i = 0; i < cards.length; i++) {
-        setWidth += carousel.children[i].offsetWidth + gap;
-      }
-      
-      // Start animation after we have the width
-      startAnimation();
-    }, 50);
-    
-    // Position tracking
-    let position = 0;
+    // State
+    let scrollPos = 0;
     let isInteracting = false;
     let isHovering = false;
-    let isHoverReady = false; // True after 1 second of hovering
+    let isHoverReady = false;
     let timeout = null;
     let hoverTimeout = null;
     let dragging = false;
     let startX = 0;
     let dragStartPos = 0;
     
-    // Apply transform
-    function setPosition(x) {
-      carousel.style.transform = `translateX(${x}px)`;
+    // Reposition cards for infinite loop
+    function repositionCards() {
+      cards.forEach(card => {
+        let cardLeft = parseFloat(card.style.left) - scrollPos;
+        
+        // If card is too far left (off screen), move it to the right
+        while (cardLeft < -card.offsetWidth - gap) {
+          cardLeft += totalWidth;
+          card.style.left = (parseFloat(card.style.left) + totalWidth) + 'px';
+        }
+        
+        // If card is too far right, move it to the left
+        while (cardLeft > wrapper.offsetWidth + gap) {
+          cardLeft -= totalWidth;
+          card.style.left = (parseFloat(card.style.left) - totalWidth) + 'px';
+        }
+      });
     }
     
-    // Wrap position for infinite loop
-    function wrapPosition() {
-      if (setWidth <= 0) return;
-      while (position <= -setWidth) {
-        position += setWidth;
-      }
-      while (position > 0) {
-        position -= setWidth;
-      }
+    // Apply scroll position
+    function render() {
+      carousel.style.transform = `translateX(${-scrollPos}px)`;
     }
     
     // Animation loop
     function animate() {
       if (!isInteracting && !isHovering) {
-        position -= 0.5; // Move left slowly
-        wrapPosition();
-        setPosition(position);
+        scrollPos += 0.5; // Auto-scroll speed
+        repositionCards();
+        render();
       }
       requestAnimationFrame(animate);
     }
     
-    function startAnimation() {
-      requestAnimationFrame(animate);
-    }
+    // Start animation
+    requestAnimationFrame(animate);
     
-    // Pause on hover with 1 second delay for interaction
-    wrapper.addEventListener('mouseenter', () => { 
+    // Hover delay for interaction
+    wrapper.addEventListener('mouseenter', () => {
       isHovering = true;
-      // Start 1 second timer before enabling interaction
       hoverTimeout = setTimeout(() => {
         isHoverReady = true;
         wrapper.style.cursor = 'grab';
       }, 1000);
     });
     
-    wrapper.addEventListener('mouseleave', () => { 
+    wrapper.addEventListener('mouseleave', () => {
       isHovering = false;
       isHoverReady = false;
       clearTimeout(hoverTimeout);
       wrapper.style.cursor = 'default';
       if (!dragging) {
-        resumeLater();
+        clearTimeout(timeout);
+        timeout = setTimeout(() => { isInteracting = false; }, 1000);
       }
     });
     
-    // Resume auto-scroll after interaction
-    function resumeLater() {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => { 
-        isInteracting = false; 
-      }, 1000);
-    }
-    
-    // Mouse wheel & trackpad - only works after 1 second hover
+    // Mouse wheel & trackpad
     wrapper.addEventListener('wheel', e => {
-      if (!isHoverReady) return; // Allow page scroll if not hover-ready
+      if (!isHoverReady) return;
       
       e.preventDefault();
       isInteracting = true;
       clearTimeout(timeout);
       
-      // Use both deltaX (trackpad horizontal) and deltaY (mouse wheel / trackpad vertical)
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      position -= delta;
+      scrollPos += delta;
+      repositionCards();
+      render();
       
-      wrapPosition();
-      setPosition(position);
-      resumeLater();
+      timeout = setTimeout(() => { isInteracting = false; }, 1000);
     }, { passive: false });
     
-    // Mouse drag - only works after 1 second hover
+    // Mouse drag
     wrapper.addEventListener('mousedown', e => {
       if (!isHoverReady) return;
       
       dragging = true;
       isInteracting = true;
       startX = e.clientX;
-      dragStartPos = position;
+      dragStartPos = scrollPos;
       clearTimeout(timeout);
       wrapper.style.cursor = 'grabbing';
       e.preventDefault();
@@ -507,9 +456,9 @@ function initCarousels() {
     
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
-      position = dragStartPos + (e.clientX - startX);
-      wrapPosition();
-      setPosition(position);
+      scrollPos = dragStartPos + (startX - e.clientX);
+      repositionCards();
+      render();
     });
     
     document.addEventListener('mouseup', () => {
@@ -518,30 +467,31 @@ function initCarousels() {
         if (isHoverReady) {
           wrapper.style.cursor = 'grab';
         }
-        resumeLater();
+        timeout = setTimeout(() => { isInteracting = false; }, 1000);
       }
     });
     
-    // Touch
+    // Touch support
     wrapper.addEventListener('touchstart', e => {
       dragging = true;
       isInteracting = true;
+      isHoverReady = true; // Touch doesn't need hover delay
       startX = e.touches[0].clientX;
-      dragStartPos = position;
+      dragStartPos = scrollPos;
       clearTimeout(timeout);
     }, { passive: true });
     
     document.addEventListener('touchmove', e => {
       if (!dragging) return;
-      position = dragStartPos + (e.touches[0].clientX - startX);
-      wrapPosition();
-      setPosition(position);
+      scrollPos = dragStartPos + (startX - e.touches[0].clientX);
+      repositionCards();
+      render();
     }, { passive: true });
     
     document.addEventListener('touchend', () => {
       if (dragging) {
         dragging = false;
-        resumeLater();
+        timeout = setTimeout(() => { isInteracting = false; }, 1000);
       }
     });
   });
