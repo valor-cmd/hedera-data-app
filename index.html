@@ -676,7 +676,7 @@ async function queryAccount() {
       const account = result.data.entity[0];
       const balance = (account.balance / 100000000).toFixed(2);
       const created = new Date(account.created_timestamp / 1000000).toLocaleDateString();
-      const evmAddr = account.evm_address ? `0x${account.evm_address.slice(0, 8)}...` : 'N/A';
+      const evmAddr = account.evm_address ? `0x${Buffer.from(account.evm_address).toString('hex').slice(0, 8)}...` : 'N/A';
       
       document.getElementById('balance').textContent = `${balance} HBAR`;
       document.getElementById('accountId').textContent = `0.0.${account.num}`;
@@ -767,8 +767,9 @@ async function queryNetwork() {
   }
 }
 
-async function queryTransactions() {
-  document.getElementById('txLoading').classList.add('active');
+// Rich List Functions
+async function loadRichList() {
+  document.getElementById('richlistLoading').classList.add('active');
   
   try {
     const response = await fetch(HGRAPH_API, {
@@ -779,15 +780,15 @@ async function queryTransactions() {
       },
       body: JSON.stringify({
         query: `
-          query GetRecentTransactions {
-            transaction(
-              order_by: [{consensus_timestamp: desc}]
-              limit: 6
+          query GetRichList {
+            entity(
+              where: {type: {_eq: "ACCOUNT"}, balance: {_gt: "0"}}
+              order_by: [{balance: desc_nulls_last}]
+              limit: 50
             ) {
-              consensus_timestamp
-              type
-              payer_account_id
-              charged_tx_fee
+              num
+              balance
+              evm_address
             }
           }
         `
@@ -796,32 +797,175 @@ async function queryTransactions() {
     
     const result = await response.json();
     
-    if (result.data?.transaction) {
-      const carousel = document.getElementById('txCarousel');
-      carousel.innerHTML = '';
+    if (result.data?.entity) {
+      const table = document.getElementById('richlistTable');
+      table.innerHTML = '';
       
-      result.data.transaction.forEach(tx => {
-        const fee = (tx.charged_tx_fee / 100000000).toFixed(4);
-        const time = new Date(tx.consensus_timestamp / 1000000).toLocaleTimeString();
+      result.data.entity.forEach((account, index) => {
+        const rank = index + 1;
+        const balance = (account.balance / 100000000).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
         
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="card-title">Type ${tx.type} • ${time}</div>
-          <div class="card-value" style="font-size:1.8rem;">${fee} HBAR</div>
+        let rankClass = '';
+        if (rank === 1) rankClass = 'gold';
+        else if (rank === 2) rankClass = 'silver';
+        else if (rank === 3) rankClass = 'bronze';
+        
+        const row = document.createElement('div');
+        row.className = 'richlist-row';
+        row.innerHTML = `
+          <div class="richlist-rank ${rankClass}">#${rank}</div>
+          <div class="richlist-address">0.0.${account.num}</div>
+          <div class="richlist-balance">${balance} ℏ</div>
         `;
-        carousel.appendChild(card);
+        table.appendChild(row);
       });
-      
-      // Re-initialize the carousel with new cards
-      makeCarouselDraggable(carousel);
     }
   } catch (error) {
-    alert('Error: ' + error.message);
+    alert('Error loading rich list: ' + error.message);
   } finally {
-    document.getElementById('txLoading').classList.remove('active');
+    document.getElementById('richlistLoading').classList.remove('active');
   }
 }
+
+async function checkRank() {
+  const accountInput = document.getElementById('richlistInput').value;
+  const accountNum = parseInt(accountInput.replace('0.0.', ''));
+  
+  if (!accountNum) {
+    alert('Please enter a valid account ID (e.g., 0.0.123456)');
+    return;
+  }
+  
+  document.getElementById('rankLoading').classList.add('active');
+  document.getElementById('rankResult').classList.remove('active');
+  
+  try {
+    // First, get the account's balance
+    const accountResponse = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetAccount($accountNum: bigint!) {
+            entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+              num
+              balance
+            }
+          }
+        `,
+        variables: { accountNum }
+      })
+    });
+    
+    const accountResult = await accountResponse.json();
+    
+    if (!accountResult.data?.entity?.[0]) {
+      alert('Account not found');
+      return;
+    }
+    
+    const account = accountResult.data.entity[0];
+    const balance = account.balance;
+    const balanceHbar = (balance / 100000000).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    
+    // Then, count how many accounts have more HBAR
+    const rankResponse = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetRank($balance: bigint!) {
+            entity_aggregate(
+              where: {type: {_eq: "ACCOUNT"}, balance: {_gt: $balance}}
+            ) {
+              aggregate {
+                count
+              }
+            }
+            total: entity_aggregate(
+              where: {type: {_eq: "ACCOUNT"}, balance: {_gt: "0"}}
+            ) {
+              aggregate {
+                count
+              }
+            }
+          }
+        `,
+        variables: { balance: balance.toString() }
+      })
+    });
+    
+    const rankResult = await rankResponse.json();
+    const rank = rankResult.data.entity_aggregate.aggregate.count + 1;
+    const totalAccounts = rankResult.data.total.aggregate.count;
+    const percentile = ((rank / totalAccounts) * 100).toFixed(2);
+    
+    // Determine badge class
+    let badgeClass = 'other';
+    let badgeText = `Top ${percentile}%`;
+    
+    if (percentile <= 1) {
+      badgeClass = 'top1';
+      badgeText = 'Top 1% 🏆';
+    } else if (percentile <= 5) {
+      badgeClass = 'top5';
+      badgeText = 'Top 5% 🥈';
+    } else if (percentile <= 10) {
+      badgeClass = 'top10';
+      badgeText = 'Top 10% 🥉';
+    } else if (percentile <= 25) {
+      badgeClass = 'top25';
+      badgeText = 'Top 25%';
+    }
+    
+    // Display results
+    const resultDiv = document.getElementById('rankResult');
+    resultDiv.innerHTML = `
+      <div class="rank-number">Rank #${rank.toLocaleString()}</div>
+      <div class="rank-balance">${balanceHbar} ℏ</div>
+      <div class="rank-percentile ${badgeClass}">${badgeText}</div>
+      <p style="margin-top:1rem;opacity:0.7;">Out of ${totalAccounts.toLocaleString()} active accounts</p>
+    `;
+    resultDiv.classList.add('active');
+    
+  } catch (error) {
+    alert('Error checking rank: ' + error.message);
+  } finally {
+    document.getElementById('rankLoading').classList.remove('active');
+  }
+}
+
+// Auto-load rich list when section comes into view
+ScrollTrigger.create({
+  trigger: "#richlist",
+  start: "top 80%",
+  once: true,
+  onEnter: () => {
+    loadRichList();
+  }
+});
+
+// Add event listener for the Check Rank button
+document.getElementById('checkRankBtn').addEventListener('click', checkRank);
+
+// Allow Enter key to check rank
+document.getElementById('richlistInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    checkRank();
+  }
+});
 </script>
 </body>
 </html>
