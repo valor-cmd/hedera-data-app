@@ -349,6 +349,7 @@ function initCarousels() {
     // Position tracking
     let position = 0;
     let isInteracting = false;
+    let isHovering = false;
     let timeout = null;
     let dragging = false;
     let startX = 0;
@@ -372,7 +373,7 @@ function initCarousels() {
     
     // Animation loop
     function animate() {
-      if (!isInteracting) {
+      if (!isInteracting && !isHovering) {
         position -= 0.5; // Move left slowly
         wrapPosition();
         setPosition(position);
@@ -384,19 +385,33 @@ function initCarousels() {
       requestAnimationFrame(animate);
     }
     
+    // Pause on hover
+    wrapper.addEventListener('mouseenter', () => { isHovering = true; });
+    wrapper.addEventListener('mouseleave', () => { 
+      isHovering = false;
+      if (!dragging) {
+        resumeLater();
+      }
+    });
+    
     // Resume auto-scroll after interaction
     function resumeLater() {
       clearTimeout(timeout);
       timeout = setTimeout(() => { 
         isInteracting = false; 
-      }, 1500);
+      }, 1000);
     }
     
-    // Mouse wheel
+    // Mouse wheel - scroll down/right = cards move left (position decreases)
     wrapper.addEventListener('wheel', e => {
       e.preventDefault();
       isInteracting = true;
-      position -= e.deltaY || e.deltaX;
+      clearTimeout(timeout);
+      
+      // Normalize scroll direction
+      const delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
+      position -= delta;
+      
       wrapPosition();
       setPosition(position);
       resumeLater();
