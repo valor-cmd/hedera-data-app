@@ -423,7 +423,7 @@
         <div class="carousel" id="networkCarousel">
           <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice">---</div></div>
           <div class="card"><div class="card-title">Market Cap</div><div class="card-value" id="marketCap">---</div></div>
-          <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div></div>
+          <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div><div style="font-size:0.75rem;opacity:0.6;margin-top:0.5rem;">Hourly Average</div></div>
           <div class="card"><div class="card-title">Consensus Time</div><div class="card-value" id="consensusTime">---</div></div>
           <div class="card"><div class="card-title">24h Network Fees</div><div class="card-value" id="networkFees">---</div></div>
           <div class="card"><div class="card-title">HBAR Released</div><div class="card-value" id="hbarReleased">---</div></div>
@@ -783,8 +783,8 @@ async function queryNetwork() {
             ) {
               total
             }
-            tps: ecosystem_metric(
-              where: {name: {_eq: "network_tps"}, period: {_eq: "hour"}}
+            transactionsLastHour: ecosystem_metric(
+              where: {name: {_eq: "new_transactions"}, period: {_eq: "hour"}}
               order_by: [{end_date: desc_nulls_last}]
               limit: 1
             ) {
@@ -855,8 +855,10 @@ async function queryNetwork() {
         ? `$${(result.data.marketCap[0].total / 100 / 1000000000).toFixed(2)}B` 
         : 'N/A';
       
-      // Network TPS
-      const tps = result.data.tps?.[0]?.total?.toLocaleString() || 'N/A';
+      // Network TPS - Calculate from last hour's transactions
+      const tps = result.data.transactionsLastHour?.[0] 
+        ? (result.data.transactionsLastHour[0].total / 3600).toFixed(2)
+        : 'N/A';
       
       // Consensus Time (÷1000000000 for seconds)
       const consensusTime = result.data.consensusTime?.[0] 
