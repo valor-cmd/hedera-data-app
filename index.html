@@ -400,6 +400,192 @@
     min-width:150px;
     flex-shrink:0;
   }
+  
+  /* Live Transactions Styles */
+  .live-tx-container {
+    width:95%;
+    max-width:1600px;
+    height:700px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:1.5rem;
+    background:rgba(22,27,34,0.4);
+    border-radius:24px;
+    padding:1.5rem;
+    border:1px solid #30363d;
+    backdrop-filter:blur(12px);
+  }
+  
+  .tx-feed-panel {
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+    overflow:hidden;
+  }
+  
+  .tx-stats-header {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  
+  .tx-volume, .tx-count {
+    background:rgba(22,27,34,0.8);
+    border-radius:12px;
+    padding:1rem;
+    border:1px solid #30363d;
+  }
+  
+  .tx-volume-label, .tx-count-label {
+    font-size:0.8rem;
+    opacity:0.6;
+    margin-bottom:0.5rem;
+  }
+  
+  .tx-volume-value, .tx-count-value {
+    font-size:1.5rem;
+    font-weight:700;
+    background:linear-gradient(135deg,#00d4ff,#8b5cf6);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  
+  .tx-feed {
+    flex:1;
+    background:rgba(22,27,34,0.8);
+    border-radius:12px;
+    padding:1rem;
+    border:1px solid #30363d;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+  }
+  
+  .tx-feed::-webkit-scrollbar {
+    width:6px;
+  }
+  
+  .tx-feed::-webkit-scrollbar-track {
+    background:rgba(255,255,255,0.05);
+    border-radius:3px;
+  }
+  
+  .tx-feed::-webkit-scrollbar-thumb {
+    background:rgba(0,212,255,0.5);
+    border-radius:3px;
+  }
+  
+  .tx-feed-item {
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    padding:0.75rem;
+    background:rgba(0,212,255,0.05);
+    border-radius:8px;
+    border-left:3px solid #00d4ff;
+    animation:slideIn 0.3s ease;
+    font-size:0.85rem;
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity:0;
+      transform:translateX(-20px);
+    }
+    to {
+      opacity:1;
+      transform:translateX(0);
+    }
+  }
+  
+  .tx-feed-icon {
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#00d4ff,#8b5cf6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.7rem;
+    flex-shrink:0;
+  }
+  
+  .tx-feed-details {
+    flex:1;
+    min-width:0;
+  }
+  
+  .tx-feed-label {
+    font-size:0.75rem;
+    opacity:0.6;
+    margin-bottom:0.25rem;
+  }
+  
+  .tx-feed-amount {
+    font-weight:700;
+    color:#00d4ff;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  
+  .tx-feed-time {
+    font-size:0.7rem;
+    opacity:0.5;
+  }
+  
+  .tx-map-panel {
+    position:relative;
+    background:rgba(5,8,16,0.95);
+    border-radius:12px;
+    border:1px solid #30363d;
+    overflow:hidden;
+  }
+  
+  #worldMap {
+    width:100%;
+    height:100%;
+    position:absolute;
+    top:0;
+    left:0;
+  }
+  
+  #worldMap path {
+    fill:#1a1f2e;
+    stroke:#30363d;
+    stroke-width:0.5;
+    transition:fill 0.3s ease;
+  }
+  
+  #worldMap path:hover {
+    fill:#252b3a;
+  }
+  
+  #txCanvas {
+    width:100%;
+    height:100%;
+    position:absolute;
+    top:0;
+    left:0;
+    pointer-events:none;
+  }
+  
+  @media (max-width: 1200px) {
+    .live-tx-container {
+      grid-template-columns:1fr;
+      height:auto;
+    }
+    
+    .tx-feed-panel {
+      height:400px;
+    }
+    
+    .tx-map-panel {
+      height:500px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -432,6 +618,40 @@
           <div class="card"><div class="card-title">24h New Accounts</div><div class="card-value" id="newAccounts">---</div></div>
           <div class="card"><div class="card-title">24h Transactions</div><div class="card-value" id="transactions">---</div></div>
         </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="section" id="live-transactions" style="min-height:100vh;height:auto;padding:4rem 0;">
+    <div class="gradient-orb" style="top:-300px;right:-300px;background:radial-gradient(circle,rgba(0,212,255,0.2),transparent);"></div>
+    <h2>LIVE TRANSACTIONS</h2>
+    
+    <div class="live-tx-container">
+      <!-- Left Panel: Transaction Feed -->
+      <div class="tx-feed-panel">
+        <div class="tx-stats-header">
+          <div class="tx-volume">
+            <div class="tx-volume-label">Volume (1 min)</div>
+            <div class="tx-volume-value" id="txVolumeValue">0 ℏ</div>
+          </div>
+          <div class="tx-count">
+            <div class="tx-count-label">Transactions</div>
+            <div class="tx-count-value" id="txCountValue">0</div>
+          </div>
+        </div>
+        <div class="tx-feed" id="txFeed">
+          <div class="tx-feed-item loading-placeholder">
+            <div class="tx-feed-label">Connecting to live feed...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Panel: World Map -->
+      <div class="tx-map-panel">
+        <svg id="worldMap" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+          <!-- World map will be injected here -->
+        </svg>
+        <canvas id="txCanvas" width="1000" height="500"></canvas>
       </div>
     </div>
   </section>
@@ -964,6 +1184,269 @@ function startLiveTPSUpdates() {
 window.addEventListener('beforeunload', () => {
   if (tpsInterval) {
     clearInterval(tpsInterval);
+  }
+});
+
+// Live Transaction Feed System
+let txFeedActive = false;
+let txFeedInterval;
+let lastTxTimestamp = null;
+let txVolumeCounter = 0;
+let txCountCounter = 0;
+let bubbles = [];
+
+// Simplified world map SVG path (major continents)
+const worldMapPath = `
+  <path d="M 150,100 L 200,90 L 250,100 L 280,120 L 290,140 L 280,160 L 250,170 L 200,165 L 150,150 Z" />
+  <path d="M 300,100 L 400,95 L 480,110 L 520,130 L 530,160 L 510,190 L 470,200 L 400,195 L 330,180 L 300,150 Z" />
+  <path d="M 550,120 L 620,115 L 680,125 L 710,145 L 720,170 L 700,195 L 650,205 L 590,200 L 550,180 Z" />
+  <path d="M 100,200 L 180,190 L 240,200 L 270,230 L 280,270 L 260,310 L 220,330 L 160,325 L 100,300 Z" />
+  <path d="M 450,250 L 520,245 L 570,255 L 590,280 L 590,310 L 570,340 L 520,350 L 470,345 L 450,320 Z" />
+  <path d="M 750,180 L 820,175 L 880,190 L 910,220 L 920,260 L 900,300 L 850,320 L 790,315 L 750,280 Z" />
+`;
+
+// Country coordinates for transaction origins (approximate centers)
+const countryCoords = {
+  'US': {x: 200, y: 180},
+  'UK': {x: 480, y: 140},
+  'DE': {x: 510, y: 145},
+  'JP': {x: 850, y: 200},
+  'AU': {x: 820, y: 360},
+  'CA': {x: 180, y: 150},
+  'FR': {x: 495, y: 155},
+  'IT': {x: 520, y: 160},
+  'ES': {x: 470, y: 165},
+  'BR': {x: 320, y: 310},
+  'IN': {x: 680, y: 220},
+  'CN': {x: 780, y: 200},
+  'KR': {x: 830, y: 195},
+  'SG': {x: 750, y: 260},
+  'NL': {x: 495, y: 138},
+  'CH': {x: 510, y: 152},
+  'SE': {x: 520, y: 125},
+  'NO': {x: 510, y: 120},
+  'DK': {x: 510, y: 133},
+  'FI': {x: 540, y: 115}
+};
+
+// Transaction type icons
+const txTypeIcons = {
+  14: '💸', // CryptoTransfer
+  7: '📝',  // ContractCall
+  29: '🪙', // TokenCreation
+  37: '✨', // TokenMint
+  50: '⚡', // EthereumTransaction
+  default: '📊'
+};
+
+// Initialize world map
+function initWorldMap() {
+  const mapSvg = document.getElementById('worldMap');
+  mapSvg.innerHTML = worldMapPath;
+}
+
+// Bubble animation class
+class TransactionBubble {
+  constructor(x, y, amount) {
+    this.x = x;
+    this.y = y;
+    this.targetX = 500 + (Math.random() - 0.5) * 200;
+    this.targetY = 250 + (Math.random() - 0.5) * 100;
+    this.radius = Math.min(Math.max(Math.log(amount) * 2, 3), 20);
+    this.alpha = 1;
+    this.speed = 0.02;
+    this.life = 1;
+  }
+  
+  update() {
+    this.x += (this.targetX - this.x) * this.speed;
+    this.y += (this.targetY - this.y) * this.speed;
+    this.life -= 0.005;
+    this.alpha = this.life;
+    return this.life > 0;
+  }
+  
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    gradient.addColorStop(0, 'rgba(0,212,255,0.8)');
+    gradient.addColorStop(0.5, 'rgba(139,92,246,0.4)');
+    gradient.addColorStop(1, 'rgba(0,212,255,0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
+}
+
+// Animate bubbles
+function animateBubbles() {
+  const canvas = document.getElementById('txCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  bubbles = bubbles.filter(bubble => {
+    const alive = bubble.update();
+    if (alive) bubble.draw(ctx);
+    return alive;
+  });
+  
+  requestAnimationFrame(animateBubbles);
+}
+
+// Get random country for visualization
+function getRandomCountry() {
+  const countries = Object.keys(countryCoords);
+  return countries[Math.floor(Math.random() * countries.length)];
+}
+
+// Update transaction feed
+async function updateTransactionFeed() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetLiveTransactions {
+            transaction(
+              order_by: [{consensus_timestamp: desc}]
+              limit: 20
+            ) {
+              consensus_timestamp
+              type
+              charged_tx_fee
+              payer_account_id
+            }
+            crypto_transfer(
+              order_by: [{consensus_timestamp: desc}]
+              limit: 20
+              where: {amount: {_gt: 0}}
+            ) {
+              consensus_timestamp
+              amount
+              entity_id
+            }
+          }
+        `
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.data?.transaction) {
+      const feed = document.getElementById('txFeed');
+      const transactions = result.data.transaction;
+      const transfers = result.data.crypto_transfer || [];
+      
+      // Reset counters every minute
+      const now = Date.now();
+      if (!lastTxTimestamp || now - lastTxTimestamp > 60000) {
+        txVolumeCounter = 0;
+        txCountCounter = 0;
+        lastTxTimestamp = now;
+      }
+      
+      // Process new transactions
+      transactions.forEach((tx, index) => {
+        if (index < 5) { // Only show latest 5 to avoid spam
+          const transfer = transfers.find(t => t.consensus_timestamp === tx.consensus_timestamp);
+          const amount = transfer ? transfer.amount / 100000000 : tx.charged_tx_fee / 100000000;
+          const type = tx.type;
+          const icon = txTypeIcons[type] || txTypeIcons.default;
+          
+          // Update counters
+          txVolumeCounter += amount;
+          txCountCounter++;
+          
+          // Create feed item
+          const feedItem = document.createElement('div');
+          feedItem.className = 'tx-feed-item';
+          
+          const timeAgo = Math.floor((Date.now() - (tx.consensus_timestamp / 1000000)) / 1000);
+          const timeText = timeAgo < 60 ? `${timeAgo}s ago` : `${Math.floor(timeAgo / 60)}m ago`;
+          
+          feedItem.innerHTML = `
+            <div class="tx-feed-icon">${icon}</div>
+            <div class="tx-feed-details">
+              <div class="tx-feed-label">Account ${tx.payer_account_id}</div>
+              <div class="tx-feed-amount">${amount.toFixed(4)} ℏ</div>
+            </div>
+            <div class="tx-feed-time">${timeText}</div>
+          `;
+          
+          // Add to feed (prepend)
+          if (feed.firstChild) {
+            feed.insertBefore(feedItem, feed.firstChild);
+          } else {
+            feed.appendChild(feedItem);
+          }
+          
+          // Remove old items (keep max 20)
+          while (feed.children.length > 20) {
+            feed.removeChild(feed.lastChild);
+          }
+          
+          // Add bubble to map
+          const country = getRandomCountry();
+          const coords = countryCoords[country];
+          bubbles.push(new TransactionBubble(coords.x, coords.y, amount));
+        }
+      });
+      
+      // Update stats
+      document.getElementById('txVolumeValue').textContent = 
+        `${txVolumeCounter.toLocaleString(undefined, {maximumFractionDigits: 0})} ℏ`;
+      document.getElementById('txCountValue').textContent = 
+        txCountCounter.toLocaleString();
+    }
+  } catch (error) {
+    console.error('Error updating transaction feed:', error);
+  }
+}
+
+// Start transaction feed
+function startTransactionFeed() {
+  if (txFeedActive) return;
+  txFeedActive = true;
+  
+  // Initialize map
+  initWorldMap();
+  
+  // Start bubble animation
+  animateBubbles();
+  
+  // Initial update
+  updateTransactionFeed();
+  
+  // Update every 5 seconds
+  txFeedInterval = setInterval(updateTransactionFeed, 5000);
+}
+
+// Stop transaction feed
+function stopTransactionFeed() {
+  txFeedActive = false;
+  if (txFeedInterval) {
+    clearInterval(txFeedInterval);
+  }
+}
+
+// Auto-start transaction feed when section comes into view
+ScrollTrigger.create({
+  trigger: "#live-transactions",
+  start: "top 80%",
+  once: true,
+  onEnter: () => {
+    startTransactionFeed();
   }
 });
 
