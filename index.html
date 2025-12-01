@@ -423,7 +423,7 @@
         <div class="carousel" id="networkCarousel">
           <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice">---</div></div>
           <div class="card"><div class="card-title">Market Cap</div><div class="card-value" id="marketCap">---</div></div>
-          <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div><div style="font-size:0.75rem;opacity:0.6;margin-top:0.5rem;">Hourly Average</div></div>
+          <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div><div style="font-size:0.75rem;opacity:0.6;margin-top:0.5rem;">Live (30s window)</div></div>
           <div class="card"><div class="card-title">Consensus Time</div><div class="card-value" id="consensusTime">---</div></div>
           <div class="card"><div class="card-title">24h Network Fees</div><div class="card-value" id="networkFees">---</div></div>
           <div class="card"><div class="card-title">HBAR Released</div><div class="card-value" id="hbarReleased">---</div></div>
@@ -509,6 +509,9 @@ ScrollTrigger.create({
       initCarousels();
     }
     queryNetwork();
+    
+    // Start live TPS updates
+    startLiveTPSUpdates();
   }
 });
 
@@ -783,13 +786,6 @@ async function queryNetwork() {
             ) {
               total
             }
-            transactionsLastHour: ecosystem_metric(
-              where: {name: {_eq: "new_transactions"}, period: {_eq: "hour"}}
-              order_by: [{end_date: desc_nulls_last}]
-              limit: 1
-            ) {
-              total
-            }
             consensusTime: ecosystem_metric(
               where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}
               order_by: [{end_date: desc_nulls_last}]
@@ -855,11 +851,6 @@ async function queryNetwork() {
         ? `$${(result.data.marketCap[0].total / 100 / 1000000000).toFixed(2)}B` 
         : 'N/A';
       
-      // Network TPS - Calculate from last hour's transactions
-      const tps = result.data.transactionsLastHour?.[0] 
-        ? (result.data.transactionsLastHour[0].total / 3600).toFixed(2)
-        : 'N/A';
-      
       // Consensus Time (÷1000000000 for seconds)
       const consensusTime = result.data.consensusTime?.[0] 
         ? `${(result.data.consensusTime[0].total / 1000000000).toFixed(2)}s` 
@@ -892,7 +883,6 @@ async function queryNetwork() {
       
       document.getElementById('hbarPrice').textContent = price;
       document.getElementById('marketCap').textContent = marketCap;
-      document.getElementById('tps').textContent = tps;
       document.getElementById('consensusTime').textContent = consensusTime;
       document.getElementById('networkFees').textContent = networkFees;
       document.getElementById('hbarReleased').textContent = hbarReleased;
@@ -902,11 +892,80 @@ async function queryNetwork() {
       document.getElementById('transactions').textContent = txs;
     }
   } catch (error) {
-    alert('Error: ' + error.message);
+    console.error('Error loading network stats:', error);
   } finally {
     document.getElementById('networkLoading').classList.remove('active');
   }
 }
+
+// Live TPS calculation function
+async function updateLiveTPS() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetLiveTPS {
+            transaction(
+              order_by: [{consensus_timestamp: desc}]
+              limit: 200
+            ) {
+              consensus_timestamp
+            }
+          }
+        `
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.data?.transaction && result.data.transaction.length > 1) {
+      const transactions = result.data.transaction;
+      
+      // Get timestamps in seconds
+      const newestTime = transactions[0].consensus_timestamp / 1000000000;
+      const oldestTime = transactions[transactions.length - 1].consensus_timestamp / 1000000000;
+      
+      // Calculate time span
+      const timeSpan = newestTime - oldestTime;
+      
+      // Calculate TPS (only use transactions within last 30 seconds)
+      if (timeSpan > 0) {
+        // Filter to only transactions in last 30 seconds
+        const thirtySecondsAgo = newestTime - 30;
+        const recentTransactions = transactions.filter(tx => 
+          (tx.consensus_timestamp / 1000000000) >= thirtySecondsAgo
+        );
+        
+        const tps = (recentTransactions.length / Math.min(timeSpan, 30)).toFixed(2);
+        document.getElementById('tps').textContent = tps;
+      }
+    }
+  } catch (error) {
+    console.error('Error updating live TPS:', error);
+  }
+}
+
+// Start live TPS updates
+let tpsInterval;
+function startLiveTPSUpdates() {
+  // Initial update
+  updateLiveTPS();
+  
+  // Update every 10 seconds
+  tpsInterval = setInterval(updateLiveTPS, 10000);
+}
+
+// Stop live updates when user leaves the page
+window.addEventListener('beforeunload', () => {
+  if (tpsInterval) {
+    clearInterval(tpsInterval);
+  }
+});
 
 // Rich List Functions
 async function loadRichList() {
