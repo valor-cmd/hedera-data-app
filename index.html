@@ -122,6 +122,8 @@
     cursor:grab;
     width:max-content;
     will-change:transform;
+    contain:layout style;
+    transform:translateZ(0);
   }
   .carousel:active {
     cursor:grabbing;
@@ -149,10 +151,12 @@
     justify-content:center;
     will-change:transform;
     position:relative;
+    transform:translateZ(0);
+    backface-visibility:hidden;
     z-index:1;
   }
   .card:hover {
-    transform:translateY(-8px) scale(1.02);
+    transform:translateY(-8px) scale(1.02) translateZ(0);
     box-shadow:0 15px 25px rgba(0,212,255,0.12);
     border-color:var(--accent);
     z-index:10;
@@ -165,8 +169,8 @@
     overflow:hidden;
     text-overflow:ellipsis;
   }
-  .card-value { 
-    font-size:2.5rem; 
+  .card-value {
+    font-size:2.5rem;
     font-weight:800;
     background:linear-gradient(#00d4ff,#8b5cf6);
     -webkit-background-clip:text;
@@ -174,6 +178,35 @@
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    transition: transform 0.3s ease;
+    will-change: contents;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Price change animations */
+  .card-value.price-up {
+    animation: priceUp 0.5s ease;
+  }
+
+  .card-value.price-down {
+    animation: priceDown 0.5s ease;
+  }
+
+  @keyframes priceUp {
+    0%, 100% { transform: scale(1); }
+    50% {
+      transform: scale(1.1);
+      filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.6));
+    }
+  }
+
+  @keyframes priceDown {
+    0%, 100% { transform: scale(1); }
+    50% {
+      transform: scale(1.1);
+      filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+    }
   }
   .gradient-orb {
     position:absolute;
@@ -664,7 +697,6 @@
   <section class="section" id="network">
     <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.3),rgba(139,92,246,0.2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;"></div>
     <h2 style="opacity:0;transform:scale(0.8);">NETWORK STATS</h2>
-    <div class="loading" id="networkLoading">Loading...</div>
     <div class="cards-wrapper">
       <div class="carousel-scroll">
         <div class="carousel" id="networkCarousel">
@@ -790,9 +822,25 @@ ScrollTrigger.create({
       initCarousels();
     }
     queryNetwork();
-    
+
     // Start live TPS updates
     startLiveTPSUpdates();
+
+    // Staggered refresh intervals for different stats
+    // HBAR Price & Market Cap - every 8 seconds
+    setInterval(() => updatePriceAndMarketCap(), 8000);
+
+    // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
+    setTimeout(() => {
+      updateConsensusAndFees();
+      setInterval(() => updateConsensusAndFees(), 12000);
+    }, 4000);
+
+    // HBAR Released & Accounts - every 15 seconds (offset by 8s)
+    setTimeout(() => {
+      updateHbarAndAccounts();
+      setInterval(() => updateHbarAndAccounts(), 15000);
+    }, 8000);
   }
 });
 
@@ -854,20 +902,38 @@ function initCarousels() {
       }
     }
     
-    // Sync data from original cards to clones
+    // Sync data from original cards to clones (throttled)
+    let lastSyncTime = 0;
+    const syncInterval = 100; // Only sync every 100ms instead of every frame
+
     function syncClonedCards() {
+      const now = performance.now();
+      if (now - lastSyncTime < syncInterval) return;
+      lastSyncTime = now;
+
       const allCards = carousel.querySelectorAll('.card');
       const numOriginal = cards.length;
-      
+
+      // Batch reads first, then batch writes to avoid layout thrashing
+      const updates = [];
       for (let i = 0; i < numOriginal; i++) {
         const originalValue = allCards[i].querySelector('.card-value');
         const cloneValue = allCards[i + numOriginal]?.querySelector('.card-value');
         if (originalValue && cloneValue && originalValue.textContent !== cloneValue.textContent) {
-          cloneValue.textContent = originalValue.textContent;
+          updates.push({ clone: cloneValue, text: originalValue.textContent });
         }
       }
+
+      // Apply all updates together
+      if (updates.length > 0) {
+        requestAnimationFrame(() => {
+          updates.forEach(({ clone, text }) => {
+            clone.textContent = text;
+          });
+        });
+      }
     }
-    
+
     // Animation loop
     function animate() {
       if (!isInteracting && !isHovering) {
@@ -875,7 +941,7 @@ function initCarousels() {
         wrapPosition();
         setPosition(position);
       }
-      // Sync clones every frame
+      // Sync clones periodically
       syncClonedCards();
       requestAnimationFrame(animate);
     }
@@ -1041,8 +1107,6 @@ async function queryAccount() {
 }
 
 async function queryNetwork() {
-  document.getElementById('networkLoading').classList.add('active');
-  
   try {
     const response = await fetch(HGRAPH_API, {
       method: 'POST',
@@ -1125,7 +1189,34 @@ async function queryNetwork() {
     
     if (result.data) {
       // HBAR Price (÷100000 for USD)
-      const price = result.data.price?.[0] ? `$${(result.data.price[0].total / 100000).toFixed(5)}` : 'N/A';
+      const priceValue = result.data.price?.[0] ? (result.data.price[0].total / 100000) : null;
+      const price = priceValue ? `$${priceValue.toFixed(5)}` : 'N/A';
+
+      // Track previous price for animation
+      const priceElement = document.getElementById('hbarPrice');
+      const previousPrice = parseFloat(priceElement.dataset.previousPrice || '0');
+
+      if (priceValue && previousPrice > 0) {
+        // Remove any existing animation classes
+        priceElement.classList.remove('price-up', 'price-down');
+
+        // Add animation based on price change
+        if (priceValue > previousPrice) {
+          priceElement.classList.add('price-up');
+        } else if (priceValue < previousPrice) {
+          priceElement.classList.add('price-down');
+        }
+
+        // Remove animation class after it completes
+        setTimeout(() => {
+          priceElement.classList.remove('price-up', 'price-down');
+        }, 500);
+      }
+
+      // Store current price for next comparison
+      if (priceValue) {
+        priceElement.dataset.previousPrice = priceValue.toString();
+      }
       
       // Market Cap (÷100 for USD)
       const marketCap = result.data.marketCap?.[0] 
@@ -1174,8 +1265,213 @@ async function queryNetwork() {
     }
   } catch (error) {
     console.error('Error loading network stats:', error);
-  } finally {
-    document.getElementById('networkLoading').classList.remove('active');
+  }
+}
+
+// Staggered update functions for live stats
+
+// Update HBAR Price & Market Cap (every 8 seconds)
+async function updatePriceAndMarketCap() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetPriceAndMarketCap {
+            price: ecosystem_metric(
+              where: {name: {_eq: "avg_usd_conversion"}, period: {_eq: "minute"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            marketCap: ecosystem_metric(
+              where: {name: {_eq: "hbar_market_cap"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+          }
+        `
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.data) {
+      // HBAR Price with animation
+      const priceValue = result.data.price?.[0] ? (result.data.price[0].total / 100000) : null;
+      const price = priceValue ? `$${priceValue.toFixed(5)}` : 'N/A';
+
+      const priceElement = document.getElementById('hbarPrice');
+      const previousPrice = parseFloat(priceElement.dataset.previousPrice || '0');
+
+      if (priceValue && previousPrice > 0) {
+        priceElement.classList.remove('price-up', 'price-down');
+        if (priceValue > previousPrice) {
+          priceElement.classList.add('price-up');
+        } else if (priceValue < previousPrice) {
+          priceElement.classList.add('price-down');
+        }
+        setTimeout(() => priceElement.classList.remove('price-up', 'price-down'), 500);
+      }
+
+      if (priceValue) {
+        priceElement.dataset.previousPrice = priceValue.toString();
+      }
+
+      // Batch DOM updates with requestAnimationFrame for smooth rendering
+      requestAnimationFrame(() => {
+        document.getElementById('hbarPrice').textContent = price;
+
+        // Market Cap
+        const marketCap = result.data.marketCap?.[0]
+          ? `$${(result.data.marketCap[0].total / 100 / 1000000000).toFixed(2)}B`
+          : 'N/A';
+        document.getElementById('marketCap').textContent = marketCap;
+      });
+    }
+  } catch (error) {
+    console.error('Error updating price and market cap:', error);
+  }
+}
+
+// Update Consensus Time & Network Fees (every 12 seconds, offset 4s)
+async function updateConsensusAndFees() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetConsensusAndFees {
+            consensusTime: ecosystem_metric(
+              where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            networkFees: ecosystem_metric(
+              where: {name: {_eq: "network_fee"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+          }
+        `
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.data) {
+      const consensusTime = result.data.consensusTime?.[0]
+        ? `${(result.data.consensusTime[0].total / 1000000000).toFixed(2)}s`
+        : 'N/A';
+
+      const networkFees = result.data.networkFees?.[0]
+        ? `${(result.data.networkFees[0].total / 100000000).toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          })} ℏ`
+        : 'N/A';
+
+      // Batch DOM updates with requestAnimationFrame
+      requestAnimationFrame(() => {
+        document.getElementById('consensusTime').textContent = consensusTime;
+        document.getElementById('networkFees').textContent = networkFees;
+      });
+    }
+  } catch (error) {
+    console.error('Error updating consensus and fees:', error);
+  }
+}
+
+// Update HBAR Released & Account Stats (every 15 seconds, offset 8s)
+async function updateHbarAndAccounts() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetHbarAndAccounts {
+            hbarReleased: ecosystem_metric(
+              where: {name: {_eq: "hbar_total_released"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            activeAccounts: ecosystem_metric(
+              where: {name: {_eq: "active_accounts"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            totalAccounts: ecosystem_metric(
+              where: {name: {_eq: "total_accounts"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            newAccounts: ecosystem_metric(
+              where: {name: {_eq: "new_accounts"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+            transactions: ecosystem_metric(
+              where: {name: {_eq: "new_transactions"}, period: {_eq: "day"}}
+              order_by: [{end_date: desc_nulls_last}]
+              limit: 1
+            ) {
+              total
+            }
+          }
+        `
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.data) {
+      const hbarReleased = result.data.hbarReleased?.[0]
+        ? `${(result.data.hbarReleased[0].total / 100000000 / 1000000000).toFixed(2)}B ℏ`
+        : 'N/A';
+
+      const active = result.data.activeAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+      const total = result.data.totalAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+      const newAccounts = result.data.newAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+      const txs = result.data.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+
+      // Batch DOM updates with requestAnimationFrame
+      requestAnimationFrame(() => {
+        document.getElementById('hbarReleased').textContent = hbarReleased;
+        document.getElementById('activeAccounts').textContent = active;
+        document.getElementById('totalAccounts').textContent = total;
+        document.getElementById('newAccounts').textContent = newAccounts;
+        document.getElementById('transactions').textContent = txs;
+      });
+    }
+  } catch (error) {
+    console.error('Error updating HBAR and accounts:', error);
   }
 }
 
