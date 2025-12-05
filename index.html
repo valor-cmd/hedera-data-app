@@ -2617,7 +2617,7 @@ function init3DCoin() {
 
   // Load GLB model
   const loader = new THREE.GLTFLoader();
-  loader.load('hbar coin.glb', (gltf) => {
+  loader.load('hbar-coin.glb', (gltf) => {
     coinModel = gltf.scene;
 
     // Enable transparency for fade effect and adjust material for softer, larger reflections
@@ -2898,8 +2898,8 @@ function initGlassCards() {
     emissiveIntensity: 0
   });
 
-  // Create more cards for looping effect
-  const numCards = 150; // More cards for continuous loop
+  // Create half as many cards for cleaner look
+  const numCards = 75; // Half of 150
   const cardSpacing = 3.2; // Much tighter spacing for dense effect
   const startX = -(numCards - 1) * cardSpacing / 2;
 
@@ -2909,11 +2909,11 @@ function initGlassCards() {
     // Position cards along an arc
     const normalizedIndex = i / (numCards - 1); // 0 to 1
 
-    // Arc positioning - creates a smooth curve
-    const arcRadius = 25; // Radius of the arc
-    const arcAngle = (normalizedIndex - 0.5) * Math.PI * 1.2; // 2x spread: 216 degrees (was 108)
+    // Arc positioning - creates a smooth curve that extends off-screen
+    const arcRadius = 60; // Much larger radius - arc extends way beyond viewport
+    const arcAngle = (normalizedIndex - 0.5) * Math.PI * 1.8; // Larger spread: 324 degrees
 
-    const posX = Math.sin(arcAngle) * arcRadius - 5; // Shift left by 5 units to center
+    const posX = Math.sin(arcAngle) * arcRadius + 3; // Shift right by 3 units to center
     const posY = -Math.cos(arcAngle) * arcRadius + arcRadius; // Offset to center the arc
     const posZ = -10 - (normalizedIndex * 12); // Extended depth for looping
 
@@ -2969,7 +2969,7 @@ function updateGlassCardsOnScroll() {
 
   glassCards.forEach((card) => {
     // Continuous animation + scroll-based speed up
-    const baseAnimationSpeed = time * 0.15; // Continuous slow movement
+    const baseAnimationSpeed = time * 0.009375; // Half of 0.01875 - ultra slow continuous movement
     const scrollSpeedBoost = (scrollProgress - 0.45) * 2.5; // Scroll makes it faster
     const totalOffset = baseAnimationSpeed + scrollSpeedBoost;
 
@@ -2978,10 +2978,10 @@ function updateGlassCardsOnScroll() {
     const flowingIndex = (baseIndex + totalOffset) % 1.0; // Loop back to start
 
     // Recalculate position on arc with flowing index
-    const arcRadius = 25;
-    const arcAngle = (flowingIndex - 0.5) * Math.PI * 1.2; // Same arc spread as initialization
+    const arcRadius = 60; // Match initialization - larger arc
+    const arcAngle = (flowingIndex - 0.5) * Math.PI * 1.8; // Match initialization - wider spread
 
-    const flowX = Math.sin(arcAngle) * arcRadius - 5; // Follow arc path - shifted left
+    const flowX = Math.sin(arcAngle) * arcRadius + 3; // Follow arc path - shifted right to center
     const flowY = -Math.cos(arcAngle) * arcRadius + arcRadius;
     const flowZ = -10 - (flowingIndex * 12); // Depth along arc
 
@@ -2989,11 +2989,11 @@ function updateGlassCardsOnScroll() {
     const parallaxX = mouseX * 1.5 * flowingIndex;
     const parallaxY = mouseY * 2 * flowingIndex;
 
-    // All cards always visible
+    // All cards always visible - reduced opacity to 5%
     card.visible = baseOpacity > 0;
 
     if (card.material.opacity !== undefined) {
-      card.material.opacity = baseOpacity;
+      card.material.opacity = baseOpacity * 0.05; // 5% opacity - extremely subtle
       card.material.transparent = true;
     }
 
