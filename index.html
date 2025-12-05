@@ -2617,7 +2617,10 @@ function init3DCoin() {
 
   // Load GLB model
   const loader = new THREE.GLTFLoader();
-  loader.load('hbar-coin.glb', (gltf) => {
+  loader.load(
+    'hbar-coin.glb',
+    // Success callback
+    (gltf) => {
     coinModel = gltf.scene;
 
     // Enable transparency for fade effect and adjust material for softer, larger reflections
