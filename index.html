@@ -681,8 +681,17 @@
     }
   }
 </style>
+<!-- Three.js for 3D coin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
+  <!-- 3D HBAR Coin Canvas (behind everything) -->
+  <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;"></canvas>
+
+  <!-- 3D Glass Cards Canvas (behind content cards, in front of coin) -->
+  <canvas id="glassCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:1;pointer-events:none;"></canvas>
+
   <!-- Subtle animated background orbs -->
   <div class="bg-orbs">
     <div class="bg-orb"></div>
@@ -691,9 +700,12 @@
   </div>
   
   <h1 id="fixed-title">HEDERA</h1>
-  
+
   <section class="section" id="s1"></section>
-  
+
+  <!-- Spacer to push network section down so it scrolls naturally from below -->
+  <div style="height: 25vh;"></div>
+
   <section class="section" id="network">
     <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.3),rgba(139,92,246,0.2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;"></div>
     <h2 style="opacity:0;transform:scale(0.8);">NETWORK STATS</h2>
@@ -801,9 +813,10 @@
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
 
-gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
-  scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
-});
+// Disabled GSAP animation - now handled by updateAllScrollEffects() for better control
+// gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
+//   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
+// });
 gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
   scrollTrigger: {trigger:"#network", start:"top 70%"}
 });
@@ -2545,6 +2558,477 @@ document.getElementById('richlistInput').addEventListener('keypress', (e) => {
 
 // Add event listener for back to top 50 button
 document.getElementById('backToTop50').addEventListener('click', loadRichList);
+
+// ============================================
+// 3D HBAR Coin Animation with Three.js
+// ============================================
+
+let coinScene, coinCamera, coinRenderer, coinModel;
+let coinInitialized = false;
+
+function init3DCoin() {
+  const canvas = document.getElementById('coinCanvas');
+
+  // Scene
+  coinScene = new THREE.Scene();
+
+  // Camera
+  coinCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  coinCamera.position.z = 5;
+
+  // Renderer
+  coinRenderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+    antialias: true
+  });
+  coinRenderer.setSize(window.innerWidth, window.innerHeight);
+  coinRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Lights - 50% darker ambient lighting
+  const ambientLight = new THREE.AmbientLight(0x202050, 0.4);  // Very dark cool purple-blue (50% darker)
+  coinScene.add(ambientLight);
+
+  // Hemisphere for soft fill - 50% darker
+  const hemiLight = new THREE.HemisphereLight(0x282850, 0x101020, 0.25);  // Much darker cool purple sky/ground
+  hemiLight.position.set(0, 20, 0);
+  coinScene.add(hemiLight);
+
+  // Soft directional lights at 45° angle with strong purple/cyan colors
+  const light1 = new THREE.DirectionalLight(0x8b5cf6, 0.8);  // Your site purple
+  light1.position.set(350, -350, 500);  // 45° angle, very far
+  coinScene.add(light1);
+
+  const light2 = new THREE.DirectionalLight(0x00d4ff, 0.8);  // Your site cyan
+  light2.position.set(-350, -350, 500);  // 45° angle opposite side
+  coinScene.add(light2);
+
+  const light3 = new THREE.DirectionalLight(0xa0a0ff, 0.6);  // Cool lavender
+  light3.position.set(0, -400, 450);  // Below at 45°
+  coinScene.add(light3);
+
+  const light4 = new THREE.DirectionalLight(0x9370db, 0.4);  // Medium purple
+  light4.position.set(350, 0, 500);  // Side at 45°
+  coinScene.add(light4);
+
+  const light5 = new THREE.DirectionalLight(0x00bfff, 0.4);  // Deep sky blue
+  light5.position.set(-350, 0, 500);  // Opposite side at 45°
+  coinScene.add(light5);
+
+  // Load GLB model
+  const loader = new THREE.GLTFLoader();
+  loader.load('hbar coin.glb', (gltf) => {
+    coinModel = gltf.scene;
+
+    // Enable transparency for fade effect and adjust material for softer, larger reflections
+    coinModel.traverse((child) => {
+      if (child.isMesh && child.material) {
+        child.material.transparent = true;
+        child.material.opacity = 1.0;
+
+        // Very dark coin material - 50% darker
+        child.material.color = new THREE.Color(0x202028);  // Very dark gray with cool tint
+
+        // If it has emissive, set it to very subtle cool tone
+        if (child.material.emissive !== undefined) {
+          child.material.emissive = new THREE.Color(0x000000);  // No emissive glow
+          child.material.emissiveIntensity = 0.0;
+        }
+
+        // Moderate roughness increase - half the strength
+        if (child.material.roughness !== undefined) {
+          child.material.roughness = 0.35;  // Half-strength (between 0 and 0.7)
+        }
+
+        // Slight metalness reduction - half the strength
+        if (child.material.metalness !== undefined) {
+          child.material.metalness = 0.8;  // Half-strength (between 1.0 and 0.6)
+        }
+
+        child.material.needsUpdate = true;
+      }
+    });
+
+    // Scale and position
+    coinModel.scale.set(2, 2, 2);
+    coinModel.position.set(0, 0, 0);
+
+    // Initial state - far away and small
+    coinModel.position.z = -50;
+    coinModel.scale.set(0.1, 0.1, 0.1);
+
+    coinScene.add(coinModel);
+    coinInitialized = true;
+
+    // Force immediate render with new material colors
+    coinRenderer.render(coinScene, coinCamera);
+
+    // Start animation loop
+    animate3DCoin();
+  }, undefined, (error) => {
+    console.error('Error loading HBAR coin model:', error);
+  });
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    coinCamera.aspect = window.innerWidth / window.innerHeight;
+    coinCamera.updateProjectionMatrix();
+    coinRenderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+// Animation loop
+function animate3DCoin() {
+  requestAnimationFrame(animate3DCoin);
+
+  if (coinModel && coinInitialized) {
+    coinRenderer.render(coinScene, coinCamera);
+  }
+}
+
+// Scroll-based animation
+function updateCoinOnScroll() {
+  if (!coinModel || !coinInitialized) return;
+
+  const scrollProgress = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+  const scrollY = window.scrollY;
+
+  // Quick zoom in when starting to scroll (first 300px - faster)
+  if (scrollY < 300) {
+    const zoomProgress = scrollY / 300;
+    coinModel.position.z = -50 + (zoomProgress * 48); // Zoom from -50 to -2
+    coinModel.scale.set(
+      0.9 + (zoomProgress * 17.1),  // Scale from 0.9 to 18.0 (1.5x larger = 9x bigger)
+      0.9 + (zoomProgress * 17.1),
+      0.9 + (zoomProgress * 17.1)
+    );
+  } else {
+    // After zoom in, keep it close
+    coinModel.position.z = -2;
+    coinModel.scale.set(18, 18, 18);  // 1.5x larger than before (was 12, now 18)
+  }
+
+  // Disappear behind live transactions section - fade out much earlier
+  let opacity = 1.0;
+
+  if (scrollProgress > 0.35) {
+    // Start fading at 35% scroll, completely gone by 45%
+    const fadeProgress = (scrollProgress - 0.35) / 0.10;
+    opacity = Math.max(0, 1.0 - fadeProgress);
+  }
+
+  // Apply opacity to all materials
+  coinModel.traverse((child) => {
+    if (child.isMesh && child.material) {
+      child.material.opacity = opacity;
+    }
+  });
+
+  // Rotation - Face forward during zoom-in, then start spinning
+  if (scrollY < 300) {
+    // Face forward during entire zoom-in animation
+    coinModel.rotation.y = 0;
+    coinModel.rotation.x = 0;
+  } else {
+    // After zoom completes, start rotating continuously
+    const scrollAfterZoom = scrollY - 300;
+    const rotationProgress = scrollAfterZoom / (document.documentElement.scrollHeight - window.innerHeight - 350);
+    coinModel.rotation.y = rotationProgress * Math.PI * 4; // 4 full rotations
+    coinModel.rotation.x = Math.sin(rotationProgress * Math.PI * 2) * 0.1; // Subtle wobble
+  }
+
+  // Vertical position - center over HEDERA text when zoomed in, then follow scroll
+  if (scrollY < 300) {
+    // During zoom in, stay centered over HEDERA text
+    coinModel.position.y = -2;  // Positioned lower to center over HEDERA
+  } else {
+    // After zoom in, follow scroll movement
+    coinModel.position.y = -2 - ((scrollY - 300) * 0.002);
+  }
+}
+
+// Initialize on load
+window.addEventListener('load', () => {
+  init3DCoin();
+});
+
+// Combined scroll update function for coin, HEDERA fade, and network section
+function updateAllScrollEffects() {
+  updateCoinOnScroll();
+
+  const scrollY = window.scrollY;
+  const coinZoomDistance = 300;
+  const hederaFadeDistance = 300; // Complete fade+blur at EXACTLY same time as coin - both finish at 300px
+
+  // HEDERA title fade+blur - smooth animation, reappears on scroll up
+  const hederaTitle = document.getElementById('fixed-title');
+  if (hederaTitle) {
+    // Calculate progress (0 to 1) over the fade distance - clamp to max 1.0
+    const fadeProgress = Math.min(Math.max(scrollY / hederaFadeDistance, 0), 1.0);
+
+    // Opacity: 1.0 -> 0.0 (MUST be 0 at 100px, well before coin finishes at 300px)
+    const opacity = Math.max(1.0 - fadeProgress, 0);
+    hederaTitle.style.opacity = opacity.toFixed(3);
+
+    // Blur: 0px -> 30px
+    const blurAmount = fadeProgress * 30;
+
+    // Scale: 1.0 -> 0.88
+    const scale = 1.0 - (fadeProgress * 0.12);
+
+    hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+    // IMPORTANT: Keep translateY(-50%) to maintain vertical centering
+    hederaTitle.style.transform = `translateY(-50%) scale(${scale.toFixed(3)})`;
+  }
+
+  // No special handling needed - network section will scroll naturally from below
+}
+
+// Update on scroll - single handler for all effects
+window.addEventListener('scroll', updateAllScrollEffects);
+
+// ==========================================
+// 3D GLASS CARDS SYSTEM
+// ==========================================
+let glassScene, glassCamera, glassRenderer;
+let glassCards = [];
+let mouseX = 0, mouseY = 0;
+let targetMouseX = 0, targetMouseY = 0;
+
+function initGlassCards() {
+  const canvas = document.getElementById('glassCanvas');
+
+  glassScene = new THREE.Scene();
+  glassCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  glassCamera.position.z = 8; // Zoomed in closer (was 15)
+
+  glassRenderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+    antialias: true
+  });
+  glassRenderer.setSize(window.innerWidth, window.innerHeight);
+  glassRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Edge backlighting setup - lights from behind/sides to catch beveled edges
+  const ambientLight = new THREE.AmbientLight(0x050508, 0.15);
+  glassScene.add(ambientLight);
+
+  // Strong backlight - Purple (from behind cards)
+  const backLight1 = new THREE.DirectionalLight(0xc084fc, 4.5);
+  backLight1.position.set(0, 8, -15);
+  glassScene.add(backLight1);
+
+  // Back-top light - Magenta
+  const backLight2 = new THREE.DirectionalLight(0xe879f9, 3.8);
+  backLight2.position.set(-6, 12, -12);
+  glassScene.add(backLight2);
+
+  // Back-bottom light - Blue
+  const backLight3 = new THREE.DirectionalLight(0x6366f1, 3.2);
+  backLight3.position.set(8, -10, -12);
+  glassScene.add(backLight3);
+
+  // Side rim light - Cyan (catches edges from side)
+  const sideLight1 = new THREE.DirectionalLight(0x22d3ee, 2.5);
+  sideLight1.position.set(-20, 0, -8);
+  glassScene.add(sideLight1);
+
+  // Opposite side - Purple accent
+  const sideLight2 = new THREE.DirectionalLight(0xa78bfa, 2.2);
+  sideLight2.position.set(20, 4, -6);
+  glassScene.add(sideLight2);
+
+  // Top edge highlight - White
+  const topEdgeLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  topEdgeLight.position.set(0, 18, -10);
+  glassScene.add(topEdgeLight);
+
+  // Create rectangular cards with beveled/rounded edges
+  const width = 10;
+  const height = 14;
+  const depth = 0.78; // 65% of 1.2 = thinner cards
+  const bevelSize = 0.2; // Slightly smaller bevel for thinner cards
+  const bevelSegments = 8; // Smooth bevel
+
+  const cardGeometry = new THREE.BoxGeometry(
+    width,
+    height,
+    depth,
+    1, 1, 1
+  );
+
+  // Apply bevel to create rounded edges between faces
+  const shape = new THREE.Shape();
+  const hw = width / 2 - bevelSize;
+  const hh = height / 2 - bevelSize;
+
+  // Create rounded rectangle shape
+  shape.moveTo(-hw, -hh);
+  shape.lineTo(hw, -hh);
+  shape.quadraticCurveTo(hw + bevelSize, -hh, hw + bevelSize, -hh + bevelSize);
+  shape.lineTo(hw + bevelSize, hh - bevelSize);
+  shape.quadraticCurveTo(hw + bevelSize, hh, hw, hh);
+  shape.lineTo(-hw, hh);
+  shape.quadraticCurveTo(-hw - bevelSize, hh, -hw - bevelSize, hh - bevelSize);
+  shape.lineTo(-hw - bevelSize, -hh + bevelSize);
+  shape.quadraticCurveTo(-hw - bevelSize, -hh, -hw, -hh);
+
+  const extrudeSettings = {
+    depth: depth,
+    bevelEnabled: true,
+    bevelThickness: bevelSize,
+    bevelSize: bevelSize,
+    bevelSegments: bevelSegments,
+    curveSegments: 16
+  };
+
+  const beveledCardGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+  // Center the geometry
+  beveledCardGeometry.translate(0, 0, -depth / 2);
+
+  // Almost black material with edge lighting
+  const darkMaterial = new THREE.MeshStandardMaterial({
+    color: 0x0a0a0f, // Almost black
+    metalness: 0.95,
+    roughness: 0.08,
+    side: THREE.DoubleSide,
+    emissive: 0x000000,
+    emissiveIntensity: 0
+  });
+
+  // Create more cards for looping effect
+  const numCards = 150; // More cards for continuous loop
+  const cardSpacing = 3.2; // Much tighter spacing for dense effect
+  const startX = -(numCards - 1) * cardSpacing / 2;
+
+  for (let i = 0; i < numCards; i++) {
+    const card = new THREE.Mesh(beveledCardGeometry, darkMaterial.clone());
+
+    // Position cards along an arc
+    const normalizedIndex = i / (numCards - 1); // 0 to 1
+
+    // Arc positioning - creates a smooth curve
+    const arcRadius = 25; // Radius of the arc
+    const arcAngle = (normalizedIndex - 0.5) * Math.PI * 1.2; // 2x spread: 216 degrees (was 108)
+
+    const posX = Math.sin(arcAngle) * arcRadius - 5; // Shift left by 5 units to center
+    const posY = -Math.cos(arcAngle) * arcRadius + arcRadius; // Offset to center the arc
+    const posZ = -10 - (normalizedIndex * 12); // Extended depth for looping
+
+    card.position.set(posX, posY, posZ);
+
+    // Rotate 80 degrees to show more of the edge profile
+    const angleInRadians = (80 * Math.PI) / 180;
+    card.rotation.x = 0;
+    card.rotation.y = angleInRadians; // 80 degrees rotation - shows mostly edge
+    card.rotation.z = 0;
+
+    // Store initial values for wave animation
+    card.userData = {
+      initialX: posX,
+      initialY: posY,
+      initialZ: posZ,
+      initialRotY: angleInRadians, // Store base rotation
+      index: i,
+      phaseOffset: i * 0.2 // Wave propagation delay across the row
+    };
+
+    glassCards.push(card);
+    glassScene.add(card);
+  }
+
+  animateGlassCards();
+}
+
+function animateGlassCards() {
+  requestAnimationFrame(animateGlassCards);
+
+  updateGlassCardsOnScroll();
+
+  glassRenderer.render(glassScene, glassCamera);
+}
+
+function updateGlassCardsOnScroll() {
+  const scrollY = window.scrollY;
+  const scrollProgress = scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+
+  // Fade in later and 2x faster
+  let baseOpacity = 0;
+  if (scrollProgress > 0.45) { // Start later (was 0.35)
+    const fadeInProgress = Math.min((scrollProgress - 0.45) / 0.10, 1.0); // 2x faster (0.20 / 2 = 0.10)
+    baseOpacity = fadeInProgress;
+  }
+
+  // Smooth mouse follow with easing
+  mouseX += (targetMouseX - mouseX) * 0.05;
+  mouseY += (targetMouseY - mouseY) * 0.05;
+
+  const time = Date.now() * 0.0005; // Wave speed
+
+  glassCards.forEach((card) => {
+    // Continuous animation + scroll-based speed up
+    const baseAnimationSpeed = time * 0.15; // Continuous slow movement
+    const scrollSpeedBoost = (scrollProgress - 0.45) * 2.5; // Scroll makes it faster
+    const totalOffset = baseAnimationSpeed + scrollSpeedBoost;
+
+    // Calculate new position along the arc (cards flow continuously)
+    const baseIndex = card.userData.index / (glassCards.length - 1); // 0 to 1
+    const flowingIndex = (baseIndex + totalOffset) % 1.0; // Loop back to start
+
+    // Recalculate position on arc with flowing index
+    const arcRadius = 25;
+    const arcAngle = (flowingIndex - 0.5) * Math.PI * 1.2; // Same arc spread as initialization
+
+    const flowX = Math.sin(arcAngle) * arcRadius - 5; // Follow arc path - shifted left
+    const flowY = -Math.cos(arcAngle) * arcRadius + arcRadius;
+    const flowZ = -10 - (flowingIndex * 12); // Depth along arc
+
+    // Mouse parallax
+    const parallaxX = mouseX * 1.5 * flowingIndex;
+    const parallaxY = mouseY * 2 * flowingIndex;
+
+    // All cards always visible
+    card.visible = baseOpacity > 0;
+
+    if (card.material.opacity !== undefined) {
+      card.material.opacity = baseOpacity;
+      card.material.transparent = true;
+    }
+
+    // Apply flowing motion along the arc path
+    card.position.x = flowX + parallaxX;
+    card.position.y = flowY + parallaxY;
+    card.position.z = flowZ;
+
+    // Apply static rotation (no animation)
+    card.rotation.x = 0;
+    card.rotation.y = card.userData.initialRotY; // Keep base 80 degrees only
+    card.rotation.z = 0;
+  });
+}
+
+// Mouse movement tracking
+document.addEventListener('mousemove', (e) => {
+  targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+  targetMouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  if (glassRenderer) {
+    glassCamera.aspect = window.innerWidth / window.innerHeight;
+    glassCamera.updateProjectionMatrix();
+    glassRenderer.setSize(window.innerWidth, window.innerHeight);
+  }
+});
+
+// Initialize glass cards after page loads
+window.addEventListener('load', () => {
+  setTimeout(initGlassCards, 500); // Slight delay to ensure everything is ready
+});
+
 </script>
 </body>
 </html>
