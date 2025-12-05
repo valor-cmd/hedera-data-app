@@ -683,7 +683,11 @@
 </style>
 <!-- Three.js for 3D coin -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js" type="module"></script>
+<script type="module">
+  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+  window.GLTFLoader = GLTFLoader;
+</script>
 </head>
 <body>
   <!-- 3D HBAR Coin Canvas (behind everything) -->
@@ -2616,7 +2620,7 @@ function init3DCoin() {
   coinScene.add(light5);
 
   // Load GLB model
-  const loader = new THREE.GLTFLoader();
+  const loader = new (window.GLTFLoader || THREE.GLTFLoader)();
   loader.load(
     'hbar-coin.glb',
     // Success callback
