@@ -681,9 +681,9 @@
     }
   }
 </style>
-<!-- Three.js for 3D coin - using UMD build -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/loaders/GLTFLoader.js"></script>
+<!-- Three.js for 3D coin - using older version with UMD GLTFLoader -->
+<script src="https://unpkg.com/three@0.137.5/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
   <!-- 3D HBAR Coin Canvas (behind everything) -->
@@ -2567,7 +2567,12 @@ let coinScene, coinCamera, coinRenderer, coinModel;
 let coinInitialized = false;
 
 function init3DCoin() {
+  console.log('🎯 Initializing 3D Coin...');
+  console.log('THREE available?', typeof THREE !== 'undefined');
+  console.log('GLTFLoader available?', typeof THREE.GLTFLoader !== 'undefined');
+
   const canvas = document.getElementById('coinCanvas');
+  console.log('Canvas found?', !!canvas);
 
   // Scene
   coinScene = new THREE.Scene();
@@ -2616,11 +2621,13 @@ function init3DCoin() {
   coinScene.add(light5);
 
   // Load GLB model
+  console.log('📦 Loading GLB model: hbar-coin.glb');
   const loader = new THREE.GLTFLoader();
   loader.load(
     'hbar-coin.glb',
     // Success callback
     (gltf) => {
+    console.log('✅ GLB model loaded successfully!', gltf);
     coinModel = gltf.scene;
 
     // Enable transparency for fade effect and adjust material for softer, larger reflections
@@ -2668,8 +2675,15 @@ function init3DCoin() {
 
     // Start animation loop
     animate3DCoin();
-  }, undefined, (error) => {
-    console.error('Error loading HBAR coin model:', error);
+  },
+  // Progress callback
+  (xhr) => {
+    console.log('Loading progress:', (xhr.loaded / xhr.total * 100) + '% loaded');
+  },
+  // Error callback
+  (error) => {
+    console.error('❌ Error loading HBAR coin model:', error);
+    console.error('Full error details:', error);
   });
 
   // Handle window resize
