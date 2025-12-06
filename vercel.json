@@ -1,8 +1,26 @@
 {
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
-}
+    "routes": [
+      {
+        "src": "/hbar-coin.glb",
+        "dest": "/hbar-coin.glb"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "/index.html"
+      }
+    ]
+  }
+
+  OR, even better, move the GLB file to the public folder and use this vercel.json:
+
+  {
+    "routes": [
+      {
+        "handle": "filesystem"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "/index.html"
+      }
+    ]
+  }
