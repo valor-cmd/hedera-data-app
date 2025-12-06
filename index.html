@@ -2766,6 +2766,9 @@ function updateCoinOnScroll() {
 
 // Initialize on load
 window.addEventListener('load', () => {
+  console.log('🚀 Page loaded, initializing 3D coin...');
+  console.log('THREE exists?', typeof THREE);
+  console.log('THREE.GLTFLoader exists?', typeof THREE?.GLTFLoader);
   init3DCoin();
 });
 
