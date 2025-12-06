@@ -2621,10 +2621,10 @@ function init3DCoin() {
   coinScene.add(light5);
 
   // Load GLB model
-  console.log('📦 Loading GLB model: hbar-coin.glb');
+  console.log('📦 Loading GLB model: /hbar-coin.glb');
   const loader = new THREE.GLTFLoader();
   loader.load(
-    'hbar-coin.glb',
+    '/hbar-coin.glb',
     // Success callback
     (gltf) => {
     console.log('✅ GLB model loaded successfully!', gltf);
