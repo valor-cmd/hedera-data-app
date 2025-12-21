@@ -1262,6 +1262,12 @@ async function queryAccount() {
       console.log('✅ Account found, now fetching tokens...');
       await fetchTokenBalances(accountNum);
       console.log('✅ Finished fetching tokens');
+
+      // Auto-populate richlist section with same account and check rank
+      const richlistInput = document.getElementById('richlistInput');
+      richlistInput.value = `0.0.${account.num}`;
+      console.log('🔄 Auto-checking rank for account 0.0.' + account.num);
+      await checkRank();
     } else {
       alert('Account not found');
       document.getElementById('tokenBalancesContainer').style.display = 'none';
@@ -1364,6 +1370,13 @@ async function fetchTokenPricesAndDisplay(tokenBalances) {
             iconMap[token.id] = token.icon;
           }
 
+          // Store HBAR price separately by symbol for easy access
+          if (token.symbol === 'HBAR') {
+            priceMap['HBAR'] = actualPrice;
+            iconMap['HBAR'] = token.icon;
+            console.log(`HBAR price from SaucerSwap: $${actualPrice}`);
+          }
+
           if (token.symbol === 'LEEMON') {
             console.log(`LEEMON price: ${token.priceUsd} = $${actualPrice}`);
           }
@@ -1380,6 +1393,11 @@ async function fetchTokenPricesAndDisplay(tokenBalances) {
   }
 }
 
+// Store token data globally for sorting
+let globalTokenData = [];
+let currentSortBy = 'usd'; // 'name' or 'usd'
+let currentSortDirection = 'desc'; // 'asc' or 'desc'
+
 function displayTokenBalances(tokenBalances, priceMap = {}, iconMap = {}) {
   const container = document.getElementById('tokenBalancesList');
   const chartContainer = document.getElementById('tokenBalancesContainer');
@@ -1393,18 +1411,84 @@ function displayTokenBalances(tokenBalances, priceMap = {}, iconMap = {}) {
 
   chartContainer.style.display = 'block';
 
-  // Calculate total portfolio value
-  let totalValue = 0;
+  // Get HBAR balance from the balance card
+  const hbarBalanceText = document.getElementById('balance')?.textContent || '0 HBAR';
+  const hbarBalance = parseFloat(hbarBalanceText.replace(' HBAR', '').replace(/,/g, ''));
+
+  // Get HBAR price from SaucerSwap - try common HBAR token IDs
+  const hbarPrice = priceMap['HBAR'] || priceMap['0.0.0'] || 0.11;
+  const hbarIcon = iconMap['HBAR'] || 'https://hedera.com/favicon.ico';
+  console.log('HBAR price:', hbarPrice);
+
+  // Prepare all token data including HBAR
+  globalTokenData = [];
+
+  // Add HBAR first
+  globalTokenData.push({
+    tokenId: '0',
+    tokenName: 'Hedera',
+    tokenSymbol: 'HBAR',
+    balance: hbarBalance,
+    decimals: 8,
+    tokenPrice: hbarPrice,
+    tokenIcon: hbarIcon,
+    usdValue: hbarBalance * hbarPrice,
+    isHbar: true
+  });
+
+  // Add all other tokens
   tokenBalances.forEach((item) => {
     const tokenInfo = item.token || {};
     const decimals = tokenInfo.decimals || 8;
     const balance = item.balance / Math.pow(10, decimals);
-    const tokenIdStr = `0.0.${item.token_id}`;
-    const tokenPrice = priceMap[tokenIdStr];
-    if (tokenPrice) {
-      totalValue += balance * tokenPrice;
-    }
+    const tokenName = tokenInfo.name || `Token 0.0.${item.token_id}`;
+    const tokenSymbol = tokenInfo.symbol || 'Unknown';
+    const tokenId = item.token_id;
+    const tokenIdStr = `0.0.${tokenId}`;
+    const tokenPrice = priceMap[tokenIdStr] || 0;
+    const tokenIcon = iconMap[tokenIdStr];
+    const usdValue = balance * tokenPrice;
+
+    globalTokenData.push({
+      tokenId,
+      tokenName,
+      tokenSymbol,
+      balance,
+      decimals,
+      tokenPrice,
+      tokenIcon,
+      usdValue,
+      isHbar: false
+    });
   });
+
+  // Render with current sort
+  renderTokenList();
+}
+
+function renderTokenList() {
+  const container = document.getElementById('tokenBalancesList');
+
+  // Sort the data
+  let sortedData = [...globalTokenData];
+  if (currentSortBy === 'name') {
+    sortedData.sort((a, b) => {
+      const comparison = a.tokenName.localeCompare(b.tokenName);
+      return currentSortDirection === 'asc' ? comparison : -comparison;
+    });
+  } else if (currentSortBy === 'usd') {
+    sortedData.sort((a, b) => {
+      const comparison = a.usdValue - b.usdValue;
+      return currentSortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
+
+  // Calculate total portfolio value
+  const totalValue = globalTokenData.reduce((sum, token) => sum + token.usdValue, 0);
+
+  // Create arrow icons
+  const nameArrow = currentSortBy === 'name' ? (currentSortDirection === 'asc' ? '▲' : '▼') : '⇅';
+  const balanceArrow = currentSortBy === 'usd' ? (currentSortDirection === 'asc' ? '▲' : '▼') : '⇅';
 
   // Create sticky header with total value and column labels
   let html = `
@@ -1414,36 +1498,22 @@ function displayTokenBalances(tokenBalances, priceMap = {}, iconMap = {}) {
         <div style="font-size:2rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.75rem 1rem;font-size:0.9rem;font-weight:700;opacity:0.8;text-transform:uppercase;letter-spacing:0.05em;">
-        <div>Token</div>
-        <div>Balance</div>
+        <div style="cursor:pointer;user-select:none;" onclick="sortTokens('name')">Token ${nameArrow}</div>
+        <div style="cursor:pointer;user-select:none;" onclick="sortTokens('usd')">Balance ${balanceArrow}</div>
       </div>
     </div>
   `;
 
-  tokenBalances.forEach((item, index) => {
-    const tokenInfo = item.token || {};
-    const decimals = tokenInfo.decimals || 8;
-    const balance = (item.balance / Math.pow(10, decimals)).toFixed(Math.min(decimals, 4));
-    const tokenName = tokenInfo.name || `Token 0.0.${item.token_id}`;
-    const tokenSymbol = tokenInfo.symbol || 'Unknown';
-    const tokenId = item.token_id;
-
-    // Calculate USD value using SaucerSwap price data
-    const tokenIdStr = `0.0.${tokenId}`;
-    const tokenPrice = priceMap[tokenIdStr];
-    const tokenIcon = iconMap[tokenIdStr];
-    let usdValue = '~$-.--';
-    if (tokenPrice) {
-      const usdAmount = (parseFloat(balance) * tokenPrice).toFixed(2);
-      usdValue = `~$${parseFloat(usdAmount).toLocaleString()}`;
-      console.log(`${tokenSymbol} (${tokenIdStr}): ${balance} tokens × $${tokenPrice} = $${usdAmount}`);
-    } else {
-      console.log(`No price found for ${tokenSymbol} (${tokenIdStr})`);
-    }
+  // Render each token
+  sortedData.forEach((token) => {
+    const balance = token.balance.toFixed(Math.min(token.decimals, 4));
+    const usdValue = token.usdValue > 0
+      ? `~$${token.usdValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+      : '~$-.--';
 
     // Create icon HTML if available
-    const iconHtml = tokenIcon
-      ? `<img src="${tokenIcon}" alt="${tokenSymbol}" style="width:40px;height:40px;border-radius:50%;margin-right:1rem;object-fit:cover;" onerror="this.style.display='none'">`
+    const iconHtml = token.tokenIcon
+      ? `<img src="${token.tokenIcon}" alt="${token.tokenSymbol}" style="width:40px;height:40px;border-radius:50%;margin-right:1rem;object-fit:cover;" onerror="this.style.display='none'">`
       : '';
 
     html += `
@@ -1451,13 +1521,13 @@ function displayTokenBalances(tokenBalances, priceMap = {}, iconMap = {}) {
         <div style="flex:1;display:flex;align-items:center;">
           ${iconHtml}
           <div>
-            <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${tokenName}</div>
-            <div style="font-size:0.85rem;opacity:0.7;">${tokenSymbol} · 0.0.${tokenId}</div>
+            <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${token.tokenName}</div>
+            <div style="font-size:0.85rem;opacity:0.7;">${token.tokenSymbol}${token.isHbar ? '' : ' · 0.0.' + token.tokenId}</div>
           </div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:1.3rem;font-weight:700;">${balance}</div>
-          <div style="font-size:0.75rem;opacity:0.6;">${tokenSymbol}</div>
+          <div style="font-size:0.75rem;opacity:0.6;">${token.tokenSymbol}</div>
           <div style="font-size:0.7rem;opacity:0.5;margin-top:0.25rem;color:#8b5cf6;">${usdValue}</div>
         </div>
       </div>
@@ -1465,7 +1535,19 @@ function displayTokenBalances(tokenBalances, priceMap = {}, iconMap = {}) {
   });
 
   container.innerHTML = html;
-  console.log('✅ Token chart displayed with prices');
+  console.log('✅ Token chart displayed with', sortedData.length, 'tokens');
+}
+
+function sortTokens(sortBy) {
+  if (currentSortBy === sortBy) {
+    // Toggle direction if clicking same column
+    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    // New column, default to descending for USD, ascending for name
+    currentSortBy = sortBy;
+    currentSortDirection = sortBy === 'usd' ? 'desc' : 'asc';
+  }
+  renderTokenList();
 }
 
 async function queryNetwork() {
