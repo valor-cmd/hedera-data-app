@@ -912,7 +912,7 @@
         <div class="carousel" id="userCarousel">
           <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
           <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
-          <div class="card"><div class="card-title">EVM Address</div><div class="card-value" id="evmAddr" style="font-size:1.2rem;">---</div></div>
+          <div class="card"><div class="card-title">Total Staked</div><div class="card-value" id="stakedBalance">---</div></div>
           <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
         </div>
       </div>
@@ -1236,7 +1236,8 @@ async function queryAccount() {
             entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
               num
               balance
-              evm_address
+              staked_account_id
+              stake_period_start
               created_timestamp
             }
           }
@@ -1251,12 +1252,13 @@ async function queryAccount() {
       const account = result.data.entity[0];
       const balance = (account.balance / 100000000).toFixed(2);
       const created = new Date(account.created_timestamp / 1000000).toLocaleDateString();
-      const evmAddr = account.evm_address ? `0x${Buffer.from(account.evm_address).toString('hex').slice(0, 8)}...` : 'N/A';
-      
+
       document.getElementById('balance').textContent = `${balance} HBAR`;
       document.getElementById('accountId').textContent = `0.0.${account.num}`;
-      document.getElementById('evmAddr').textContent = evmAddr;
       document.getElementById('created').textContent = created;
+
+      // Fetch staked balance
+      await fetchStakedBalance(accountNum);
 
       // Fetch token balances
       console.log('✅ Account found, now fetching tokens...');
@@ -1277,6 +1279,45 @@ async function queryAccount() {
     document.getElementById('tokenBalancesContainer').style.display = 'none';
   } finally {
     document.getElementById('accountLoading').classList.remove('active');
+  }
+}
+
+async function fetchStakedBalance(accountNum) {
+  try {
+    console.log('🔍 Fetching staked balance for account', accountNum);
+
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetStakedBalance($accountNum: bigint!) {
+            entity_stake(where: {id: {_eq: $accountNum}}) {
+              staked_to_me
+            }
+          }
+        `,
+        variables: { accountNum }
+      })
+    });
+
+    const result = await response.json();
+    console.log('Staking response:', result);
+
+    if (result.data?.entity_stake?.[0]) {
+      const stakedBalance = (result.data.entity_stake[0].staked_to_me / 100000000).toFixed(2);
+      document.getElementById('stakedBalance').textContent = `${stakedBalance} HBAR`;
+      console.log('✅ Staked balance:', stakedBalance, 'HBAR');
+    } else {
+      document.getElementById('stakedBalance').textContent = '0.00 HBAR';
+      console.log('No staking data found');
+    }
+  } catch (error) {
+    console.error('Error fetching staked balance:', error);
+    document.getElementById('stakedBalance').textContent = 'N/A';
   }
 }
 
@@ -1493,9 +1534,10 @@ function renderTokenList() {
   // Create sticky header with total value and column labels
   let html = `
     <div style="position:sticky;top:0;background:rgba(22,27,34,0.95);backdrop-filter:blur(12px);z-index:10;padding-bottom:1rem;margin-bottom:1rem;border-bottom:2px solid #00d4ff;">
-      <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="position:relative;text-align:center;margin-bottom:1.5rem;">
         <div style="font-size:0.9rem;opacity:0.7;margin-bottom:0.5rem;">Estimated Total Value</div>
         <div style="font-size:2rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div onclick="refreshTokenBalances()" style="position:absolute;top:0;right:1rem;cursor:pointer;font-size:1.5rem;opacity:0.7;transition:all 0.3s ease;transform:rotate(0deg);" onmouseover="this.style.opacity='1';this.style.transform='rotate(180deg)'" onmouseout="this.style.opacity='0.7';this.style.transform='rotate(0deg)'" title="Refresh balances">🔄</div>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.75rem 1rem;font-size:0.9rem;font-weight:700;opacity:0.8;text-transform:uppercase;letter-spacing:0.05em;">
         <div style="cursor:pointer;user-select:none;" onclick="sortTokens('name')">Token ${nameArrow}</div>
@@ -1548,6 +1590,34 @@ function sortTokens(sortBy) {
     currentSortDirection = sortBy === 'usd' ? 'desc' : 'asc';
   }
   renderTokenList();
+}
+
+async function refreshTokenBalances() {
+  console.log('🔄 Refreshing token balances...');
+
+  // Get the current account from the accountId display
+  const accountIdText = document.getElementById('accountId')?.textContent;
+  if (!accountIdText || accountIdText === '---') {
+    alert('Please query an account first');
+    return;
+  }
+
+  const accountNum = parseInt(accountIdText.replace('0.0.', ''));
+
+  // Show a brief loading indicator
+  const container = document.getElementById('tokenBalancesList');
+  const originalHTML = container.innerHTML;
+  container.innerHTML = '<div style="text-align:center;padding:2rem;opacity:0.7;">Refreshing...</div>';
+
+  try {
+    // Re-fetch token balances
+    await fetchTokenBalances(accountNum);
+    console.log('✅ Token balances refreshed');
+  } catch (error) {
+    console.error('Error refreshing balances:', error);
+    container.innerHTML = originalHTML; // Restore on error
+    alert('Failed to refresh balances');
+  }
 }
 
 async function queryNetwork() {
