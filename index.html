@@ -1273,11 +1273,11 @@ async function fetchTokenBalances(accountNum) {
         query: `
           query GetTokenBalances($accountNum: bigint!) {
             token_account(
-              where: {account_num: {_eq: $accountNum}, balance: {_gt: 0}}
+              where: {account_id: {_eq: $accountNum}, balance: {_gt: 0}}
               order_by: {balance: desc}
             ) {
               balance
-              token_num
+              token_id
             }
           }
         `,
@@ -1317,7 +1317,7 @@ function displayTokenBalances(tokenBalances) {
   let html = '';
   tokenBalances.forEach((item, index) => {
     const balance = (item.balance / 100000000).toFixed(2); // Assuming 8 decimals like HBAR
-    const tokenId = item.token_num || 'Unknown';
+    const tokenId = item.token_id || 'Unknown';
 
     html += `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
