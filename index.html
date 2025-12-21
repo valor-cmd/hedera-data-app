@@ -903,8 +903,16 @@
         </div>
       </div>
     </div>
+
+    <!-- Token Balances Chart -->
+    <div id="tokenBalancesContainer" style="width:95%;max-width:1200px;margin:3rem auto 0;display:none;">
+      <h3 style="font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;color:#00d4ff;text-align:center;">Token Balances</h3>
+      <div id="tokenBalancesChart" style="background:rgba(22,27,34,0.6);border-radius:16px;padding:2rem;border:1px solid #30363d;backdrop-filter:blur(12px);">
+        <div id="tokenBalancesList"></div>
+      </div>
+    </div>
   </section>
-  
+
   <section class="section" id="richlist" style="min-height:100vh;height:auto;padding:4rem 0;">
     <div class="gradient-orb" style="bottom:-300px;right:-300px;background:radial-gradient(circle,rgba(255,0,170,0.2),transparent);"></div>
     <h2>HBAR RICH LIST</h2>
@@ -1235,14 +1243,96 @@ async function queryAccount() {
       document.getElementById('accountId').textContent = `0.0.${account.num}`;
       document.getElementById('evmAddr').textContent = evmAddr;
       document.getElementById('created').textContent = created;
+
+      // Fetch token balances
+      await fetchTokenBalances(accountNum);
     } else {
       alert('Account not found');
+      document.getElementById('tokenBalancesContainer').style.display = 'none';
     }
   } catch (error) {
     alert('Error: ' + error.message);
+    document.getElementById('tokenBalancesContainer').style.display = 'none';
   } finally {
     document.getElementById('accountLoading').classList.remove('active');
   }
+}
+
+async function fetchTokenBalances(accountNum) {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': HGRAPH_KEY
+      },
+      body: JSON.stringify({
+        query: `
+          query GetTokenBalances($accountNum: bigint!) {
+            token_balance(
+              where: {account_num: {_eq: $accountNum}, balance: {_gt: 0}}
+              order_by: {balance: desc}
+            ) {
+              balance
+              token {
+                name
+                symbol
+                decimals
+                token_id
+              }
+            }
+          }
+        `,
+        variables: { accountNum }
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.data?.token_balance && result.data.token_balance.length > 0) {
+      displayTokenBalances(result.data.token_balance);
+    } else {
+      document.getElementById('tokenBalancesContainer').style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error fetching token balances:', error);
+    document.getElementById('tokenBalancesContainer').style.display = 'none';
+  }
+}
+
+function displayTokenBalances(tokenBalances) {
+  const container = document.getElementById('tokenBalancesList');
+  const chartContainer = document.getElementById('tokenBalancesContainer');
+
+  if (tokenBalances.length === 0) {
+    chartContainer.style.display = 'none';
+    return;
+  }
+
+  chartContainer.style.display = 'block';
+
+  let html = '';
+  tokenBalances.forEach((item, index) => {
+    const token = item.token;
+    const balance = (item.balance / Math.pow(10, token.decimals)).toFixed(token.decimals);
+    const tokenName = token.name || 'Unknown Token';
+    const tokenSymbol = token.symbol || token.token_id;
+
+    html += `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
+        <div style="flex:1;">
+          <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${tokenName}</div>
+          <div style="font-size:0.85rem;opacity:0.7;">${tokenSymbol}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:1.3rem;font-weight:700;">${balance}</div>
+          <div style="font-size:0.75rem;opacity:0.6;">${tokenSymbol}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
 }
 
 async function queryNetwork() {
