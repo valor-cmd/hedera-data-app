@@ -5,7 +5,7 @@
 <title>Hedera Mainnet Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root { --bg:#050810; --card:#0a0a0a; --accent:#00d4ff; }
+  :root { --bg:#000000; --card:#0a0a0a; --accent:#00d4ff; }
   * { margin:0; padding:0; box-sizing:border-box; }
   html {
     overflow-x:hidden;
@@ -3244,6 +3244,19 @@ function animate3DCoin() {
   }
 }
 
+// Smooth interpolation values for buttery smooth animation
+let targetPosZ = -10;
+let targetPosY = -2;
+let targetScale = 4;
+let targetRotationY = 0;
+let targetRotationX = 0;
+let targetOpacity = 1;
+
+// Lerp function for smooth interpolation
+function lerp(start, end, factor) {
+  return start + (end - start) * factor;
+}
+
 // Scroll-based animation
 function updateCoinOnScroll() {
   if (!coinModel || !coinInitialized) return;
@@ -3251,56 +3264,72 @@ function updateCoinOnScroll() {
   const scrollProgress = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
   const scrollY = window.scrollY;
 
+  // Calculate target values based on scroll
   // Quick zoom in when starting to scroll (first 300px - faster)
   if (scrollY < 300) {
     const zoomProgress = scrollY / 300;
-    coinModel.position.z = -10 + (zoomProgress * 8); // Zoom from -10 to -2
-    coinModel.scale.set(
-      4 + (zoomProgress * 14),  // Scale from 4 to 18
-      4 + (zoomProgress * 14),
-      4 + (zoomProgress * 14)
-    );
+    targetPosZ = -10 + (zoomProgress * 8); // Zoom from -10 to -2
+    targetScale = 4 + (zoomProgress * 14);  // Scale from 4 to 18
   } else {
     // After zoom in, keep it close
-    coinModel.position.z = -2;
-    coinModel.scale.set(18, 18, 18);
+    targetPosZ = -2;
+    targetScale = 18;
   }
 
-  // Disappear behind live transactions section - fade out much earlier
-  let opacity = 1.0;
+  // Smoothly interpolate to target values (lerp factor of 0.1 = smooth, 0.2 = more responsive)
+  const lerpFactor = 0.15;
+  const currentScale = coinModel.scale.x;
+  const newScale = lerp(currentScale, targetScale, lerpFactor);
 
+  coinModel.position.z = lerp(coinModel.position.z, targetPosZ, lerpFactor);
+  coinModel.scale.set(newScale, newScale, newScale);
+
+  // Disappear behind live transactions section - fade out much earlier
   if (scrollProgress > 0.35) {
     // Start fading at 35% scroll, completely gone by 45%
     const fadeProgress = (scrollProgress - 0.35) / 0.10;
-    opacity = Math.max(0, 1.0 - fadeProgress);
+    targetOpacity = Math.max(0, 1.0 - fadeProgress);
+  } else {
+    targetOpacity = 1.0;
   }
+
+  // Smooth opacity interpolation
+  const currentOpacity = coinMaterials.length > 0 ? coinMaterials[0].opacity : 1;
+  const newOpacity = lerp(currentOpacity, targetOpacity, lerpFactor);
 
   // Apply opacity to all materials (using cached array for performance)
   for (let i = 0; i < coinMaterials.length; i++) {
-    coinMaterials[i].opacity = opacity;
+    coinMaterials[i].opacity = newOpacity;
   }
 
   // Rotation - Face forward during zoom-in, then start spinning
   if (scrollY < 300) {
     // Face forward during entire zoom-in animation
-    coinModel.rotation.y = 0;
-    coinModel.rotation.x = 0;
+    targetRotationY = 0;
+    targetRotationX = 0;
   } else {
     // After zoom completes, start rotating continuously
     const scrollAfterZoom = scrollY - 300;
     const rotationProgress = scrollAfterZoom / (document.documentElement.scrollHeight - window.innerHeight - 350);
-    coinModel.rotation.y = rotationProgress * Math.PI * 4; // 4 full rotations
-    coinModel.rotation.x = Math.sin(rotationProgress * Math.PI * 2) * 0.1; // Subtle wobble
+    targetRotationY = rotationProgress * Math.PI * 4; // 4 full rotations
+    targetRotationX = Math.sin(rotationProgress * Math.PI * 2) * 0.1; // Subtle wobble
   }
+
+  // Smooth rotation interpolation
+  coinModel.rotation.y = lerp(coinModel.rotation.y, targetRotationY, lerpFactor);
+  coinModel.rotation.x = lerp(coinModel.rotation.x, targetRotationX, lerpFactor);
 
   // Vertical position - center over HEDERA text when zoomed in, then follow scroll
   if (scrollY < 300) {
     // During zoom in, stay centered over HEDERA text
-    coinModel.position.y = -2;  // Positioned lower to center over HEDERA
+    targetPosY = -2;  // Positioned lower to center over HEDERA
   } else {
     // After zoom in, follow scroll movement
-    coinModel.position.y = -2 - ((scrollY - 300) * 0.002);
+    targetPosY = -2 - ((scrollY - 300) * 0.002);
   }
+
+  // Smooth vertical position interpolation
+  coinModel.position.y = lerp(coinModel.position.y, targetPosY, lerpFactor);
 }
 
 // Initialize on load
