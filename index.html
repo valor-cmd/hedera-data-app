@@ -2751,14 +2751,9 @@ function init3DCoin() {
   light5.position.set(-350, 0, 500);  // Opposite side at 45°
   coinScene.add(light5);
 
-  // Load GLB model - auto-detect path based on environment
-  // Use /public/hbar-coin.glb for production (Vercel), hbar-coin.glb for local development
-  const isLocalFile = window.location.protocol === 'file:';
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isProduction = !isLocalFile && !isLocalhost;
-
-  const coinPath = isProduction ? '/public/hbar-coin.glb' : 'hbar-coin.glb';
-  console.log('📦 Loading GLB model from:', coinPath, '(Production:', isProduction + ')');
+  // Load GLB model - same path works for both local and production
+  const coinPath = 'hbar-coin.glb';
+  console.log('📦 Loading GLB model from:', coinPath);
 
   const loader = new THREE.GLTFLoader();
   loader.load(
