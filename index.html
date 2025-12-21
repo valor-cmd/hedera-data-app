@@ -732,15 +732,18 @@
     /* Adjust carousel for smaller cards - edge to edge on mobile */
     .carousel {
       gap:1rem;
-      padding:1rem 0.5rem;
-    }
-
-    .cards-wrapper {
       padding:1rem 0;
     }
 
+    .cards-wrapper {
+      padding:0;
+      margin:0 -1rem;
+    }
+
     .carousel-scroll {
-      padding:0.5rem 0;
+      padding:0;
+      overflow-x:scroll;
+      -webkit-overflow-scrolling:touch;
     }
 
     /* Live Transactions map - 16:9 landscape ratio on mobile */
@@ -801,16 +804,25 @@
       top:25%;
     }
 
-    /* Optimize search boxes and buttons for mobile */
+    /* Optimize search boxes and buttons for mobile - stack vertically */
     .search-box {
       padding:1rem 1.5rem;
+      padding-right:1.5rem !important;
       font-size:1rem;
       width:95%;
+      max-width:100%;
+      display:block !important;
+      margin-bottom:1rem !important;
     }
 
     .search-btn {
       padding:0.9rem 2rem;
       font-size:1rem;
+      margin-left:0 !important;
+      display:block !important;
+      width:95%;
+      max-width:100%;
+      margin:0 auto 1rem auto;
     }
 
     /* Optimize transaction feed for mobile */
@@ -825,6 +837,28 @@
     .tx-feed-item {
       padding:0.5rem;
       font-size:0.75rem;
+    }
+
+    /* Fix richlist balance overflow on mobile */
+    .richlist-row {
+      padding:0.75rem 1rem;
+      font-size:0.85rem;
+    }
+
+    .rank-balance {
+      font-size:1rem !important;
+      word-wrap:break-word;
+      overflow-wrap:break-word;
+    }
+
+    .account-id {
+      font-size:0.75rem !important;
+      word-wrap:break-word;
+    }
+
+    .rank-badge {
+      font-size:1.2rem !important;
+      min-width:40px;
     }
   }
 </style>
