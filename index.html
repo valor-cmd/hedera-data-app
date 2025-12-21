@@ -1340,9 +1340,11 @@ async function fetchTokenPricesAndDisplay(tokenBalances) {
       priceData.forEach(token => {
         if (token.id && token.price) {
           priceMap[token.id] = parseFloat(token.price);
+          console.log(`Price for ${token.id}: $${token.price} (${typeof token.price})`);
         }
       });
     }
+    console.log('Price map created:', priceMap);
 
     displayTokenBalances(tokenBalances, priceMap);
   } catch (error) {
@@ -1407,6 +1409,9 @@ function displayTokenBalances(tokenBalances, priceMap = {}) {
     if (tokenPrice) {
       const usdAmount = (parseFloat(balance) * tokenPrice).toFixed(2);
       usdValue = `~$${parseFloat(usdAmount).toLocaleString()}`;
+      console.log(`${tokenSymbol} (${tokenIdStr}): ${balance} tokens × $${tokenPrice} = $${usdAmount}`);
+    } else {
+      console.log(`No price found for ${tokenSymbol} (${tokenIdStr})`);
     }
 
     html += `
