@@ -89,14 +89,11 @@
     right:0;
     text-align:center;
     transform:translateY(-50%);
-    font-size:clamp(4rem,10vw,10rem);
+    font-size:clamp(5rem,12vw,12rem);
     font-weight:900;
     z-index:100;
     pointer-events:none;
-    background:linear-gradient(90deg,#00d4ff,#8b5cf6,#ff00aa);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
+    color:white;
     white-space:nowrap;
   }
   h2 {
@@ -779,6 +776,11 @@
     .gradient-orb {
       width:400px !important;
       height:400px !important;
+    }
+
+    /* Move HEDERA title up on mobile */
+    #fixed-title {
+      top:25%;
     }
 
     /* Optimize search boxes and buttons for mobile */
