@@ -1332,19 +1332,44 @@ async function fetchTokenPricesAndDisplay(tokenBalances) {
     });
 
     const priceData = await priceResponse.json();
-    console.log('SaucerSwap price data:', priceData);
+    console.log('📊 SaucerSwap API returned', Array.isArray(priceData) ? priceData.length : 0, 'tokens');
+
+    // Log first 3 tokens to see structure
+    if (Array.isArray(priceData) && priceData.length > 0) {
+      console.log('Sample token data (first 3):');
+      priceData.slice(0, 3).forEach(token => {
+        console.log('  Token:', {
+          id: token.id,
+          name: token.name,
+          symbol: token.symbol,
+          price: token.price,
+          priceUsd: token.priceUsd,
+          allFields: Object.keys(token)
+        });
+      });
+    }
 
     // Create a map of token prices by token ID
     const priceMap = {};
     if (Array.isArray(priceData)) {
       priceData.forEach(token => {
-        if (token.id && token.price) {
-          priceMap[token.id] = parseFloat(token.price);
-          console.log(`Price for ${token.id}: $${token.price} (${typeof token.price})`);
+        if (token.id && (token.priceUsd || token.price)) {
+          // Try priceUsd first, fall back to price
+          let usdPrice = token.priceUsd || token.price;
+
+          // Remove $ sign if present and parse as float
+          if (typeof usdPrice === 'string') {
+            usdPrice = usdPrice.replace('$', '');
+          }
+
+          // SaucerSwap returns prices in smallest unit (8 decimals)
+          // Divide by 100,000,000 to get actual USD price
+          const actualPrice = parseFloat(usdPrice) / 100000000;
+          priceMap[token.id] = actualPrice;
         }
       });
     }
-    console.log('Price map created:', priceMap);
+    console.log('💵 Price map has', Object.keys(priceMap).length, 'tokens with prices');
 
     displayTokenBalances(tokenBalances, priceMap);
   } catch (error) {
