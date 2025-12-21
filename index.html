@@ -1349,29 +1349,30 @@ async function fetchTokenPricesAndDisplay(tokenBalances) {
       });
     }
 
-    // Create a map of token prices by token ID
+    // Create maps for token prices and icons by token ID
     const priceMap = {};
+    const iconMap = {};
     if (Array.isArray(priceData)) {
       priceData.forEach(token => {
-        if (token.id && (token.priceUsd || token.price)) {
-          // Try priceUsd first, fall back to price
-          let usdPrice = token.priceUsd || token.price;
+        if (token.id && token.priceUsd) {
+          // Use priceUsd field directly (it's already in USD, may be in scientific notation)
+          const actualPrice = parseFloat(token.priceUsd);
+          priceMap[token.id] = actualPrice;
 
-          // Remove $ sign if present and parse as float
-          if (typeof usdPrice === 'string') {
-            usdPrice = usdPrice.replace('$', '');
+          // Store icon URL if available
+          if (token.icon) {
+            iconMap[token.id] = token.icon;
           }
 
-          // SaucerSwap returns prices in smallest unit (8 decimals)
-          // Divide by 100,000,000 to get actual USD price
-          const actualPrice = parseFloat(usdPrice) / 100000000;
-          priceMap[token.id] = actualPrice;
+          if (token.symbol === 'LEEMON') {
+            console.log(`LEEMON price: ${token.priceUsd} = $${actualPrice}`);
+          }
         }
       });
     }
     console.log('💵 Price map has', Object.keys(priceMap).length, 'tokens with prices');
 
-    displayTokenBalances(tokenBalances, priceMap);
+    displayTokenBalances(tokenBalances, priceMap, iconMap);
   } catch (error) {
     console.error('Error fetching token prices:', error);
     // Display without prices if fetch fails
@@ -1379,7 +1380,7 @@ async function fetchTokenPricesAndDisplay(tokenBalances) {
   }
 }
 
-function displayTokenBalances(tokenBalances, priceMap = {}) {
+function displayTokenBalances(tokenBalances, priceMap = {}, iconMap = {}) {
   const container = document.getElementById('tokenBalancesList');
   const chartContainer = document.getElementById('tokenBalancesContainer');
 
@@ -1430,6 +1431,7 @@ function displayTokenBalances(tokenBalances, priceMap = {}) {
     // Calculate USD value using SaucerSwap price data
     const tokenIdStr = `0.0.${tokenId}`;
     const tokenPrice = priceMap[tokenIdStr];
+    const tokenIcon = iconMap[tokenIdStr];
     let usdValue = '~$-.--';
     if (tokenPrice) {
       const usdAmount = (parseFloat(balance) * tokenPrice).toFixed(2);
@@ -1439,11 +1441,19 @@ function displayTokenBalances(tokenBalances, priceMap = {}) {
       console.log(`No price found for ${tokenSymbol} (${tokenIdStr})`);
     }
 
+    // Create icon HTML if available
+    const iconHtml = tokenIcon
+      ? `<img src="${tokenIcon}" alt="${tokenSymbol}" style="width:40px;height:40px;border-radius:50%;margin-right:1rem;object-fit:cover;" onerror="this.style.display='none'">`
+      : '';
+
     html += `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
-        <div style="flex:1;">
-          <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${tokenName}</div>
-          <div style="font-size:0.85rem;opacity:0.7;">${tokenSymbol} · 0.0.${tokenId}</div>
+        <div style="flex:1;display:flex;align-items:center;">
+          ${iconHtml}
+          <div>
+            <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${tokenName}</div>
+            <div style="font-size:0.85rem;opacity:0.7;">${tokenSymbol} · 0.0.${tokenId}</div>
+          </div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:1.3rem;font-weight:700;">${balance}</div>
