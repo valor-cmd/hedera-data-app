@@ -1278,6 +1278,11 @@ async function fetchTokenBalances(accountNum) {
             ) {
               balance
               token_id
+              token {
+                name
+                symbol
+                decimals
+              }
             }
           }
         `,
@@ -1316,17 +1321,22 @@ function displayTokenBalances(tokenBalances) {
 
   let html = '';
   tokenBalances.forEach((item, index) => {
-    const balance = (item.balance / 100000000).toFixed(2); // Assuming 8 decimals like HBAR
-    const tokenId = item.token_id || 'Unknown';
+    const tokenInfo = item.token || {};
+    const decimals = tokenInfo.decimals || 8;
+    const balance = (item.balance / Math.pow(10, decimals)).toFixed(Math.min(decimals, 4));
+    const tokenName = tokenInfo.name || `Token 0.0.${item.token_id}`;
+    const tokenSymbol = tokenInfo.symbol || 'Unknown';
+    const tokenId = item.token_id;
 
     html += `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
         <div style="flex:1;">
-          <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">Token 0.0.${tokenId}</div>
-          <div style="font-size:0.85rem;opacity:0.7;">Token ID: 0.0.${tokenId}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${tokenName}</div>
+          <div style="font-size:0.85rem;opacity:0.7;">${tokenSymbol} · 0.0.${tokenId}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:1.3rem;font-weight:700;">${balance}</div>
+          <div style="font-size:0.75rem;opacity:0.6;">${tokenSymbol}</div>
         </div>
       </div>
     `;
