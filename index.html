@@ -1245,7 +1245,9 @@ async function queryAccount() {
       document.getElementById('created').textContent = created;
 
       // Fetch token balances
+      console.log('✅ Account found, now fetching tokens...');
       await fetchTokenBalances(accountNum);
+      console.log('✅ Finished fetching tokens');
     } else {
       alert('Account not found');
       document.getElementById('tokenBalancesContainer').style.display = 'none';
@@ -1270,17 +1272,12 @@ async function fetchTokenBalances(accountNum) {
       body: JSON.stringify({
         query: `
           query GetTokenBalances($accountNum: bigint!) {
-            token_balance(
-              where: {account_num: {_eq: $accountNum}, balance: {_gt: 0}}
+            account_balance(
+              where: {account_id: {_eq: $accountNum}, balance: {_gt: 0}}
               order_by: {balance: desc}
             ) {
               balance
-              token {
-                name
-                symbol
-                decimals
-                token_id
-              }
+              token_id
             }
           }
         `,
@@ -1291,9 +1288,9 @@ async function fetchTokenBalances(accountNum) {
     const result = await response.json();
     console.log('Token balance response:', result);
 
-    if (result.data?.token_balance && result.data.token_balance.length > 0) {
-      console.log('✅ Found', result.data.token_balance.length, 'tokens');
-      displayTokenBalances(result.data.token_balance);
+    if (result.data?.account_balance && result.data.account_balance.length > 0) {
+      console.log('✅ Found', result.data.account_balance.length, 'tokens');
+      displayTokenBalances(result.data.account_balance);
     } else {
       console.log('❌ No tokens found for this account');
       document.getElementById('tokenBalancesContainer').style.display = 'none';
@@ -1308,6 +1305,8 @@ function displayTokenBalances(tokenBalances) {
   const container = document.getElementById('tokenBalancesList');
   const chartContainer = document.getElementById('tokenBalancesContainer');
 
+  console.log('Displaying', tokenBalances.length, 'tokens');
+
   if (tokenBalances.length === 0) {
     chartContainer.style.display = 'none';
     return;
@@ -1317,26 +1316,24 @@ function displayTokenBalances(tokenBalances) {
 
   let html = '';
   tokenBalances.forEach((item, index) => {
-    const token = item.token;
-    const balance = (item.balance / Math.pow(10, token.decimals)).toFixed(token.decimals);
-    const tokenName = token.name || 'Unknown Token';
-    const tokenSymbol = token.symbol || token.token_id;
+    const balance = (item.balance / 100000000).toFixed(2); // Assuming 8 decimals like HBAR
+    const tokenId = item.token_id || 'Unknown';
 
     html += `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
         <div style="flex:1;">
-          <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${tokenName}</div>
-          <div style="font-size:0.85rem;opacity:0.7;">${tokenSymbol}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">Token ${tokenId}</div>
+          <div style="font-size:0.85rem;opacity:0.7;">ID: ${tokenId}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:1.3rem;font-weight:700;">${balance}</div>
-          <div style="font-size:0.75rem;opacity:0.6;">${tokenSymbol}</div>
         </div>
       </div>
     `;
   });
 
   container.innerHTML = html;
+  console.log('✅ Token chart displayed');
 }
 
 async function queryNetwork() {
