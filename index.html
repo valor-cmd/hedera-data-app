@@ -1259,6 +1259,7 @@ async function queryAccount() {
 }
 
 async function fetchTokenBalances(accountNum) {
+  console.log('🪙 Fetching token balances for account:', accountNum);
   try {
     const response = await fetch(HGRAPH_API, {
       method: 'POST',
@@ -1288,10 +1289,13 @@ async function fetchTokenBalances(accountNum) {
     });
 
     const result = await response.json();
+    console.log('Token balance response:', result);
 
     if (result.data?.token_balance && result.data.token_balance.length > 0) {
+      console.log('✅ Found', result.data.token_balance.length, 'tokens');
       displayTokenBalances(result.data.token_balance);
     } else {
+      console.log('❌ No tokens found for this account');
       document.getElementById('tokenBalancesContainer').style.display = 'none';
     }
   } catch (error) {
