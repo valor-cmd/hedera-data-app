@@ -512,6 +512,20 @@
     background:rgba(0,212,255,0.5);
     border-radius:3px;
   }
+
+  #tokenBalancesList::-webkit-scrollbar {
+    width:6px;
+  }
+
+  #tokenBalancesList::-webkit-scrollbar-track {
+    background:rgba(255,255,255,0.05);
+    border-radius:3px;
+  }
+
+  #tokenBalancesList::-webkit-scrollbar-thumb {
+    background:rgba(0,212,255,0.5);
+    border-radius:3px;
+  }
   
   .tx-feed-item {
     display:flex;
@@ -908,7 +922,7 @@
     <div id="tokenBalancesContainer" style="width:95%;max-width:1200px;margin:3rem auto 0;display:none;">
       <h3 style="font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;color:#00d4ff;text-align:center;">Token Balances</h3>
       <div id="tokenBalancesChart" style="background:rgba(22,27,34,0.6);border-radius:16px;padding:2rem;border:1px solid #30363d;backdrop-filter:blur(12px);">
-        <div id="tokenBalancesList"></div>
+        <div id="tokenBalancesList" style="max-height:600px;overflow-y:auto;"></div>
       </div>
     </div>
   </section>
@@ -1328,6 +1342,9 @@ function displayTokenBalances(tokenBalances) {
     const tokenSymbol = tokenInfo.symbol || 'Unknown';
     const tokenId = item.token_id;
 
+    // Placeholder for USD value - would need price API integration for accurate values
+    const usdValue = '~$-.--';
+
     html += `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
         <div style="flex:1;">
@@ -1337,6 +1354,7 @@ function displayTokenBalances(tokenBalances) {
         <div style="text-align:right;">
           <div style="font-size:1.3rem;font-weight:700;">${balance}</div>
           <div style="font-size:0.75rem;opacity:0.6;">${tokenSymbol}</div>
+          <div style="font-size:0.7rem;opacity:0.5;margin-top:0.25rem;color:#8b5cf6;">${usdValue}</div>
         </div>
       </div>
     `;
