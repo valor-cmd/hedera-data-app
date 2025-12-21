@@ -71,7 +71,7 @@
   }
   
   .section {
-    height:100vh;
+    min-height:60vh;
     width:100%;
     position:relative;
     display:flex;
@@ -80,6 +80,7 @@
     flex-direction:column;
     overflow:visible;
     z-index:1;
+    padding:2rem 0;
   }
   #fixed-title {
     position:fixed;
@@ -101,7 +102,7 @@
   h2 {
     font-size:clamp(2.5rem,6vw,5rem);
     font-weight:900;
-    margin-bottom:3rem;
+    margin-bottom:1rem;
     background:linear-gradient(90deg,#00d4ff,#8b5cf6);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
@@ -109,18 +110,18 @@
   }
   .cards-wrapper {
     width:100%;
-    padding:2rem 0;
+    padding:0.5rem 0;
     position:relative;
   }
   .carousel-scroll {
     width:100%;
     overflow:hidden;
-    padding:1rem 0;
+    padding:0.5rem 0;
   }
   .carousel {
     display:flex;
     gap:2.5rem;
-    padding:1.5rem 0;
+    padding:0.5rem 0;
     padding-left:1rem;
     padding-right:1rem;
     user-select:none;
@@ -754,8 +755,13 @@
 
     /* Reduce padding on mobile for sections */
     .section {
-      padding:1.5rem 1rem;
-      min-height:auto;
+      padding:1rem 1rem;
+      min-height:40vh;
+    }
+
+    /* Further reduce spacing on mobile */
+    h2 {
+      margin-bottom:0.5rem;
     }
 
     /* Center align all text in sections on mobile */
@@ -766,7 +772,7 @@
 
     /* Reduce spacer height on mobile */
     .section-spacer {
-      height:10vh !important;
+      height:5vh !important;
     }
 
     /* Smaller gradient orbs on mobile */
@@ -822,7 +828,7 @@
   <section class="section" id="s1"></section>
 
   <!-- Spacer to push network section down so it scrolls naturally from below -->
-  <div class="section-spacer" style="height: 25vh;"></div>
+  <div class="section-spacer" style="height: 10vh;"></div>
 
   <section class="section" id="network">
     <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.3),rgba(139,92,246,0.2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;"></div>
@@ -2789,16 +2795,18 @@ function init3DCoin() {
       }
     });
 
-    // Scale and position
-    coinModel.scale.set(2, 2, 2);
-    coinModel.position.set(0, 0, 0);
-
-    // Initial state - far away and small
-    coinModel.position.z = -50;
-    coinModel.scale.set(0.1, 0.1, 0.1);
+    // Initial state - positioned to be visible before scroll starts
+    coinModel.position.z = -10;
+    coinModel.scale.set(4, 4, 4);
+    coinModel.position.y = -2;
 
     coinScene.add(coinModel);
     coinInitialized = true;
+
+    console.log('✅ Coin added to scene. Initial position:', coinModel.position, 'Initial scale:', coinModel.scale);
+
+    // Force initial scroll update to set proper position
+    updateCoinOnScroll();
 
     // Force immediate render with new material colors
     coinRenderer.render(coinScene, coinCamera);
@@ -2843,16 +2851,16 @@ function updateCoinOnScroll() {
   // Quick zoom in when starting to scroll (first 300px - faster)
   if (scrollY < 300) {
     const zoomProgress = scrollY / 300;
-    coinModel.position.z = -50 + (zoomProgress * 48); // Zoom from -50 to -2
+    coinModel.position.z = -10 + (zoomProgress * 8); // Zoom from -10 to -2
     coinModel.scale.set(
-      0.9 + (zoomProgress * 17.1),  // Scale from 0.9 to 18.0 (1.5x larger = 9x bigger)
-      0.9 + (zoomProgress * 17.1),
-      0.9 + (zoomProgress * 17.1)
+      4 + (zoomProgress * 14),  // Scale from 4 to 18
+      4 + (zoomProgress * 14),
+      4 + (zoomProgress * 14)
     );
   } else {
     // After zoom in, keep it close
     coinModel.position.z = -2;
-    coinModel.scale.set(18, 18, 18);  // 1.5x larger than before (was 12, now 18)
+    coinModel.scale.set(18, 18, 18);
   }
 
   // Disappear behind live transactions section - fade out much earlier
