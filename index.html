@@ -687,6 +687,20 @@
     pointer-events:none;
   }
   
+  /* Desktop-only improvements for search bars */
+  @media (min-width: 769px) {
+    .search-box {
+      padding:1.2rem 11rem 1.2rem 2rem;
+      max-width:600px;
+      height:auto;
+    }
+
+    .search-btn {
+      padding:1.2rem 3rem;
+      margin-left:-10rem;
+    }
+  }
+
   @media (max-width: 1200px) {
     .live-tx-container {
       grid-template-columns:1fr;
@@ -732,18 +746,21 @@
     /* Adjust carousel for smaller cards - edge to edge on mobile */
     .carousel {
       gap:1rem;
-      padding:1rem 0;
+      padding:1rem 0 1rem 1rem;
     }
 
     .cards-wrapper {
+      width:100vw;
+      margin-left:calc(-50vw + 50%);
       padding:0;
-      margin:0 -1rem;
     }
 
     .carousel-scroll {
       padding:0;
-      overflow-x:scroll;
+      overflow-x:auto;
+      overflow-y:hidden;
       -webkit-overflow-scrolling:touch;
+      touch-action:pan-x;
     }
 
     /* Live Transactions map - 16:9 landscape ratio on mobile */
@@ -777,6 +794,14 @@
       min-height:40vh;
     }
 
+    /* Fix scroll performance on mobile */
+    body {
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior-y:contain;
+    }
+
     /* Further reduce spacing on mobile */
     h2 {
       margin-bottom:0.5rem;
@@ -802,6 +827,18 @@
     /* Move HEDERA title up on mobile */
     #fixed-title {
       top:25%;
+    }
+
+    /* Ensure 3D coin canvas is visible on mobile */
+    #coin-canvas {
+      display:block !important;
+      position:fixed !important;
+      top:0 !important;
+      left:0 !important;
+      width:100vw !important;
+      height:100vh !important;
+      pointer-events:none !important;
+      z-index:5 !important;
     }
 
     /* Optimize search boxes and buttons for mobile - stack vertically */
