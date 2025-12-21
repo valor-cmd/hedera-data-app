@@ -690,29 +690,31 @@
   /* Desktop-only improvements for search bars */
   @media (min-width: 769px) {
     .search-box {
-      padding:0.4rem 2rem;
-      padding-right:190px;
-      max-width:600px;
-      width:500px;
+      padding:0.5rem 2rem;
+      padding-right:230px;
+      max-width:700px;
+      width:550px;
       border:2px solid #30363d;
       position:relative;
       z-index:1;
-      height:56px;
+      height:60px;
       display:inline-flex;
       align-items:center;
+      box-sizing:border-box;
     }
 
     .search-btn {
-      padding:0.9rem 3rem;
-      margin-left:-184px;
-      margin-right:4px;
+      padding:0.85rem 2.5rem;
+      margin-left:-220px;
+      margin-right:10px;
       margin-top:0;
       margin-bottom:0;
       position:relative;
       z-index:2;
-      height:48px;
+      height:auto;
       display:inline-flex;
       align-items:center;
+      justify-content:center;
       vertical-align:middle;
     }
   }
