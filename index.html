@@ -1309,7 +1309,9 @@ async function fetchTokenBalances(accountNum) {
 
     if (result.data?.token_account && result.data.token_account.length > 0) {
       console.log('✅ Found', result.data.token_account.length, 'tokens');
-      displayTokenBalances(result.data.token_account);
+
+      // Fetch token prices from SaucerSwap
+      await fetchTokenPricesAndDisplay(result.data.token_account);
     } else {
       console.log('❌ No tokens found for this account');
       document.getElementById('tokenBalancesContainer').style.display = 'none';
@@ -1320,7 +1322,37 @@ async function fetchTokenBalances(accountNum) {
   }
 }
 
-function displayTokenBalances(tokenBalances) {
+async function fetchTokenPricesAndDisplay(tokenBalances) {
+  try {
+    console.log('💰 Fetching token prices from SaucerSwap...');
+    const priceResponse = await fetch('https://api.saucerswap.finance/tokens', {
+      headers: {
+        'x-api-key': '875e1017-87b8-4b12-8301-6aa1f1aa073b'
+      }
+    });
+
+    const priceData = await priceResponse.json();
+    console.log('SaucerSwap price data:', priceData);
+
+    // Create a map of token prices by token ID
+    const priceMap = {};
+    if (Array.isArray(priceData)) {
+      priceData.forEach(token => {
+        if (token.id && token.price) {
+          priceMap[token.id] = parseFloat(token.price);
+        }
+      });
+    }
+
+    displayTokenBalances(tokenBalances, priceMap);
+  } catch (error) {
+    console.error('Error fetching token prices:', error);
+    // Display without prices if fetch fails
+    displayTokenBalances(tokenBalances, {});
+  }
+}
+
+function displayTokenBalances(tokenBalances, priceMap = {}) {
   const container = document.getElementById('tokenBalancesList');
   const chartContainer = document.getElementById('tokenBalancesContainer');
 
@@ -1333,7 +1365,33 @@ function displayTokenBalances(tokenBalances) {
 
   chartContainer.style.display = 'block';
 
-  let html = '';
+  // Calculate total portfolio value
+  let totalValue = 0;
+  tokenBalances.forEach((item) => {
+    const tokenInfo = item.token || {};
+    const decimals = tokenInfo.decimals || 8;
+    const balance = item.balance / Math.pow(10, decimals);
+    const tokenIdStr = `0.0.${item.token_id}`;
+    const tokenPrice = priceMap[tokenIdStr];
+    if (tokenPrice) {
+      totalValue += balance * tokenPrice;
+    }
+  });
+
+  // Create sticky header with total value and column labels
+  let html = `
+    <div style="position:sticky;top:0;background:rgba(22,27,34,0.95);backdrop-filter:blur(12px);z-index:10;padding-bottom:1rem;margin-bottom:1rem;border-bottom:2px solid #00d4ff;">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-size:0.9rem;opacity:0.7;margin-bottom:0.5rem;">Estimated Total Value</div>
+        <div style="font-size:2rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.75rem 1rem;font-size:0.9rem;font-weight:700;opacity:0.8;text-transform:uppercase;letter-spacing:0.05em;">
+        <div>Token</div>
+        <div>Balance</div>
+      </div>
+    </div>
+  `;
+
   tokenBalances.forEach((item, index) => {
     const tokenInfo = item.token || {};
     const decimals = tokenInfo.decimals || 8;
@@ -1342,8 +1400,14 @@ function displayTokenBalances(tokenBalances) {
     const tokenSymbol = tokenInfo.symbol || 'Unknown';
     const tokenId = item.token_id;
 
-    // Placeholder for USD value - would need price API integration for accurate values
-    const usdValue = '~$-.--';
+    // Calculate USD value using SaucerSwap price data
+    const tokenIdStr = `0.0.${tokenId}`;
+    const tokenPrice = priceMap[tokenIdStr];
+    let usdValue = '~$-.--';
+    if (tokenPrice) {
+      const usdAmount = (parseFloat(balance) * tokenPrice).toFixed(2);
+      usdValue = `~$${parseFloat(usdAmount).toLocaleString()}`;
+    }
 
     html += `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
@@ -1361,7 +1425,7 @@ function displayTokenBalances(tokenBalances) {
   });
 
   container.innerHTML = html;
-  console.log('✅ Token chart displayed');
+  console.log('✅ Token chart displayed with prices');
 }
 
 async function queryNetwork() {
