@@ -573,7 +573,7 @@
   }
 
   #tokenBalancesList::-webkit-scrollbar-thumb {
-    background:rgba(0,212,255,0.5);
+    background:rgba(139,92,246,0.5);
     border-radius:3px;
   }
   
@@ -1684,7 +1684,7 @@ function renderTokenList() {
 
   // Create sticky header with total value and column labels
   let html = `
-    <div style="position:sticky;top:0;background:rgba(10,10,10,1);backdrop-filter:blur(12px);z-index:10;padding-bottom:1rem;margin-bottom:1rem;border-bottom:2px solid #8b5cf6;margin-top:-2rem;padding-top:2rem;">
+    <div style="position:sticky;top:0;background:rgba(10,10,10,1);backdrop-filter:blur(12px);z-index:10;padding-bottom:1rem;margin-bottom:1rem;border-bottom:2px solid #8b5cf6;margin-top:-3rem;padding-top:3rem;">
       <div style="position:relative;text-align:center;margin-bottom:1.5rem;padding-top:15px;">
         <div style="font-size:0.9rem;opacity:0.7;margin-bottom:0.5rem;">Estimated Total Value</div>
         <div style="font-size:2rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
@@ -1718,7 +1718,7 @@ function renderTokenList() {
         <div style="flex:1;display:flex;align-items:center;">
           ${iconHtml}
           <div>
-            <div style="font-size:1.1rem;font-weight:700;color:#00d4ff;margin-bottom:0.25rem;">${token.tokenName}</div>
+            <div style="font-size:1.1rem;font-weight:700;color:white;margin-bottom:0.25rem;">${token.tokenName}</div>
             <div style="font-size:0.85rem;opacity:0.7;">${token.tokenSymbol}${token.isHbar ? '' : ' · 0.0.' + token.tokenId}</div>
           </div>
         </div>
