@@ -958,7 +958,7 @@
   <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;"></canvas>
 
   <!-- Small fixed top-left spinning coin -->
-  <canvas id="topLeftCoin" style="position:fixed;top:-600px;left:-600px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
+  <canvas id="topLeftCoin" style="position:fixed;top:20px;left:20px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
 
   <!-- Subtle animated background orbs -->
   <div class="bg-orbs">
@@ -3523,6 +3523,7 @@ window.addEventListener('scroll', throttledScrollHandler, { passive: true });
 let topLeftScene, topLeftCamera, topLeftRenderer, topLeftCoinModel;
 let topLeftLastScrollY = 0;
 let topLeftCurrentRotation = 0;
+let topLeftTargetRotation = 0;
 
 function initTopLeftCoin() {
   console.log('🎯 Initializing top-left spinning coin...');
@@ -3602,10 +3603,17 @@ function animateTopLeftCoin() {
     const scrollDelta = scrollY - topLeftLastScrollY;
     topLeftLastScrollY = scrollY;
 
-    // Update rotation based on scroll direction
+    // Update target rotation based on scroll direction
     // Positive delta = scrolling down = clockwise
     // Negative delta = scrolling up = counter-clockwise
-    topLeftCurrentRotation += scrollDelta * 0.01;
+    topLeftTargetRotation += scrollDelta * 0.01;
+
+    // Smooth interpolation (lerp) to prevent glitching
+    // Higher lerp factor = more responsive but potentially more jittery
+    // Lower lerp factor = smoother but more laggy
+    const lerpFactor = 0.12;
+    topLeftCurrentRotation += (topLeftTargetRotation - topLeftCurrentRotation) * lerpFactor;
+
     topLeftCoinModel.rotation.y = topLeftCurrentRotation;
 
     // Render
