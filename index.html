@@ -12,6 +12,13 @@
     font-style: normal;
   }
 
+  @font-face {
+    font-family: 'Styrene';
+    src: url('StyreneB-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+  }
+
   :root { --bg:#000000; --card:#0a0a0a; --accent:#00d4ff; }
   * { margin:0; padding:0; box-sizing:border-box; }
   html {
@@ -122,13 +129,19 @@
     50% { border-color:white; }
   }
   h2 {
+    font-family:'Styrene', system-ui, sans-serif;
     font-size:clamp(2.5rem,6vw,5rem);
-    font-weight:900;
+    font-weight:500;
     margin-bottom:2rem;
+    color:white;
+    white-space:nowrap;
+  }
+
+  /* Special gradient style for "The Future is Hedera" */
+  h2.gradient-title {
     background:linear-gradient(90deg,#00d4ff,#8b5cf6);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
-    white-space:nowrap;
   }
   .cards-wrapper {
     width:100%;
@@ -1081,7 +1094,7 @@
   </section>
   
   <section class="section" id="final" style="background:transparent;text-align:center;">
-    <h2>THE FUTURE IS HEDERA</h2>
+    <h2 class="gradient-title">THE FUTURE IS HEDERA</h2>
     <p style="font-size:1.5rem;opacity:0.7;margin-top:2rem;">Powered by Hgraph API</p>
   </section>
 
