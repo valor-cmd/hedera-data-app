@@ -1441,17 +1441,26 @@ window.addEventListener('load', initCarousels);
 
 function initUserCarousel() {
   if (userCarouselInitialized) {
+    console.log('⚠️ User carousel already initialized, skipping');
     return;
   }
   userCarouselInitialized = true;
 
+  console.log('🎠 Initializing user carousel...');
   const carousel = document.getElementById('userCarousel');
-  if (!carousel) return;
+  if (!carousel) {
+    console.log('❌ User carousel element not found');
+    return;
+  }
 
   const wrapper = carousel.closest('.carousel-scroll');
-  if (!wrapper) return;
+  if (!wrapper) {
+    console.log('❌ Carousel wrapper not found');
+    return;
+  }
 
   const cards = Array.from(carousel.children);
+  console.log('📊 Found', cards.length, 'cards in user carousel');
   if (cards.length === 0) return;
 
   const gap = 40;
@@ -1547,7 +1556,12 @@ function initUserCarousel() {
   }
 
   // Animation loop
+  let frameCount = 0;
   function animate() {
+    frameCount++;
+    if (frameCount % 60 === 0) {
+      console.log('🎬 Animation loop running. isInteracting:', isInteracting, 'isHovering:', isHovering, 'position:', position);
+    }
     if (!isInteracting && !isHovering) {
       position -= 0.5;
       wrapPosition();
@@ -1557,6 +1571,7 @@ function initUserCarousel() {
     requestAnimationFrame(animate);
   }
 
+  console.log('▶️ Starting user carousel animation loop');
   requestAnimationFrame(animate);
 
   // Hover delay - only pause after hovering for a bit
