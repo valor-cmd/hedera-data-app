@@ -3152,14 +3152,8 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
         `;
         table.appendChild(row);
       });
-      
-      // Scroll the user's account into view
-      setTimeout(() => {
-        const userRow = table.querySelector('.user-account');
-        if (userRow) {
-          userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
+
+      // Auto-scroll removed - user stays on current section
     }
   } catch (error) {
     alert('Error loading surrounding accounts: ' + error.message);
