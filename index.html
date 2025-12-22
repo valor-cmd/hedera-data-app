@@ -958,7 +958,7 @@
   <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;"></canvas>
 
   <!-- Small fixed top-left spinning coin -->
-  <canvas id="topLeftCoin" style="position:fixed;top:20px;left:20px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
+  <canvas id="topLeftCoin" style="position:fixed;top:-580px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
 
   <!-- Subtle animated background orbs -->
   <div class="bg-orbs">
@@ -3581,19 +3581,38 @@ function initTopLeftCoin() {
     (gltf) => {
       topLeftCoinModel = gltf.scene;
 
-      // Set scale and position
+      // Set scale and position - same initial scale as main coin
       topLeftCoinModel.scale.set(4, 4, 4);
-      // Keep coin centered in the canvas (the canvas itself is positioned top-left)
-      // Moved closer to camera for visibility
-      topLeftCoinModel.position.set(0, 0, 0);
+      // Position coin at origin, camera will look at it from z=5
+      topLeftCoinModel.position.set(0, 0, -10);
 
-      // Ensure materials have full opacity (keep original materials but force opacity)
-      topLeftCoinModel.traverse((node) => {
-        if (node.isMesh && node.material) {
-          node.material.transparent = true;
-          node.material.opacity = 1.0;
-          node.material.needsUpdate = true;
-          console.log('Material opacity set:', node.material.opacity);
+      // Apply EXACT same material setup as main coin
+      topLeftCoinModel.traverse((child) => {
+        if (child.isMesh && child.material) {
+          child.material.transparent = true;
+          child.material.opacity = 1.0;
+
+          // Very dark coin material - same as main coin
+          child.material.color = new THREE.Color(0x202028);
+
+          // No emissive glow
+          if (child.material.emissive !== undefined) {
+            child.material.emissive = new THREE.Color(0x000000);
+            child.material.emissiveIntensity = 0.0;
+          }
+
+          // Moderate roughness
+          if (child.material.roughness !== undefined) {
+            child.material.roughness = 0.35;
+          }
+
+          // Slight metalness
+          if (child.material.metalness !== undefined) {
+            child.material.metalness = 0.8;
+          }
+
+          child.material.needsUpdate = true;
+          console.log('Material opacity set:', child.material.opacity);
         }
       });
 
