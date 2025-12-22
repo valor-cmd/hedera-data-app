@@ -1823,26 +1823,37 @@ async function fetchRewards(accountNum) {
 function toggleRewardsCurrency(currency) {
   globalRewardsCurrency = currency;
 
-  // Update button styles - active button gets purple, inactive gets transparent
-  const hbarBtn = document.getElementById('rewardsHbarBtn');
-  const usdBtn = document.getElementById('rewardsUsdBtn');
+  // Update ALL buttons (original and cloned cards)
+  const allHbarBtns = document.querySelectorAll('[id="rewardsHbarBtn"], [onclick*="toggleRewardsCurrency"][style*="HBAR"]');
+  const allUsdBtns = document.querySelectorAll('[id="rewardsUsdBtn"], [onclick*="toggleRewardsCurrency"][style*="USD"]');
 
   if (currency === 'usd') {
     // USD is active
-    usdBtn.style.background = 'rgba(139,92,246,0.3)';
-    usdBtn.style.borderColor = '#8b5cf6';
-    hbarBtn.style.background = 'transparent';
-    hbarBtn.style.borderColor = '#30363d';
+    allUsdBtns.forEach(btn => {
+      btn.style.background = 'rgba(139,92,246,0.3)';
+      btn.style.borderColor = '#8b5cf6';
+    });
+    allHbarBtns.forEach(btn => {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = '#30363d';
+    });
   } else {
     // HBAR is active
-    hbarBtn.style.background = 'rgba(139,92,246,0.3)';
-    hbarBtn.style.borderColor = '#8b5cf6';
-    usdBtn.style.background = 'transparent';
-    usdBtn.style.borderColor = '#30363d';
+    allHbarBtns.forEach(btn => {
+      btn.style.background = 'rgba(139,92,246,0.3)';
+      btn.style.borderColor = '#8b5cf6';
+    });
+    allUsdBtns.forEach(btn => {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = '#30363d';
+    });
   }
 
   updateStakedDisplay();
   updateRewardsDisplay();
+
+  // Update cloned card values immediately
+  updateClonedStakedAndRewards();
 }
 
 function updateStakedDisplay() {
@@ -1872,25 +1883,36 @@ function updateRewardsDisplay() {
 function toggleBalanceCurrency(currency) {
   globalBalanceCurrency = currency;
 
-  // Update button styles - active button gets purple, inactive gets transparent
-  const hbarBtn = document.getElementById('balanceHbarBtn');
-  const usdBtn = document.getElementById('balanceUsdBtn');
+  // Update ALL buttons (original and cloned cards)
+  const allHbarBtns = document.querySelectorAll('[id="balanceHbarBtn"], [onclick*="toggleBalanceCurrency"][style*="HBAR"]');
+  const allUsdBtns = document.querySelectorAll('[id="balanceUsdBtn"], [onclick*="toggleBalanceCurrency"][style*="USD"]');
 
   if (currency === 'usd') {
     // USD is active
-    usdBtn.style.background = 'rgba(139,92,246,0.3)';
-    usdBtn.style.borderColor = '#8b5cf6';
-    hbarBtn.style.background = 'transparent';
-    hbarBtn.style.borderColor = '#30363d';
+    allUsdBtns.forEach(btn => {
+      btn.style.background = 'rgba(139,92,246,0.3)';
+      btn.style.borderColor = '#8b5cf6';
+    });
+    allHbarBtns.forEach(btn => {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = '#30363d';
+    });
   } else {
     // HBAR is active
-    hbarBtn.style.background = 'rgba(139,92,246,0.3)';
-    hbarBtn.style.borderColor = '#8b5cf6';
-    usdBtn.style.background = 'transparent';
-    usdBtn.style.borderColor = '#30363d';
+    allHbarBtns.forEach(btn => {
+      btn.style.background = 'rgba(139,92,246,0.3)';
+      btn.style.borderColor = '#8b5cf6';
+    });
+    allUsdBtns.forEach(btn => {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = '#30363d';
+    });
   }
 
   updateBalanceDisplay();
+
+  // Update cloned card values immediately
+  updateClonedBalance();
 }
 
 function updateBalanceDisplay() {
@@ -1903,6 +1925,59 @@ function updateBalanceDisplay() {
     const usdValue = window.hbarPrice ? (globalBalanceHbar * window.hbarPrice).toFixed(2) : '-.--';
     balanceElement.textContent = `$${usdValue}`;
   }
+}
+
+function updateClonedBalance() {
+  // Find all Balance card-value elements (original and clones)
+  const carousel = document.getElementById('userCarousel');
+  if (!carousel) return;
+
+  const allBalanceCards = carousel.querySelectorAll('.card');
+  allBalanceCards.forEach(card => {
+    const balanceElement = card.querySelector('#balance') ||
+                          (card.querySelector('.card-title')?.textContent === 'Balance' ? card.querySelector('.card-value') : null);
+    if (balanceElement) {
+      if (globalBalanceCurrency === 'hbar') {
+        balanceElement.textContent = `${globalBalanceHbar.toFixed(2)} HBAR`;
+      } else {
+        const usdValue = window.hbarPrice ? (globalBalanceHbar * window.hbarPrice).toFixed(2) : '-.--';
+        balanceElement.textContent = `$${usdValue}`;
+      }
+    }
+  });
+}
+
+function updateClonedStakedAndRewards() {
+  // Find all Total Staked card elements (original and clones)
+  const carousel = document.getElementById('userCarousel');
+  if (!carousel) return;
+
+  const allStakedCards = carousel.querySelectorAll('.card');
+  allStakedCards.forEach(card => {
+    // Update staked balance
+    const stakedElement = card.querySelector('#stakedBalance') ||
+                         (card.querySelector('.card-title')?.textContent === 'Total Staked' ? card.querySelector('.card-value') : null);
+    if (stakedElement) {
+      if (globalRewardsCurrency === 'hbar') {
+        stakedElement.textContent = `${globalStakedHbar.toFixed(2)} HBAR`;
+      } else {
+        const usdValue = window.hbarPrice ? (globalStakedHbar * window.hbarPrice).toFixed(2) : '-.--';
+        stakedElement.textContent = `$${usdValue}`;
+      }
+    }
+
+    // Update rewards
+    const rewardsElement = card.querySelector('#receivedRewards') ||
+                          card.querySelectorAll('div[style*="font-size:1.4rem"]')[0];
+    if (rewardsElement) {
+      if (globalRewardsCurrency === 'hbar') {
+        rewardsElement.textContent = `${globalRewardsHbar.toFixed(2)} HBAR`;
+      } else {
+        const usdValue = window.hbarPrice ? (globalRewardsHbar * window.hbarPrice).toFixed(2) : '-.--';
+        rewardsElement.textContent = `$${usdValue}`;
+      }
+    }
+  });
 }
 
 function toggleStakedToAccountCurrency(currency) {
