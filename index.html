@@ -1740,54 +1740,116 @@ function updateBalanceDisplay() {
 }
 
 function updateClonedBalance() {
-  // Find all Balance card-value elements (original and clones)
+  // Find all Balance cards (check for card-title = "Balance")
   const carousel = document.getElementById('userCarousel');
   if (!carousel) return;
 
-  const allBalanceCards = carousel.querySelectorAll('.card');
-  allBalanceCards.forEach(card => {
-    const balanceElement = card.querySelector('#balance') ||
-                          (card.querySelector('.card-title')?.textContent === 'Balance' ? card.querySelector('.card-value') : null);
-    if (balanceElement) {
-      if (globalBalanceCurrency === 'hbar') {
-        balanceElement.textContent = `${globalBalanceHbar.toFixed(2)} HBAR`;
-      } else {
-        const usdValue = window.hbarPrice ? (globalBalanceHbar * window.hbarPrice).toFixed(2) : '-.--';
-        balanceElement.textContent = `$${usdValue}`;
+  const allCards = carousel.querySelectorAll('.card');
+  allCards.forEach(card => {
+    const titleElement = card.querySelector('.card-title');
+    if (titleElement && titleElement.textContent.trim() === 'Balance') {
+      const balanceElement = card.querySelector('.card-value');
+      if (balanceElement) {
+        if (globalBalanceCurrency === 'hbar') {
+          balanceElement.textContent = `${globalBalanceHbar.toFixed(2)} HBAR`;
+        } else {
+          const usdValue = window.hbarPrice ? (globalBalanceHbar * window.hbarPrice).toFixed(2) : '-.--';
+          balanceElement.textContent = `$${usdValue}`;
+        }
       }
+
+      // Update buttons on this card
+      const buttons = card.querySelectorAll('button[onclick*="toggleBalanceCurrency"]');
+      buttons.forEach(btn => {
+        const isUsdBtn = btn.textContent.trim() === 'USD';
+        const isHbarBtn = btn.textContent.trim() === 'HBAR';
+        if (globalBalanceCurrency === 'usd') {
+          if (isUsdBtn) {
+            btn.style.background = 'rgba(139,92,246,0.3)';
+            btn.style.borderColor = '#8b5cf6';
+          } else if (isHbarBtn) {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = '#30363d';
+          }
+        } else {
+          if (isHbarBtn) {
+            btn.style.background = 'rgba(139,92,246,0.3)';
+            btn.style.borderColor = '#8b5cf6';
+          } else if (isUsdBtn) {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = '#30363d';
+          }
+        }
+      });
     }
   });
 }
 
 function updateClonedStakedAndRewards() {
-  // Find all Total Staked card elements (original and clones)
+  // Find all Total Staked cards (check for card-title = "Total Staked")
   const carousel = document.getElementById('userCarousel');
   if (!carousel) return;
 
-  const allStakedCards = carousel.querySelectorAll('.card');
-  allStakedCards.forEach(card => {
-    // Update staked balance
-    const stakedElement = card.querySelector('#stakedBalance') ||
-                         (card.querySelector('.card-title')?.textContent === 'Total Staked' ? card.querySelector('.card-value') : null);
-    if (stakedElement) {
-      if (globalRewardsCurrency === 'hbar') {
-        stakedElement.textContent = `${globalStakedHbar.toFixed(2)} HBAR`;
-      } else {
-        const usdValue = window.hbarPrice ? (globalStakedHbar * window.hbarPrice).toFixed(2) : '-.--';
-        stakedElement.textContent = `$${usdValue}`;
+  const allCards = carousel.querySelectorAll('.card');
+  allCards.forEach(card => {
+    const titleElement = card.querySelector('.card-title');
+    if (titleElement && titleElement.textContent.trim() === 'Total Staked') {
+      // Update staked balance
+      const stakedElement = card.querySelector('.card-value');
+      if (stakedElement) {
+        if (globalRewardsCurrency === 'hbar') {
+          stakedElement.textContent = `${globalStakedHbar.toFixed(2)} HBAR`;
+        } else {
+          const usdValue = window.hbarPrice ? (globalStakedHbar * window.hbarPrice).toFixed(2) : '-.--';
+          stakedElement.textContent = `$${usdValue}`;
+        }
       }
-    }
 
-    // Update rewards
-    const rewardsElement = card.querySelector('#receivedRewards') ||
-                          card.querySelectorAll('div[style*="font-size:1.4rem"]')[0];
-    if (rewardsElement) {
-      if (globalRewardsCurrency === 'hbar') {
-        rewardsElement.textContent = `${globalRewardsHbar.toFixed(2)} HBAR`;
-      } else {
-        const usdValue = window.hbarPrice ? (globalRewardsHbar * window.hbarPrice).toFixed(2) : '-.--';
-        rewardsElement.textContent = `$${usdValue}`;
+      // Update rewards - find the div with "Received Rewards" label
+      const rewardsDivs = card.querySelectorAll('div');
+      for (let div of rewardsDivs) {
+        if (div.textContent && div.textContent.includes('Received Rewards')) {
+          // Found the rewards section, get the value div (next sibling or child)
+          const parent = div.parentElement;
+          if (parent) {
+            const valueDivs = parent.querySelectorAll('div[style*="font-size:1.4rem"]');
+            if (valueDivs.length > 0) {
+              const rewardsElement = valueDivs[0];
+              if (globalRewardsCurrency === 'hbar') {
+                rewardsElement.textContent = `${globalRewardsHbar.toFixed(2)} HBAR`;
+              } else {
+                const usdValue = window.hbarPrice ? (globalRewardsHbar * window.hbarPrice).toFixed(2) : '-.--';
+                rewardsElement.textContent = `$${usdValue}`;
+              }
+            }
+          }
+          break;
+        }
       }
+
+      // Update buttons on this card
+      const buttons = card.querySelectorAll('button[onclick*="toggleRewardsCurrency"]');
+      buttons.forEach(btn => {
+        const isUsdBtn = btn.textContent.trim() === 'USD';
+        const isHbarBtn = btn.textContent.trim() === 'HBAR';
+        if (globalRewardsCurrency === 'usd') {
+          if (isUsdBtn) {
+            btn.style.background = 'rgba(139,92,246,0.3)';
+            btn.style.borderColor = '#8b5cf6';
+          } else if (isHbarBtn) {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = '#30363d';
+          }
+        } else {
+          if (isHbarBtn) {
+            btn.style.background = 'rgba(139,92,246,0.3)';
+            btn.style.borderColor = '#8b5cf6';
+          } else if (isUsdBtn) {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = '#30363d';
+          }
+        }
+      });
     }
   });
 }
