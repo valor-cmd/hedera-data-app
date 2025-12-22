@@ -1059,6 +1059,8 @@
     <div class="cards-wrapper">
       <div class="carousel-scroll">
         <div class="carousel" id="userCarousel">
+          <div class="card"><div class="card-title">Created</div><div class="card-value" id="created">---</div></div>
+          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
           <div class="card" style="position:relative;padding-right:8rem;">
             <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
               <button type="button" onclick="toggleBalanceCurrency('usd')" id="balanceUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
@@ -1067,7 +1069,6 @@
             <div class="card-title">Balance</div>
             <div class="card-value" id="balance">---</div>
           </div>
-          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
           <div class="card" style="position:relative;padding-right:9rem;justify-content:flex-start;">
             <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
               <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
@@ -1088,7 +1089,6 @@
             <div class="card-title">Staked to Account</div>
             <div class="card-value" id="stakedToAccount">---</div>
           </div>
-          <div class="card"><div class="card-title">Created</div><div class="card-value" id="created">---</div></div>
         </div>
       </div>
     </div>
@@ -1255,10 +1255,53 @@ function initCarousels() {
       // Batch reads first, then batch writes to avoid layout thrashing
       const updates = [];
       for (let i = 0; i < numOriginal; i++) {
-        const originalValue = allCards[i].querySelector('.card-value');
-        const cloneValue = allCards[i + numOriginal]?.querySelector('.card-value');
+        const originalCard = allCards[i];
+        const cloneCard = allCards[i + numOriginal];
+
+        if (!originalCard || !cloneCard) continue;
+
+        // Sync all card-value elements
+        const originalValue = originalCard.querySelector('.card-value');
+        const cloneValue = cloneCard.querySelector('.card-value');
         if (originalValue && cloneValue && originalValue.textContent !== cloneValue.textContent) {
           updates.push({ clone: cloneValue, text: originalValue.textContent });
+        }
+
+        // Sync Balance card (has #balance ID)
+        const originalBalance = originalCard.querySelector('#balance');
+        if (originalBalance) {
+          const cloneBalance = cloneCard.querySelector('.card-value');
+          if (cloneBalance && originalBalance.textContent !== cloneBalance.textContent) {
+            updates.push({ clone: cloneBalance, text: originalBalance.textContent });
+          }
+        }
+
+        // Sync Total Staked card (has #stakedBalance ID)
+        const originalStaked = originalCard.querySelector('#stakedBalance');
+        if (originalStaked) {
+          const cloneStaked = cloneCard.querySelector('.card-value');
+          if (cloneStaked && originalStaked.textContent !== cloneStaked.textContent) {
+            updates.push({ clone: cloneStaked, text: originalStaked.textContent });
+          }
+        }
+
+        // Sync receivedRewards element if it exists (for Total Staked card)
+        const originalRewards = originalCard.querySelector('#receivedRewards');
+        if (originalRewards) {
+          const cloneRewards = cloneCard.querySelector('[id^="receivedRewards"]') ||
+                               cloneCard.querySelectorAll('div[style*="font-size:1.4rem"]')[0];
+          if (cloneRewards && originalRewards.textContent !== cloneRewards.textContent) {
+            updates.push({ clone: cloneRewards, text: originalRewards.textContent });
+          }
+        }
+
+        // Sync Staked to Account card (has #stakedToAccount ID)
+        const originalStakedToAccount = originalCard.querySelector('#stakedToAccount');
+        if (originalStakedToAccount) {
+          const cloneStakedToAccount = cloneCard.querySelector('.card-value');
+          if (cloneStakedToAccount && originalStakedToAccount.textContent !== cloneStakedToAccount.textContent) {
+            updates.push({ clone: cloneStakedToAccount, text: originalStakedToAccount.textContent });
+          }
         }
       }
 
