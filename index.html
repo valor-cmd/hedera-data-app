@@ -1061,18 +1061,16 @@
         <div class="carousel" id="userCarousel">
           <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
           <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
-          <div class="card">
+          <div class="card" style="position:relative;">
+            <div style="position:absolute;top:1.5rem;right:1.5rem;display:flex;gap:0.25rem;z-index:10;">
+              <button type="button" onclick="toggleRewardsCurrency('hbar')" id="rewardsHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
+            </div>
             <div class="card-title">Total Staked</div>
             <div class="card-value" id="stakedBalance">---</div>
-            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.1);">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-                <div style="font-size:0.9rem;opacity:0.7;">Received Rewards</div>
-                <div style="display:flex;gap:0.25rem;">
-                  <button type="button" onclick="toggleRewardsCurrency('hbar')" id="rewardsHbarBtn" style="padding:0.25rem 0.75rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
-                  <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.25rem 0.75rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
-                </div>
-              </div>
-              <div style="font-size:1.5rem;font-weight:700;" id="receivedRewards">---</div>
+            <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.1);">
+              <div style="font-size:0.85rem;opacity:0.6;margin-bottom:0.5rem;">Received Rewards</div>
+              <div style="font-size:1.8rem;font-weight:700;color:#8b5cf6;" id="receivedRewards">---</div>
             </div>
           </div>
           <div class="card" id="stakedToAccountCard" style="display:none;"><div class="card-title">Staked to Account</div><div class="card-value" id="stakedToAccount">---</div></div>
@@ -1521,41 +1519,26 @@ let globalRewardsCurrency = 'hbar'; // default to HBAR
 
 async function fetchRewards(accountNum) {
   try {
-    console.log('💰 Fetching rewards for account', accountNum);
+    console.log('💰 Fetching rewards for account 0.0.' + accountNum);
 
-    const response = await fetch(HGRAPH_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': HGRAPH_KEY
-      },
-      body: JSON.stringify({
-        query: `
-          query GetRewards($accountNum: bigint!) {
-            account_balance_history(
-              where: {account_num: {_eq: $accountNum}}
-              order_by: {consensus_timestamp: desc}
-              limit: 1
-            ) {
-              staking_reward_account
-            }
-          }
-        `,
-        variables: { accountNum }
-      })
-    });
+    // Use Hedera Mirror Node REST API for rewards
+    const mirrorResponse = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/0.0.${accountNum}/rewards`);
+    const rewardsData = await mirrorResponse.json();
 
-    const result = await response.json();
-    console.log('💰 Rewards response:', result);
+    console.log('💰 Mirror Node rewards response:', rewardsData);
 
-    if (result.data?.account_balance_history?.[0]?.staking_reward_account) {
-      const rewardsHbar = result.data.account_balance_history[0].staking_reward_account / 100000000;
-      globalRewardsHbar = rewardsHbar;
+    if (rewardsData.rewards && rewardsData.rewards.length > 0) {
+      // Sum up all rewards
+      const totalRewardsTinybars = rewardsData.rewards.reduce((sum, reward) => sum + parseInt(reward.amount), 0);
+      const totalRewards = totalRewardsTinybars / 100000000; // Convert to HBAR
+
+      globalRewardsHbar = totalRewards;
       updateRewardsDisplay();
-      console.log('✅ Received rewards:', rewardsHbar, 'HBAR');
+      console.log('✅ Total staking rewards:', totalRewards, 'HBAR');
     } else {
-      document.getElementById('receivedRewards').textContent = '0.00 HBAR';
-      console.log('No rewards data found');
+      globalRewardsHbar = 0;
+      updateRewardsDisplay();
+      console.log('No rewards found for this account');
     }
   } catch (error) {
     console.error('Error fetching rewards:', error);
