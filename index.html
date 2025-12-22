@@ -1052,8 +1052,8 @@
     <div class="gradient-orb" style="top:-300px;left:-300px;background:radial-gradient(circle,rgba(139,92,246,0.18),transparent);"></div>
     <h2>User Data</h2>
     <div style="text-align:center;margin-bottom:3rem;white-space:nowrap;">
-      <input type="text" id="accountInput" class="search-box" placeholder="Enter account ID · 0.0.123456" onkeypress="if(event.key === 'Enter') queryAccount()" style="display:inline-block;vertical-align:middle;">
-      <button class="search-btn" onclick="queryAccount()" style="display:inline-block;vertical-align:middle;">Query Account</button>
+      <input type="text" id="accountInput" class="search-box" placeholder="Enter account ID · 0.0.123456" onkeypress="if(event.key === 'Enter') { event.preventDefault(); queryAccount(); }" style="display:inline-block;vertical-align:middle;">
+      <button class="search-btn" onclick="queryAccount(); return false;" style="display:inline-block;vertical-align:middle;">Query Account</button>
       <div class="loading" id="accountLoading">Loading...</div>
     </div>
     <div class="cards-wrapper">
@@ -3210,11 +3210,15 @@ ScrollTrigger.create({
 });
 
 // Add event listener for the Check Rank button
-document.getElementById('checkRankBtn').addEventListener('click', checkRank);
+document.getElementById('checkRankBtn').addEventListener('click', (e) => {
+  e.preventDefault();
+  checkRank();
+});
 
 // Allow Enter key to check rank
 document.getElementById('richlistInput').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
+    e.preventDefault();
     checkRank();
   }
 });
