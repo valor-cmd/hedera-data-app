@@ -1071,7 +1071,7 @@
 
     <!-- Token Balances Chart -->
     <div id="tokenBalancesContainer" style="width:95%;max-width:1200px;margin:3rem auto 0;display:none;">
-      <h3 style="font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;color:#00d4ff;text-align:center;">Token Balances</h3>
+      <h3 style="font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;color:white;text-align:center;">Token Balances</h3>
       <div id="tokenBalancesChart" style="background:rgba(10,10,10,0.9);border-radius:16px;padding:2rem;border:1px solid #30363d;backdrop-filter:blur(12px);">
         <div id="tokenBalancesList" style="max-height:600px;overflow-y:auto;"></div>
       </div>
@@ -1684,8 +1684,8 @@ function renderTokenList() {
 
   // Create sticky header with total value and column labels
   let html = `
-    <div style="position:sticky;top:0;background:rgba(10,10,10,0.98);backdrop-filter:blur(12px);z-index:10;padding-bottom:1rem;margin-bottom:1rem;border-bottom:2px solid #00d4ff;">
-      <div style="position:relative;text-align:center;margin-bottom:1.5rem;">
+    <div style="position:sticky;top:0;background:rgba(10,10,10,1);backdrop-filter:blur(12px);z-index:10;padding-bottom:1rem;margin-bottom:1rem;border-bottom:2px solid #8b5cf6;margin-top:-2rem;padding-top:2rem;">
+      <div style="position:relative;text-align:center;margin-bottom:1.5rem;padding-top:15px;">
         <div style="font-size:0.9rem;opacity:0.7;margin-bottom:0.5rem;">Estimated Total Value</div>
         <div style="font-size:2rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         <svg onclick="refreshTokenBalances()" style="position:absolute;top:0;right:1rem;cursor:pointer;width:24px;height:24px;opacity:0.7;transition:all 0.3s ease;transform:rotate(0deg);" onmouseover="this.style.opacity='1';this.style.transform='rotate(-180deg)'" onmouseout="this.style.opacity='0.7';this.style.transform='rotate(0deg)'" title="Refresh balances" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1714,7 +1714,7 @@ function renderTokenList() {
       : '';
 
     html += `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(0,212,255,0.05);border-radius:12px;border-left:3px solid #00d4ff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;margin-bottom:0.75rem;background:rgba(139,92,246,0.05);border-radius:12px;border-left:3px solid #8b5cf6;">
         <div style="flex:1;display:flex;align-items:center;">
           ${iconHtml}
           <div>
