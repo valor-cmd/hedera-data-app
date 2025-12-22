@@ -1250,9 +1250,12 @@ function initCarousels() {
     const syncInterval = isUserCarousel ? 0 : 100;
 
     function syncClonedCards() {
-      const now = performance.now();
-      if (now - lastSyncTime < syncInterval) return;
-      lastSyncTime = now;
+      // Skip throttling for user carousel (always sync)
+      if (!isUserCarousel) {
+        const now = performance.now();
+        if (now - lastSyncTime < syncInterval) return;
+        lastSyncTime = now;
+      }
 
       const allCards = carousel.querySelectorAll('.card');
       const numOriginal = cards.length;
@@ -1331,23 +1334,15 @@ function initCarousels() {
 
     // Animation loop
     function animate() {
+      // Sync clones BEFORE moving position to prevent visual jumps
+      syncClonedCards();
+
       if (!isInteracting && !isHovering) {
         position -= 0.5;
         wrapPosition();
         setPosition(position);
       }
       requestAnimationFrame(animate);
-    }
-
-    // Sync clones only when needed (not every frame)
-    // For user carousel, sync immediately when content changes
-    // For other carousels, sync periodically
-    if (!isUserCarousel) {
-      setInterval(() => {
-        if (!isInteracting && !isHovering) {
-          syncClonedCards();
-        }
-      }, 100);
     }
 
     // Start animation
