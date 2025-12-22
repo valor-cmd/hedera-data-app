@@ -1059,21 +1059,35 @@
     <div class="cards-wrapper">
       <div class="carousel-scroll">
         <div class="carousel" id="userCarousel">
-          <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
-          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
-          <div class="card" style="position:relative;padding-right:7rem;">
+          <div class="card" style="position:relative;padding-right:8rem;">
             <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
-              <button type="button" onclick="toggleRewardsCurrency('hbar')" id="rewardsHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleBalanceCurrency('usd')" id="balanceUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
+              <button type="button" onclick="toggleBalanceCurrency('hbar')" id="balanceHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+            </div>
+            <div class="card-title" style="font-size:0.75rem;">Balance</div>
+            <div class="card-value" id="balance" style="font-size:1.5rem;">---</div>
+          </div>
+          <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
+          <div class="card" style="position:relative;padding-right:8rem;">
+            <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
               <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
+              <button type="button" onclick="toggleRewardsCurrency('hbar')" id="rewardsHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
             </div>
             <div class="card-title" style="font-size:0.75rem;">Total Staked</div>
-            <div class="card-value" id="stakedBalance" style="font-size:1.6rem;">---</div>
+            <div class="card-value" id="stakedBalance" style="font-size:1.5rem;">---</div>
             <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.1);">
               <div style="font-size:0.75rem;opacity:0.6;margin-bottom:0.5rem;">Received Rewards</div>
-              <div style="font-size:1.6rem;font-weight:700;color:#8b5cf6;" id="receivedRewards">---</div>
+              <div style="font-size:1.5rem;font-weight:700;color:#8b5cf6;" id="receivedRewards">---</div>
             </div>
           </div>
-          <div class="card" id="stakedToAccountCard" style="display:none;"><div class="card-title">Staked to Account</div><div class="card-value" id="stakedToAccount">---</div></div>
+          <div class="card" id="stakedToAccountCard" style="display:none;position:relative;padding-right:8rem;">
+            <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
+              <button type="button" onclick="toggleStakedToAccountCurrency('usd')" id="stakedToAccountUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
+              <button type="button" onclick="toggleStakedToAccountCurrency('hbar')" id="stakedToAccountHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+            </div>
+            <div class="card-title" style="font-size:0.75rem;">Staked to Account</div>
+            <div class="card-value" id="stakedToAccount" style="font-size:1.5rem;">---</div>
+          </div>
           <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
         </div>
       </div>
@@ -1413,10 +1427,11 @@ async function queryAccount() {
     
     if (result.data?.entity?.[0]) {
       const account = result.data.entity[0];
-      const balance = (account.balance / 100000000).toFixed(2);
+      const balance = account.balance / 100000000;
       const created = new Date(account.created_timestamp / 1000000).toLocaleDateString();
 
-      document.getElementById('balance').textContent = `${balance} HBAR`;
+      globalBalanceHbar = balance; // Store globally for toggle
+      document.getElementById('balance').textContent = `${balance.toFixed(2)} HBAR`;
       document.getElementById('accountId').textContent = `0.0.${account.num}`;
       document.getElementById('created').textContent = created;
 
@@ -1501,8 +1516,9 @@ async function fetchStakedBalance(accountNum) {
 
     // Check if account is receiving stake (is a node)
     if (result.data?.entity_stake?.[0]?.staked_to_me) {
-      const stakedToAccount = (result.data.entity_stake[0].staked_to_me / 100000000).toFixed(2);
-      document.getElementById('stakedToAccount').textContent = `${stakedToAccount} HBAR`;
+      const stakedToAccount = result.data.entity_stake[0].staked_to_me / 100000000;
+      globalStakedToAccountHbar = stakedToAccount; // Store globally for toggle
+      document.getElementById('stakedToAccount').textContent = `${stakedToAccount.toFixed(2)} HBAR`;
       document.getElementById('stakedToAccountCard').style.display = 'flex';
       console.log('✅ Staked to account (as node):', stakedToAccount, 'HBAR');
     }
@@ -1519,6 +1535,10 @@ async function fetchStakedBalance(accountNum) {
 let globalRewardsHbar = 0;
 let globalStakedHbar = 0;
 let globalRewardsCurrency = 'hbar'; // default to HBAR
+let globalBalanceHbar = 0;
+let globalBalanceCurrency = 'hbar'; // default to HBAR
+let globalStakedToAccountHbar = 0;
+let globalStakedToAccountCurrency = 'hbar'; // default to HBAR
 
 async function fetchRewards(accountNum) {
   try {
@@ -1606,6 +1626,74 @@ function updateRewardsDisplay() {
     // Convert to USD
     const usdValue = window.hbarPrice ? (globalRewardsHbar * window.hbarPrice).toFixed(2) : '-.--';
     rewardsElement.textContent = `$${usdValue}`;
+  }
+}
+
+function toggleBalanceCurrency(currency) {
+  globalBalanceCurrency = currency;
+
+  // Update button styles
+  const hbarBtn = document.getElementById('balanceHbarBtn');
+  const usdBtn = document.getElementById('balanceUsdBtn');
+
+  if (currency === 'hbar') {
+    hbarBtn.style.background = 'rgba(139,92,246,0.3)';
+    hbarBtn.style.borderColor = '#8b5cf6';
+    usdBtn.style.background = 'transparent';
+    usdBtn.style.borderColor = '#30363d';
+  } else {
+    usdBtn.style.background = 'rgba(139,92,246,0.3)';
+    usdBtn.style.borderColor = '#8b5cf6';
+    hbarBtn.style.background = 'transparent';
+    hbarBtn.style.borderColor = '#30363d';
+  }
+
+  updateBalanceDisplay();
+}
+
+function updateBalanceDisplay() {
+  const balanceElement = document.getElementById('balance');
+
+  if (globalBalanceCurrency === 'hbar') {
+    balanceElement.textContent = `${globalBalanceHbar.toFixed(2)} HBAR`;
+  } else {
+    // Convert to USD
+    const usdValue = window.hbarPrice ? (globalBalanceHbar * window.hbarPrice).toFixed(2) : '-.--';
+    balanceElement.textContent = `$${usdValue}`;
+  }
+}
+
+function toggleStakedToAccountCurrency(currency) {
+  globalStakedToAccountCurrency = currency;
+
+  // Update button styles
+  const hbarBtn = document.getElementById('stakedToAccountHbarBtn');
+  const usdBtn = document.getElementById('stakedToAccountUsdBtn');
+
+  if (currency === 'hbar') {
+    hbarBtn.style.background = 'rgba(139,92,246,0.3)';
+    hbarBtn.style.borderColor = '#8b5cf6';
+    usdBtn.style.background = 'transparent';
+    usdBtn.style.borderColor = '#30363d';
+  } else {
+    usdBtn.style.background = 'rgba(139,92,246,0.3)';
+    usdBtn.style.borderColor = '#8b5cf6';
+    hbarBtn.style.background = 'transparent';
+    hbarBtn.style.borderColor = '#30363d';
+  }
+
+  updateStakedToAccountDisplay();
+}
+
+function updateStakedToAccountDisplay() {
+  const stakedToAccountElement = document.getElementById('stakedToAccount');
+
+  if (globalStakedToAccountCurrency === 'hbar') {
+    stakedToAccountElement.textContent = `${globalStakedToAccountHbar.toFixed(2)} HBAR`;
+  } else {
+    // Convert to USD
+    const usdValue = window.hbarPrice ? (globalStakedToAccountHbar * window.hbarPrice).toFixed(2) : '-.--';
+    stakedToAccountElement.textContent = `$${usdValue}`;
   }
 }
 
