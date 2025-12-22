@@ -1061,16 +1061,16 @@
         <div class="carousel" id="userCarousel">
           <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
           <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
-          <div class="card" style="position:relative;">
-            <div style="position:absolute;top:1.5rem;right:1.5rem;display:flex;gap:0.25rem;z-index:10;">
+          <div class="card" style="position:relative;padding-right:7rem;">
+            <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
               <button type="button" onclick="toggleRewardsCurrency('hbar')" id="rewardsHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
               <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
             </div>
-            <div class="card-title">Total Staked</div>
-            <div class="card-value" id="stakedBalance">---</div>
+            <div class="card-title" style="font-size:0.75rem;">Total Staked</div>
+            <div class="card-value" id="stakedBalance" style="font-size:1.6rem;">---</div>
             <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.1);">
-              <div style="font-size:0.85rem;opacity:0.6;margin-bottom:0.5rem;">Received Rewards</div>
-              <div style="font-size:1.8rem;font-weight:700;color:#8b5cf6;" id="receivedRewards">---</div>
+              <div style="font-size:0.75rem;opacity:0.6;margin-bottom:0.5rem;">Received Rewards</div>
+              <div style="font-size:1.6rem;font-weight:700;color:#8b5cf6;" id="receivedRewards">---</div>
             </div>
           </div>
           <div class="card" id="stakedToAccountCard" style="display:none;"><div class="card-title">Staked to Account</div><div class="card-value" id="stakedToAccount">---</div></div>
@@ -1488,12 +1488,14 @@ async function fetchStakedBalance(accountNum) {
     if ((entityData?.staked_node_id !== null && entityData?.staked_node_id !== undefined && entityData?.staked_node_id >= 0) ||
         (entityData?.staked_account_id !== null && entityData?.staked_account_id !== undefined)) {
       // Account is staking - the entire balance is what's being staked on Hedera
-      const stakedBalance = (entityData.balance / 100000000).toFixed(2);
-      document.getElementById('stakedBalance').textContent = `${stakedBalance} HBAR`;
+      const stakedBalance = entityData.balance / 100000000;
+      globalStakedHbar = stakedBalance; // Store globally for toggle
+      document.getElementById('stakedBalance').textContent = `${stakedBalance.toFixed(2)} HBAR`;
       console.log('✅ Staked balance:', stakedBalance, 'HBAR');
       console.log('   Staked to node:', entityData.staked_node_id);
       console.log('   Staked to account:', entityData.staked_account_id);
     } else {
+      globalStakedHbar = 0;
       console.log('❌ Account not staking (no staked_node_id or staked_account_id)');
     }
 
@@ -1513,28 +1515,42 @@ async function fetchStakedBalance(accountNum) {
   }
 }
 
-// Store rewards data globally
+// Store rewards and staked balance globally
 let globalRewardsHbar = 0;
+let globalStakedHbar = 0;
 let globalRewardsCurrency = 'hbar'; // default to HBAR
 
 async function fetchRewards(accountNum) {
   try {
     console.log('💰 Fetching rewards for account 0.0.' + accountNum);
 
-    // Use Hedera Mirror Node REST API for rewards
-    const mirrorResponse = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/0.0.${accountNum}/rewards`);
-    const rewardsData = await mirrorResponse.json();
+    let allRewards = [];
+    let nextLink = `https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/0.0.${accountNum}/rewards?limit=100`;
 
-    console.log('💰 Mirror Node rewards response:', rewardsData);
+    // Loop through all pages to get ALL rewards
+    while (nextLink) {
+      const mirrorResponse = await fetch(nextLink);
+      const rewardsData = await mirrorResponse.json();
 
-    if (rewardsData.rewards && rewardsData.rewards.length > 0) {
+      if (rewardsData.rewards && rewardsData.rewards.length > 0) {
+        allRewards = allRewards.concat(rewardsData.rewards);
+        console.log('💰 Fetched', rewardsData.rewards.length, 'rewards. Total so far:', allRewards.length);
+      }
+
+      // Check if there's a next page
+      nextLink = rewardsData.links?.next ? `https://mainnet-public.mirrornode.hedera.com${rewardsData.links.next}` : null;
+    }
+
+    console.log('💰 Total reward entries fetched:', allRewards.length);
+
+    if (allRewards.length > 0) {
       // Sum up all rewards
-      const totalRewardsTinybars = rewardsData.rewards.reduce((sum, reward) => sum + parseInt(reward.amount), 0);
+      const totalRewardsTinybars = allRewards.reduce((sum, reward) => sum + parseInt(reward.amount), 0);
       const totalRewards = totalRewardsTinybars / 100000000; // Convert to HBAR
 
       globalRewardsHbar = totalRewards;
       updateRewardsDisplay();
-      console.log('✅ Total staking rewards:', totalRewards, 'HBAR');
+      console.log('✅ Total staking rewards:', totalRewards, 'HBAR from', allRewards.length, 'entries');
     } else {
       globalRewardsHbar = 0;
       updateRewardsDisplay();
@@ -1565,7 +1581,20 @@ function toggleRewardsCurrency(currency) {
     hbarBtn.style.borderColor = '#30363d';
   }
 
+  updateStakedDisplay();
   updateRewardsDisplay();
+}
+
+function updateStakedDisplay() {
+  const stakedElement = document.getElementById('stakedBalance');
+
+  if (globalRewardsCurrency === 'hbar') {
+    stakedElement.textContent = `${globalStakedHbar.toFixed(2)} HBAR`;
+  } else {
+    // Convert to USD
+    const usdValue = window.hbarPrice ? (globalStakedHbar * window.hbarPrice).toFixed(2) : '-.--';
+    stakedElement.textContent = `$${usdValue}`;
+  }
 }
 
 function updateRewardsDisplay() {
