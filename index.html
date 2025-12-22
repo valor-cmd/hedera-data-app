@@ -1557,19 +1557,19 @@ function initUserCarousel() {
 
   requestAnimationFrame(animate);
 
-  // Hover delay
+  // Hover delay - only pause after hovering for a bit
   let hoverTimeout;
   wrapper.addEventListener('mouseenter', () => {
-    isHovering = true;
     hoverTimeout = setTimeout(() => {
+      isHovering = true;
       isHoverReady = true;
     }, 300);
   });
 
   wrapper.addEventListener('mouseleave', () => {
+    clearTimeout(hoverTimeout);
     isHovering = false;
     isHoverReady = false;
-    clearTimeout(hoverTimeout);
   });
 
   // Mouse drag
