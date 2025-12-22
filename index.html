@@ -1622,6 +1622,16 @@ function initUserCarousel() {
       timeout = setTimeout(() => { isInteracting = false; }, 1000);
     }
   });
+
+  // Horizontal scroll wheel support
+  wrapper.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.preventDefault();
+      position -= e.deltaX;
+      wrapPosition();
+      setPosition(position);
+    }
+  }, { passive: false });
 }
 
 async function queryAccount() {
@@ -1823,29 +1833,31 @@ async function fetchRewards(accountNum) {
 function toggleRewardsCurrency(currency) {
   globalRewardsCurrency = currency;
 
-  // Update ALL buttons (original and cloned cards)
-  const allHbarBtns = document.querySelectorAll('[id="rewardsHbarBtn"], [onclick*="toggleRewardsCurrency"][style*="HBAR"]');
-  const allUsdBtns = document.querySelectorAll('[id="rewardsUsdBtn"], [onclick*="toggleRewardsCurrency"][style*="USD"]');
+  // Update ALL buttons (original and cloned cards) by finding them properly
+  const carousel = document.getElementById('userCarousel');
+  if (carousel) {
+    const allButtons = carousel.querySelectorAll('button[onclick*="toggleRewardsCurrency"]');
+    allButtons.forEach(btn => {
+      const isUsdBtn = btn.textContent.trim() === 'USD';
+      const isHbarBtn = btn.textContent.trim() === 'HBAR';
 
-  if (currency === 'usd') {
-    // USD is active
-    allUsdBtns.forEach(btn => {
-      btn.style.background = 'rgba(139,92,246,0.3)';
-      btn.style.borderColor = '#8b5cf6';
-    });
-    allHbarBtns.forEach(btn => {
-      btn.style.background = 'transparent';
-      btn.style.borderColor = '#30363d';
-    });
-  } else {
-    // HBAR is active
-    allHbarBtns.forEach(btn => {
-      btn.style.background = 'rgba(139,92,246,0.3)';
-      btn.style.borderColor = '#8b5cf6';
-    });
-    allUsdBtns.forEach(btn => {
-      btn.style.background = 'transparent';
-      btn.style.borderColor = '#30363d';
+      if (currency === 'usd') {
+        if (isUsdBtn) {
+          btn.style.background = 'rgba(139,92,246,0.3)';
+          btn.style.borderColor = '#8b5cf6';
+        } else if (isHbarBtn) {
+          btn.style.background = 'transparent';
+          btn.style.borderColor = '#30363d';
+        }
+      } else {
+        if (isHbarBtn) {
+          btn.style.background = 'rgba(139,92,246,0.3)';
+          btn.style.borderColor = '#8b5cf6';
+        } else if (isUsdBtn) {
+          btn.style.background = 'transparent';
+          btn.style.borderColor = '#30363d';
+        }
+      }
     });
   }
 
@@ -1883,29 +1895,31 @@ function updateRewardsDisplay() {
 function toggleBalanceCurrency(currency) {
   globalBalanceCurrency = currency;
 
-  // Update ALL buttons (original and cloned cards)
-  const allHbarBtns = document.querySelectorAll('[id="balanceHbarBtn"], [onclick*="toggleBalanceCurrency"][style*="HBAR"]');
-  const allUsdBtns = document.querySelectorAll('[id="balanceUsdBtn"], [onclick*="toggleBalanceCurrency"][style*="USD"]');
+  // Update ALL buttons (original and cloned cards) by finding them properly
+  const carousel = document.getElementById('userCarousel');
+  if (carousel) {
+    const allButtons = carousel.querySelectorAll('button[onclick*="toggleBalanceCurrency"]');
+    allButtons.forEach(btn => {
+      const isUsdBtn = btn.textContent.trim() === 'USD';
+      const isHbarBtn = btn.textContent.trim() === 'HBAR';
 
-  if (currency === 'usd') {
-    // USD is active
-    allUsdBtns.forEach(btn => {
-      btn.style.background = 'rgba(139,92,246,0.3)';
-      btn.style.borderColor = '#8b5cf6';
-    });
-    allHbarBtns.forEach(btn => {
-      btn.style.background = 'transparent';
-      btn.style.borderColor = '#30363d';
-    });
-  } else {
-    // HBAR is active
-    allHbarBtns.forEach(btn => {
-      btn.style.background = 'rgba(139,92,246,0.3)';
-      btn.style.borderColor = '#8b5cf6';
-    });
-    allUsdBtns.forEach(btn => {
-      btn.style.background = 'transparent';
-      btn.style.borderColor = '#30363d';
+      if (currency === 'usd') {
+        if (isUsdBtn) {
+          btn.style.background = 'rgba(139,92,246,0.3)';
+          btn.style.borderColor = '#8b5cf6';
+        } else if (isHbarBtn) {
+          btn.style.background = 'transparent';
+          btn.style.borderColor = '#30363d';
+        }
+      } else {
+        if (isHbarBtn) {
+          btn.style.background = 'rgba(139,92,246,0.3)';
+          btn.style.borderColor = '#8b5cf6';
+        } else if (isUsdBtn) {
+          btn.style.background = 'transparent';
+          btn.style.borderColor = '#30363d';
+        }
+      }
     });
   }
 
