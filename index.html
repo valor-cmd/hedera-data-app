@@ -3582,8 +3582,8 @@ function initTopLeftCoin() {
 
       // Set scale and position
       topLeftCoinModel.scale.set(4, 4, 4);
-      // Move coin to top-left within the canvas (negative x and positive y)
-      topLeftCoinModel.position.set(-3, 3, -10);
+      // Keep coin centered in the canvas (the canvas itself is positioned top-left)
+      topLeftCoinModel.position.set(0, 0, -10);
 
       // Ensure materials have full opacity (keep original materials but force opacity)
       topLeftCoinModel.traverse((node) => {
