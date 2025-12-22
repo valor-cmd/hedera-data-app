@@ -1242,9 +1242,12 @@ function initCarousels() {
       }
     }
     
-    // Sync data from original cards to clones (throttled)
+    // Sync data from original cards to clones
+    // For user carousel: no throttling, immediate sync to prevent jumps
+    // For network carousel: throttle to 100ms for performance
+    const isUserCarousel = carousel.id === 'userCarousel';
     let lastSyncTime = 0;
-    const syncInterval = 100; // Only sync every 100ms instead of every frame
+    const syncInterval = isUserCarousel ? 0 : 100;
 
     function syncClonedCards() {
       const now = performance.now();
@@ -1254,7 +1257,8 @@ function initCarousels() {
       const allCards = carousel.querySelectorAll('.card');
       const numOriginal = cards.length;
 
-      // Batch reads first, then batch writes to avoid layout thrashing
+      // For user carousel, update synchronously to prevent layout shifts
+      // For other carousels, batch in RAF for performance
       const updates = [];
       for (let i = 0; i < numOriginal; i++) {
         const originalCard = allCards[i];
@@ -1307,13 +1311,21 @@ function initCarousels() {
         }
       }
 
-      // Apply all updates together
+      // Apply updates
       if (updates.length > 0) {
-        requestAnimationFrame(() => {
+        if (isUserCarousel) {
+          // Synchronous update for user carousel to prevent jumps
           updates.forEach(({ clone, text }) => {
             clone.textContent = text;
           });
-        });
+        } else {
+          // Batched update for other carousels
+          requestAnimationFrame(() => {
+            updates.forEach(({ clone, text }) => {
+              clone.textContent = text;
+            });
+          });
+        }
       }
     }
 
@@ -1324,11 +1336,20 @@ function initCarousels() {
         wrapPosition();
         setPosition(position);
       }
-      // Sync clones periodically
-      syncClonedCards();
       requestAnimationFrame(animate);
     }
-    
+
+    // Sync clones only when needed (not every frame)
+    // For user carousel, sync immediately when content changes
+    // For other carousels, sync periodically
+    if (!isUserCarousel) {
+      setInterval(() => {
+        if (!isInteracting && !isHovering) {
+          syncClonedCards();
+        }
+      }, 100);
+    }
+
     // Start animation
     requestAnimationFrame(animate);
     
