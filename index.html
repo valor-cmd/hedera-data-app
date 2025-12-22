@@ -385,25 +385,23 @@
     background:rgba(139,92,246,0.2);
     border:1px solid #8b5cf6;
     border-radius:12px;
-    color:#8b5cf6;
+    color:white;
     font-size:0.9rem;
     font-weight:600;
     cursor:pointer;
     transition:all 0.3s ease;
     display:none;
-    align-items:center;
-    gap:0.5rem;
-  }
-  .back-btn.active {
-    display:flex;
   }
   .back-btn:hover {
     background:rgba(139,92,246,0.4);
     transform:translateX(-4px);
   }
-  .back-btn::before {
-    content:'←';
-    font-size:1.2rem;
+  #yourRankBtn {
+    left:auto;
+    right:2rem;
+  }
+  #yourRankBtn:hover {
+    transform:translateX(4px);
   }
   .richlist-table {
     display:flex;
@@ -481,7 +479,7 @@
   .richlist-balance {
     font-size:1.1rem;
     font-weight:700;
-    color:#00d4ff;
+    color:white;
     text-align:right;
     min-width:150px;
     flex-shrink:0;
@@ -1095,7 +1093,8 @@
       
       <!-- Top 50 List -->
       <div class="richlist-table-container">
-        <button type="button" class="back-btn" id="backToTop50">Back to Top 50</button>
+        <button type="button" class="back-btn" id="backToTop50">← Back to Top 50</button>
+        <button type="button" class="back-btn" id="yourRankBtn" style="display:none;">→ Your Rank</button>
         <h3 class="richlist-subtitle">Top 50 HBAR Holders</h3>
         <div class="loading" id="richlistLoading">Loading...</div>
         <div class="richlist-table" id="richlistTable"></div>
@@ -2979,9 +2978,14 @@ async function loadRichList() {
       const table = document.getElementById('richlistTable');
       table.innerHTML = '';
       
-      // Update subtitle and hide back button
+      // Update subtitle and hide back button, show your rank button if we have a stored rank
       document.querySelector('.richlist-subtitle').textContent = 'Top 50 HBAR Holders';
-      document.getElementById('backToTop50').classList.remove('active');
+      document.getElementById('backToTop50').style.display = 'none';
+
+      // Show "Your Rank" button if we have a stored rank
+      if (window.lastQueriedRank && window.lastQueriedAccount) {
+        document.getElementById('yourRankBtn').style.display = 'block';
+      }
       
       result.data.entity.forEach((account, index) => {
         const rank = index + 1;
@@ -3175,10 +3179,15 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
       const table = document.getElementById('richlistTable');
       table.innerHTML = '';
       
-      // Update subtitle to show context and show back button
-      document.querySelector('.richlist-subtitle').textContent = 
+      // Store rank and account for later use
+      window.lastQueriedRank = userRank;
+      window.lastQueriedAccount = userAccountNum;
+
+      // Update subtitle to show context and show back button, hide your rank button
+      document.querySelector('.richlist-subtitle').textContent =
         `Accounts Around Rank #${userRank.toLocaleString()}`;
-      document.getElementById('backToTop50').classList.add('active');
+      document.getElementById('backToTop50').style.display = 'block';
+      document.getElementById('yourRankBtn').style.display = 'none';
       
       result.data.entity.forEach((account, index) => {
         const rank = offset + index + 1;
@@ -3259,6 +3268,13 @@ document.getElementById('richlistInput').addEventListener('keypress', (e) => {
 
 // Add event listener for back to top 50 button
 document.getElementById('backToTop50').addEventListener('click', loadRichList);
+
+// Add event listener for your rank button
+document.getElementById('yourRankBtn').addEventListener('click', () => {
+  if (window.lastQueriedRank && window.lastQueriedAccount) {
+    loadSurroundingAccounts(window.lastQueriedRank, window.lastQueriedAccount);
+  }
+});
 
 // ============================================
 // 3D HBAR Coin Animation with Three.js
