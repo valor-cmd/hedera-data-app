@@ -2989,18 +2989,25 @@ async function loadRichList() {
       
       result.data.entity.forEach((account, index) => {
         const rank = index + 1;
-        const balance = (account.balance / 100000000).toLocaleString(undefined, {
+        const balanceHbar = account.balance / 100000000;
+        const balance = balanceHbar.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
-        
+
+        // Calculate USD value (using global hbarPrice if available)
+        const usdValue = window.hbarPrice ? (balanceHbar * window.hbarPrice).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) : '-.--';
+
         let rankClass = '';
         if (rank === 1) rankClass = 'gold';
         else if (rank === 2) rankClass = 'silver';
         else if (rank === 3) rankClass = 'bronze';
-        
+
         const accountName = account.memo ? `<div class="account-name">${account.memo}</div>` : '';
-        
+
         const row = document.createElement('div');
         row.className = 'richlist-row';
         row.innerHTML = `
@@ -3009,7 +3016,10 @@ async function loadRichList() {
             <div class="account-id">0.0.${account.num}</div>
             ${accountName}
           </div>
-          <div class="richlist-balance">${balance} ℏ</div>
+          <div class="richlist-balance">
+            ${balance} ℏ
+            <div style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">~$${usdValue}</div>
+          </div>
         `;
         table.appendChild(row);
       });
@@ -3191,20 +3201,27 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
       
       result.data.entity.forEach((account, index) => {
         const rank = offset + index + 1;
-        const balance = (account.balance / 100000000).toLocaleString(undefined, {
+        const balanceHbar = account.balance / 100000000;
+        const balance = balanceHbar.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
-        
+
+        // Calculate USD value (using global hbarPrice if available)
+        const usdValue = window.hbarPrice ? (balanceHbar * window.hbarPrice).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) : '-.--';
+
         let rankClass = '';
         if (rank === 1) rankClass = 'gold';
         else if (rank === 2) rankClass = 'silver';
         else if (rank === 3) rankClass = 'bronze';
-        
+
         const isUserAccount = account.num === userAccountNum;
         const userLabel = isUserAccount ? ' (You)' : '';
         const accountName = account.memo ? `<div class="account-name">${account.memo}</div>` : '';
-        
+
         const row = document.createElement('div');
         row.className = `richlist-row${isUserAccount ? ' user-account' : ''}`;
         row.innerHTML = `
@@ -3213,7 +3230,10 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
             <div class="account-id">0.0.${account.num}${userLabel}</div>
             ${accountName}
           </div>
-          <div class="richlist-balance">${balance} ℏ</div>
+          <div class="richlist-balance">
+            ${balance} ℏ
+            <div style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">~$${usdValue}</div>
+          </div>
         `;
         table.appendChild(row);
       });
