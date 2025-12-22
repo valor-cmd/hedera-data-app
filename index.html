@@ -3539,7 +3539,8 @@ function initTopLeftCoin() {
 
   // Create separate camera (1:1 aspect ratio for square canvas)
   topLeftCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-  topLeftCamera.position.z = 5;
+  topLeftCamera.position.set(0, 0, 5);
+  topLeftCamera.lookAt(0, 0, 0);
 
   // Create separate renderer
   topLeftRenderer = new THREE.WebGLRenderer({
@@ -3583,7 +3584,8 @@ function initTopLeftCoin() {
       // Set scale and position
       topLeftCoinModel.scale.set(4, 4, 4);
       // Keep coin centered in the canvas (the canvas itself is positioned top-left)
-      topLeftCoinModel.position.set(0, 0, -10);
+      // Moved closer to camera for visibility
+      topLeftCoinModel.position.set(0, 0, 0);
 
       // Ensure materials have full opacity (keep original materials but force opacity)
       topLeftCoinModel.traverse((node) => {
@@ -3591,11 +3593,14 @@ function initTopLeftCoin() {
           node.material.transparent = true;
           node.material.opacity = 1.0;
           node.material.needsUpdate = true;
+          console.log('Material opacity set:', node.material.opacity);
         }
       });
 
       topLeftScene.add(topLeftCoinModel);
       console.log('✅ Top-left coin loaded and added to scene');
+      console.log('Top-left coin position:', topLeftCoinModel.position);
+      console.log('Top-left coin scale:', topLeftCoinModel.scale);
 
       // Start animation loop
       animateTopLeftCoin();
