@@ -5,6 +5,13 @@
 <title>Hedera Mainnet Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+  @font-face {
+    font-family: 'Styrene';
+    src: url('StyreneB-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+  }
+
   :root { --bg:#000000; --card:#0a0a0a; --accent:#00d4ff; }
   * { margin:0; padding:0; box-sizing:border-box; }
   html {
@@ -90,11 +97,27 @@
     text-align:center;
     transform:translateY(-50%);
     font-size:clamp(5rem,12vw,12rem);
-    font-weight:900;
+    font-family:'Styrene', system-ui, sans-serif;
+    font-weight:bold;
     z-index:100;
     pointer-events:none;
     color:white;
     white-space:nowrap;
+    overflow:hidden;
+    border-right:0.15em solid white;
+    animation:typing 2s steps(6, end) forwards, blink-caret 0.75s step-end infinite;
+    width:0;
+    margin:0 auto;
+  }
+
+  @keyframes typing {
+    from { width:0; }
+    to { width:6ch; }
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color:transparent; }
+    50% { border-color:white; }
   }
   h2 {
     font-size:clamp(2.5rem,6vw,5rem);
