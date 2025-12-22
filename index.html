@@ -958,7 +958,7 @@
   <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;"></canvas>
 
   <!-- Small fixed top-left spinning coin -->
-  <canvas id="topLeftCoin" style="position:fixed;top:-580px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
+  <canvas id="topLeftCoin" style="position:fixed;top:-560px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
 
   <!-- Subtle animated background orbs -->
   <div class="bg-orbs">
@@ -3643,7 +3643,8 @@ function animateTopLeftCoin() {
     // Update target rotation based on scroll direction
     // Positive delta = scrolling down = clockwise
     // Negative delta = scrolling up = counter-clockwise
-    topLeftTargetRotation += scrollDelta * 0.01;
+    // Half speed: 0.01 / 2 = 0.005
+    topLeftTargetRotation += scrollDelta * 0.005;
 
     // Smooth interpolation (lerp) to prevent glitching
     // Higher lerp factor = more responsive but potentially more jittery
