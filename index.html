@@ -3550,13 +3550,29 @@ function initTopLeftCoin() {
   topLeftRenderer.setSize(1280, 1280);
   topLeftRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // Add lights
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  // Add lights - same as main coin for consistent look
+  const ambientLight = new THREE.AmbientLight(0x202050, 0.4);  // Dark cool purple-blue
   topLeftScene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(5, 5, 5);
-  topLeftScene.add(directionalLight);
+  // Hemisphere for soft fill
+  const hemiLight = new THREE.HemisphereLight(0x282850, 0x101020, 0.25);
+  hemiLight.position.set(0, 20, 0);
+  topLeftScene.add(hemiLight);
+
+  // Purple directional light
+  const light1 = new THREE.DirectionalLight(0x8b5cf6, 0.8);
+  light1.position.set(350, -350, 500);
+  topLeftScene.add(light1);
+
+  // Cyan directional light
+  const light2 = new THREE.DirectionalLight(0x00d4ff, 0.8);
+  light2.position.set(-350, -350, 500);
+  topLeftScene.add(light2);
+
+  // Lavender directional light
+  const light3 = new THREE.DirectionalLight(0xa0a0ff, 0.6);
+  light3.position.set(0, -400, 450);
+  topLeftScene.add(light3);
 
   // Load coin model (separate instance)
   const loader = new THREE.GLTFLoader();
@@ -3564,20 +3580,17 @@ function initTopLeftCoin() {
     (gltf) => {
       topLeftCoinModel = gltf.scene;
 
-      // Set scale and position (same as initial main coin size)
+      // Set scale and position
       topLeftCoinModel.scale.set(4, 4, 4);
-      topLeftCoinModel.position.set(0, 0, -10);
+      // Move coin to top-left within the canvas (negative x and positive y)
+      topLeftCoinModel.position.set(-3, 3, -10);
 
-      // Apply white material with full opacity
+      // Ensure materials have full opacity (keep original materials but force opacity)
       topLeftCoinModel.traverse((node) => {
-        if (node.isMesh) {
-          node.material = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            metalness: 0.7,
-            roughness: 0.3,
-            transparent: false,
-            opacity: 1.0
-          });
+        if (node.isMesh && node.material) {
+          node.material.transparent = true;
+          node.material.opacity = 1.0;
+          node.material.needsUpdate = true;
         }
       });
 
