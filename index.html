@@ -104,16 +104,17 @@
     color:white;
     white-space:nowrap;
     overflow:hidden;
-    border-right:0.15em solid white;
-    padding-right:0.3em;
-    animation:typing 2s steps(6, end) forwards, blink-caret 0.75s step-end infinite;
+    border-right:0.075em solid white;
+    padding-right:0.15em;
+    letter-spacing:-0.05em;
+    animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite;
     width:0;
     margin:0 auto;
   }
 
   @keyframes typing {
     from { width:0; }
-    to { width:6ch; }
+    to { width:12ch; }
   }
 
   @keyframes blink-caret {
@@ -963,7 +964,7 @@
     <div class="bg-orb"></div>
   </div>
   
-  <h1 id="fixed-title">Hedera</h1>
+  <h1 id="fixed-title">Hedera Data</h1>
 
   <section class="section" id="s1"></section>
 
