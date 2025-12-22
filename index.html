@@ -231,6 +231,8 @@
     will-change: contents;
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
+    min-width: 200px;
+    display: inline-block;
   }
 
   /* Price change animations */
@@ -1595,7 +1597,8 @@ function initUserCarousel() {
 
   document.addEventListener('mouseup', () => {
     if (isInteracting) {
-      timeout = setTimeout(() => { isInteracting = false; }, 1000);
+      isInteracting = false;
+      clearTimeout(timeout);
     }
   });
 
@@ -1619,7 +1622,8 @@ function initUserCarousel() {
   document.addEventListener('touchend', () => {
     if (dragging) {
       dragging = false;
-      timeout = setTimeout(() => { isInteracting = false; }, 1000);
+      isInteracting = false;
+      clearTimeout(timeout);
     }
   });
 
