@@ -957,9 +957,6 @@
   <!-- 3D HBAR Coin Canvas (behind everything) -->
   <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;"></canvas>
 
-  <!-- Fixed top-left spinning coin -->
-  <canvas id="topLeftCoin" style="position:fixed;top:20px;left:20px;width:80px;height:80px;z-index:200;pointer-events:none;"></canvas>
-
   <!-- Subtle animated background orbs -->
   <div class="bg-orbs">
     <div class="bg-orb"></div>
@@ -3463,88 +3460,7 @@ window.addEventListener('load', () => {
   console.log('THREE exists?', typeof THREE);
   console.log('THREE.GLTFLoader exists?', typeof THREE?.GLTFLoader);
   init3DCoin();
-  initTopLeftCoin();
 });
-
-// ============================================
-// Top-left fixed spinning coin
-// ============================================
-
-let topLeftScene, topLeftCamera, topLeftRenderer, topLeftModel;
-let lastScrollY = 0;
-let currentRotationY = 0;
-
-function initTopLeftCoin() {
-  const canvas = document.getElementById('topLeftCoin');
-
-  // Scene
-  topLeftScene = new THREE.Scene();
-
-  // Camera
-  topLeftCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-  topLeftCamera.position.z = 5;
-
-  // Renderer
-  topLeftRenderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true,
-    antialias: true
-  });
-  topLeftRenderer.setSize(80, 80);
-  topLeftRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  // Lights
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-  topLeftScene.add(ambientLight);
-
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(5, 5, 5);
-  topLeftScene.add(directionalLight);
-
-  // Load HBAR coin model
-  const loader = new THREE.GLTFLoader();
-  loader.load('hbar-coin.glb', (gltf) => {
-    topLeftModel = gltf.scene;
-
-    // Set initial scale and position
-    topLeftModel.scale.set(4, 4, 4);
-    topLeftModel.position.set(0, 0, -10);
-
-    // Apply white color and full opacity to all materials
-    topLeftModel.traverse((node) => {
-      if (node.isMesh) {
-        node.material = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
-          metalness: 0.7,
-          roughness: 0.3,
-          transparent: false,
-          opacity: 1.0
-        });
-      }
-    });
-
-    topLeftScene.add(topLeftModel);
-    animateTopLeftCoin();
-  });
-}
-
-function animateTopLeftCoin() {
-  requestAnimationFrame(animateTopLeftCoin);
-
-  if (topLeftModel) {
-    // Calculate scroll delta (positive = scrolling down, negative = scrolling up)
-    const scrollY = window.scrollY;
-    const scrollDelta = scrollY - lastScrollY;
-    lastScrollY = scrollY;
-
-    // Rotate based on scroll direction and speed
-    // Scrolling down = rotate clockwise, scrolling up = rotate counter-clockwise
-    currentRotationY += scrollDelta * 0.01;
-    topLeftModel.rotation.y = currentRotationY;
-
-    topLeftRenderer.render(topLeftScene, topLeftCamera);
-  }
-}
 
 // Combined scroll update function for coin, HEDERA fade, and network section
 function updateAllScrollEffects() {
