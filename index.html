@@ -1073,6 +1073,7 @@
     <div id="tokenBalancesContainer" style="width:95%;max-width:1200px;margin:3rem auto 0;display:none;">
       <h3 style="font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;color:white;text-align:center;">Token Balances</h3>
       <div id="tokenBalancesChart" style="background:rgba(10,10,10,0.9);border-radius:16px;padding:0;border:1px solid #30363d;backdrop-filter:blur(12px);">
+        <div id="tokenBalancesHeader" style="background:rgba(10,10,10,1);padding:1rem;border-radius:16px 16px 0 0;"></div>
         <div id="tokenBalancesList" style="max-height:600px;overflow-y:auto;padding:0 1rem 1rem 1rem;"></div>
       </div>
     </div>
@@ -1682,24 +1683,28 @@ function renderTokenList() {
   const nameArrow = currentSortBy === 'name' ? (currentSortDirection === 'asc' ? '▲' : '▼') : '⇅';
   const balanceArrow = currentSortBy === 'usd' ? (currentSortDirection === 'asc' ? '▲' : '▼') : '⇅';
 
-  // Create sticky header with total value and column labels
-  let html = `
-    <div style="position:sticky;top:0;background:rgba(10,10,10,0.95);backdrop-filter:blur(12px);z-index:10;padding:1rem;margin-bottom:0.75rem;border-bottom:1px solid #30363d;border-radius:12px 12px 0 0;">
-      <div style="position:relative;text-align:center;margin-bottom:1rem;background:rgba(10,10,10,0.95);border-radius:12px;padding:1rem;border:1px solid #30363d;">
-        <div style="font-size:0.8rem;opacity:0.6;margin-bottom:0.5rem;">Estimated Total Value</div>
-        <div style="font-size:1.5rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-        <svg onclick="refreshTokenBalances()" style="position:absolute;top:1rem;right:1rem;cursor:pointer;width:24px;height:24px;opacity:0.7;transition:all 0.3s ease;transform:rotate(0deg);" onmouseover="this.style.opacity='1';this.style.transform='rotate(-180deg)'" onmouseout="this.style.opacity='0.7';this.style.transform='rotate(0deg)'" title="Refresh balances" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <polyline points="1 20 1 14 7 14"></polyline>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-        </svg>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:0.5rem 1rem;font-size:0.85rem;font-weight:700;opacity:0.8;text-transform:uppercase;letter-spacing:0.05em;">
-        <div style="cursor:pointer;user-select:none;" onclick="sortTokens('name')">Token ${nameArrow}</div>
-        <div style="cursor:pointer;user-select:none;" onclick="sortTokens('usd')">Balance ${balanceArrow}</div>
-      </div>
+  // Create static header (outside scroll area)
+  const headerHtml = `
+    <div style="position:relative;text-align:center;margin-bottom:1rem;background:rgba(10,10,10,0.95);border-radius:12px;padding:1rem;border:1px solid #30363d;">
+      <div style="font-size:0.8rem;opacity:0.6;margin-bottom:0.5rem;">Estimated Total Value</div>
+      <div style="font-size:1.5rem;font-weight:700;color:#8b5cf6;">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      <svg onclick="refreshTokenBalances()" style="position:absolute;top:1rem;right:1rem;cursor:pointer;width:24px;height:24px;opacity:0.7;transition:all 0.3s ease;transform:rotate(0deg);" onmouseover="this.style.opacity='1';this.style.transform='rotate(-180deg)'" onmouseout="this.style.opacity='0.7';this.style.transform='rotate(0deg)'" title="Refresh balances" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <polyline points="1 20 1 14 7 14"></polyline>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:0.5rem 1rem;font-size:0.85rem;font-weight:700;opacity:0.8;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #30363d;padding-bottom:0.75rem;">
+      <div style="cursor:pointer;user-select:none;" onclick="sortTokens('name')">Token ${nameArrow}</div>
+      <div style="cursor:pointer;user-select:none;" onclick="sortTokens('usd')">Balance ${balanceArrow}</div>
     </div>
   `;
+
+  // Render header in separate container
+  document.getElementById('tokenBalancesHeader').innerHTML = headerHtml;
+
+  // Create token list HTML
+  let html = '';
 
   // Render each token
   sortedData.forEach((token) => {
