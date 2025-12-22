@@ -1186,7 +1186,6 @@ ScrollTrigger.create({
 
 // Initialize carousels when DOM is fully ready
 let carouselsInitialized = false;
-let userCarouselInitialized = false;
 
 function initCarousels() {
   if (carouselsInitialized) {
@@ -1195,10 +1194,6 @@ function initCarousels() {
   carouselsInitialized = true;
 
   document.querySelectorAll('.carousel').forEach(carousel => {
-    // Skip user carousel - it will be initialized after data loads
-    if (carousel.id === 'userCarousel') {
-      return;
-    }
     const wrapper = carousel.closest('.carousel-scroll');
     if (!wrapper) return;
     
@@ -1439,219 +1434,6 @@ if (document.readyState === 'loading') {
 // Also run on window load as backup
 window.addEventListener('load', initCarousels);
 
-function initUserCarousel() {
-  if (userCarouselInitialized) {
-    console.log('⚠️ User carousel already initialized, skipping');
-    return;
-  }
-  userCarouselInitialized = true;
-
-  console.log('🎠 Initializing user carousel...');
-  const carousel = document.getElementById('userCarousel');
-  if (!carousel) {
-    console.log('❌ User carousel element not found');
-    return;
-  }
-
-  const wrapper = carousel.closest('.carousel-scroll');
-  if (!wrapper) {
-    console.log('❌ Carousel wrapper not found');
-    return;
-  }
-
-  const cards = Array.from(carousel.children);
-  console.log('📊 Found', cards.length, 'cards in user carousel');
-  if (cards.length === 0) return;
-
-  const gap = 40;
-
-  // Clone cards for seamless loop
-  cards.forEach(card => {
-    const clone = card.cloneNode(true);
-    clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-    carousel.appendChild(clone);
-  });
-
-  // Calculate set width
-  let setWidth = 0;
-  for (let i = 0; i < cards.length; i++) {
-    setWidth += carousel.children[i].offsetWidth + gap;
-  }
-
-  // State
-  let position = 0;
-  let isInteracting = false;
-  let isHovering = false;
-  let isHoverReady = false;
-
-  function setPosition(pos) {
-    carousel.style.transform = `translateX(${pos}px)`;
-  }
-
-  function wrapPosition() {
-    while (position <= -setWidth) {
-      position += setWidth;
-    }
-    while (position > 0) {
-      position -= setWidth;
-    }
-  }
-
-  // Sync data from original cards to clones (immediate, no throttling for user carousel)
-  function syncClonedCards() {
-    const allCards = carousel.querySelectorAll('.card');
-    const numOriginal = cards.length;
-
-    // Sync immediately without throttling to prevent visual jumps
-    for (let i = 0; i < numOriginal; i++) {
-      const originalCard = allCards[i];
-      const cloneCard = allCards[i + numOriginal];
-
-      if (!originalCard || !cloneCard) continue;
-
-      // Sync all card-value elements
-      const originalValue = originalCard.querySelector('.card-value');
-      const cloneValue = cloneCard.querySelector('.card-value');
-      if (originalValue && cloneValue && originalValue.textContent !== cloneValue.textContent) {
-        cloneValue.textContent = originalValue.textContent;
-      }
-
-      // Sync Balance card
-      const originalBalance = originalCard.querySelector('#balance');
-      if (originalBalance) {
-        const cloneBalance = cloneCard.querySelector('.card-value');
-        if (cloneBalance && originalBalance.textContent !== cloneBalance.textContent) {
-          cloneBalance.textContent = originalBalance.textContent;
-        }
-      }
-
-      // Sync Total Staked card
-      const originalStaked = originalCard.querySelector('#stakedBalance');
-      if (originalStaked) {
-        const cloneStaked = cloneCard.querySelector('.card-value');
-        if (cloneStaked && originalStaked.textContent !== cloneStaked.textContent) {
-          cloneStaked.textContent = originalStaked.textContent;
-        }
-      }
-
-      // Sync receivedRewards element
-      const originalRewards = originalCard.querySelector('#receivedRewards');
-      if (originalRewards) {
-        const cloneRewards = cloneCard.querySelector('[id^="receivedRewards"]') ||
-                             cloneCard.querySelectorAll('div[style*="font-size:1.4rem"]')[0];
-        if (cloneRewards && originalRewards.textContent !== cloneRewards.textContent) {
-          cloneRewards.textContent = originalRewards.textContent;
-        }
-      }
-
-      // Sync Staked to Account card
-      const originalStakedToAccount = originalCard.querySelector('#stakedToAccount');
-      if (originalStakedToAccount) {
-        const cloneStakedToAccount = cloneCard.querySelector('.card-value');
-        if (cloneStakedToAccount && originalStakedToAccount.textContent !== cloneStakedToAccount.textContent) {
-          cloneStakedToAccount.textContent = originalStakedToAccount.textContent;
-        }
-      }
-    }
-  }
-
-  // Animation loop
-  let frameCount = 0;
-  function animate() {
-    frameCount++;
-    if (frameCount % 60 === 0) {
-      console.log('🎬 Animation loop running. isInteracting:', isInteracting, 'isHovering:', isHovering, 'position:', position);
-    }
-    if (!isInteracting && !isHovering) {
-      position -= 0.5;
-      wrapPosition();
-      setPosition(position);
-    }
-    syncClonedCards();
-    requestAnimationFrame(animate);
-  }
-
-  console.log('▶️ Starting user carousel animation loop');
-  requestAnimationFrame(animate);
-
-  // Hover delay - only pause after hovering for a bit
-  let hoverTimeout;
-  wrapper.addEventListener('mouseenter', () => {
-    hoverTimeout = setTimeout(() => {
-      isHovering = true;
-      isHoverReady = true;
-    }, 300);
-  });
-
-  wrapper.addEventListener('mouseleave', () => {
-    clearTimeout(hoverTimeout);
-    isHovering = false;
-    isHoverReady = false;
-  });
-
-  // Mouse drag
-  let startX = 0;
-  let dragStartPos = 0;
-  let timeout;
-
-  carousel.addEventListener('mousedown', e => {
-    if (!isHoverReady) return;
-    isInteracting = true;
-    startX = e.clientX;
-    dragStartPos = position;
-    clearTimeout(timeout);
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!isInteracting) return;
-    position = dragStartPos + (e.clientX - startX);
-    wrapPosition();
-    setPosition(position);
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (isInteracting) {
-      isInteracting = false;
-      clearTimeout(timeout);
-    }
-  });
-
-  // Touch drag
-  let dragging = false;
-  carousel.addEventListener('touchstart', e => {
-    dragging = true;
-    isInteracting = true;
-    startX = e.touches[0].clientX;
-    dragStartPos = position;
-    clearTimeout(timeout);
-  }, { passive: true });
-
-  document.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    position = dragStartPos + (e.touches[0].clientX - startX);
-    wrapPosition();
-    setPosition(position);
-  }, { passive: true });
-
-  document.addEventListener('touchend', () => {
-    if (dragging) {
-      dragging = false;
-      isInteracting = false;
-      clearTimeout(timeout);
-    }
-  });
-
-  // Horizontal scroll wheel support
-  wrapper.addEventListener('wheel', e => {
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      e.preventDefault();
-      position -= e.deltaX;
-      wrapPosition();
-      setPosition(position);
-    }
-  }, { passive: false });
-}
 
 async function queryAccount() {
   const accountInput = document.getElementById('accountInput').value;
@@ -1712,9 +1494,6 @@ async function queryAccount() {
       richlistInput.value = `0.0.${account.num}`;
       console.log('🔄 Auto-checking rank for account 0.0.' + account.num);
       await checkRank();
-
-      // Initialize user carousel after all data is loaded to prevent glitching
-      initUserCarousel();
     } else {
       alert('Account not found');
       document.getElementById('tokenBalancesContainer').style.display = 'none';
