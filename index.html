@@ -1892,6 +1892,11 @@ async function queryNetwork() {
       const priceValue = result.data.price?.[0] ? (result.data.price[0].total / 100000) : null;
       const price = priceValue ? `$${priceValue.toFixed(5)}` : 'N/A';
 
+      // Store price globally for use in other sections
+      if (priceValue) {
+        window.hbarPrice = priceValue;
+      }
+
       // Track previous price for animation
       const priceElement = document.getElementById('hbarPrice');
       const previousPrice = parseFloat(priceElement.dataset.previousPrice || '0');
@@ -2007,6 +2012,11 @@ async function updatePriceAndMarketCap() {
       // HBAR Price with animation
       const priceValue = result.data.price?.[0] ? (result.data.price[0].total / 100000) : null;
       const price = priceValue ? `$${priceValue.toFixed(5)}` : 'N/A';
+
+      // Store price globally for use in other sections
+      if (priceValue) {
+        window.hbarPrice = priceValue;
+      }
 
       const priceElement = document.getElementById('hbarPrice');
       const previousPrice = parseFloat(priceElement.dataset.previousPrice || '0');
@@ -3018,7 +3028,7 @@ async function loadRichList() {
           </div>
           <div class="richlist-balance">
             ${balance} ℏ
-            <div style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">~$${usdValue}</div>
+            <div style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">Value in $USD ~$${usdValue}</div>
           </div>
         `;
         table.appendChild(row);
@@ -3232,7 +3242,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
           </div>
           <div class="richlist-balance">
             ${balance} ℏ
-            <div style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">~$${usdValue}</div>
+            <div style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">Value in $USD ~$${usdValue}</div>
           </div>
         `;
         table.appendChild(row);
