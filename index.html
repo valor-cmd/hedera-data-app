@@ -954,11 +954,11 @@
 <script src="https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
-  <!-- 3D HBAR Coin Canvas (behind everything) -->
-  <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;"></canvas>
+  <!-- 3D HBAR Coin Canvas (behind everything) - HIDDEN FOR NOW -->
+  <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;display:none;"></canvas>
 
   <!-- Small fixed top-left spinning coin -->
-  <canvas id="topLeftCoin" style="position:fixed;top:-540px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none;"></canvas>
+  <canvas id="topLeftCoin" style="position:fixed;top:-540px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none;opacity:0;transition:opacity 1s ease-in;"></canvas>
 
   <!-- Subtle animated background orbs -->
   <div class="bg-orbs">
@@ -972,7 +972,7 @@
   <section class="section" id="s1"></section>
 
   <!-- Spacer to push network section down so it scrolls naturally from below -->
-  <div class="section-spacer" style="height: 15vh;"></div>
+  <div class="section-spacer" style="height: 5vh;"></div>
 
   <section class="section" id="network">
     <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.3),rgba(139,92,246,0.2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;"></div>
@@ -3663,6 +3663,16 @@ window.addEventListener('load', () => {
   // Small delay to ensure Three.js and main coin are initialized first
   setTimeout(() => {
     initTopLeftCoin();
+
+    // Fade in the coin after "Hedera Data" typing animation completes
+    // Typing animation is 1.5s, so fade in at 1.6s
+    setTimeout(() => {
+      const topLeftCanvas = document.getElementById('topLeftCoin');
+      if (topLeftCanvas) {
+        topLeftCanvas.style.opacity = '1';
+        console.log('✨ Top-left coin fading in...');
+      }
+    }, 1600);
   }, 500);
 });
 
