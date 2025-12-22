@@ -3153,7 +3153,22 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
         table.appendChild(row);
       });
 
-      // Auto-scroll removed - user stays on current section
+      // Scroll the user's account into view WITHIN the table only (not the whole page)
+      setTimeout(() => {
+        const userRow = table.querySelector('.user-account');
+        if (userRow) {
+          // Calculate position to scroll within table container
+          const tableRect = table.getBoundingClientRect();
+          const rowRect = userRow.getBoundingClientRect();
+          const scrollTop = userRow.offsetTop - (table.clientHeight / 2) + (userRow.clientHeight / 2);
+
+          // Scroll the table container smoothly
+          table.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     }
   } catch (error) {
     alert('Error loading surrounding accounts: ' + error.message);
