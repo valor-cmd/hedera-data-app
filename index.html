@@ -1064,6 +1064,7 @@
           <div class="card"><div class="card-title">Balance</div><div class="card-value" id="balance">---</div></div>
           <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
           <div class="card"><div class="card-title">Total Staked</div><div class="card-value" id="stakedBalance">---</div></div>
+          <div class="card" id="stakedToAccountCard" style="display:none;"><div class="card-title">Staked to Account</div><div class="card-value" id="stakedToAccount">---</div></div>
           <div class="card"><div class="card-title">Created</div><div class="card-value" id="created" style="font-size:1.8rem;">---</div></div>
         </div>
       </div>
@@ -1447,6 +1448,12 @@ async function fetchStakedBalance(accountNum) {
       body: JSON.stringify({
         query: `
           query GetStakedBalance($accountNum: bigint!) {
+            entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}) {
+              staked_node_id
+              stake_period_start
+              pending_reward
+              balance_tinybars
+            }
             entity_stake(where: {id: {_eq: $accountNum}}) {
               staked_to_me
             }
@@ -1457,15 +1464,28 @@ async function fetchStakedBalance(accountNum) {
     });
 
     const result = await response.json();
-    console.log('Staking response:', result);
+    console.log('Full staking response:', result);
 
-    if (result.data?.entity_stake?.[0]) {
-      const stakedBalance = (result.data.entity_stake[0].staked_to_me / 100000000).toFixed(2);
+    // Reset both cards
+    document.getElementById('stakedBalance').textContent = '0.00 HBAR';
+    document.getElementById('stakedToAccountCard').style.display = 'none';
+
+    // Check if account is staking (has staked_node_id set)
+    if (result.data?.entity?.[0]?.staked_node_id !== null && result.data?.entity?.[0]?.staked_node_id !== undefined) {
+      // Account is staking - use the balance as the staked amount since it's all staked
+      const stakedBalance = (result.data.entity[0].balance_tinybars / 100000000).toFixed(2);
       document.getElementById('stakedBalance').textContent = `${stakedBalance} HBAR`;
-      console.log('✅ Staked balance:', stakedBalance, 'HBAR');
+      console.log('✅ Staked balance (from balance):', stakedBalance, 'HBAR');
     } else {
-      document.getElementById('stakedBalance').textContent = '0.00 HBAR';
-      console.log('No staking data found');
+      console.log('Account not staking to a node');
+    }
+
+    // Check if account is receiving stake (is a node)
+    if (result.data?.entity_stake?.[0]?.staked_to_me) {
+      const stakedToAccount = (result.data.entity_stake[0].staked_to_me / 100000000).toFixed(2);
+      document.getElementById('stakedToAccount').textContent = `${stakedToAccount} HBAR`;
+      document.getElementById('stakedToAccountCard').style.display = 'flex';
+      console.log('✅ Staked to account (as node):', stakedToAccount, 'HBAR');
     }
   } catch (error) {
     console.error('Error fetching staked balance:', error);
