@@ -824,6 +824,16 @@
       font-size:0.9rem;
     }
 
+    /* Make Received Rewards font size match other card values on mobile */
+    #receivedRewards {
+      font-size:0.9rem !important;
+    }
+
+    /* Ensure Total Staked card content fits on mobile */
+    #userCarousel .card {
+      overflow:visible !important;
+    }
+
     /* Adjust carousel for smaller cards - edge to edge on mobile */
     .carousel {
       gap:1rem;
@@ -876,7 +886,7 @@
       min-height:40vh;
     }
 
-    /* Fix scroll performance on mobile */
+    /* Fix scroll performance on mobile - optimized for smooth scrolling */
     body {
       overflow-x:hidden;
       overflow-y:scroll;
@@ -885,7 +895,18 @@
 
     /* Ensure sections don't block scrolling */
     .section {
-      touch-action:auto;
+      touch-action:pan-y;
+    }
+
+    /* Disable GPU-intensive effects on mobile for smoother scrolling */
+    #fixed-title {
+      will-change:opacity !important;
+    }
+
+    /* Optimize all animations for mobile */
+    * {
+      -webkit-transform:translateZ(0);
+      transform:translateZ(0);
     }
 
     /* Further reduce spacing on mobile */
@@ -910,10 +931,10 @@
       height:400px !important;
     }
 
-    /* Move HEDERA title up on mobile and make 12% smaller */
+    /* Move HEDERA title up on mobile and make 27% smaller total (12% + 15%) */
     #fixed-title {
       top:25%;
-      font-size:clamp(4.4rem,10.56vw,10.56rem);
+      font-size:clamp(3.74rem,8.976vw,8.976rem);
     }
 
     /* Make top-left coin 20% smaller and position 10px from top/left on mobile */
@@ -4030,7 +4051,12 @@ window.addEventListener('load', () => {
 
 // Combined scroll update function for coin, HEDERA fade, and network section
 function updateAllScrollEffects() {
-  updateCoinOnScroll();
+  // Skip heavy 3D coin updates on mobile for smoother scrolling
+  const isMobile = window.innerWidth <= 768;
+
+  if (!isMobile) {
+    updateCoinOnScroll();
+  }
 
   const scrollY = window.scrollY;
   const coinZoomDistance = 300;
@@ -4046,15 +4072,21 @@ function updateAllScrollEffects() {
     const opacity = Math.max(1.0 - fadeProgress, 0);
     hederaTitle.style.opacity = opacity.toFixed(3);
 
-    // Blur: 0px -> 30px
-    const blurAmount = fadeProgress * 30;
+    // On mobile, skip blur and scale for better scrolling performance
+    if (isMobile) {
+      hederaTitle.style.filter = 'none';
+      hederaTitle.style.transform = 'translateY(-50%)';
+    } else {
+      // Blur: 0px -> 30px
+      const blurAmount = fadeProgress * 30;
 
-    // Scale: 1.0 -> 0.88
-    const scale = 1.0 - (fadeProgress * 0.12);
+      // Scale: 1.0 -> 0.88
+      const scale = 1.0 - (fadeProgress * 0.12);
 
-    hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
-    // IMPORTANT: Keep translateY(-50%) to maintain vertical centering
-    hederaTitle.style.transform = `translateY(-50%) scale(${scale.toFixed(3)})`;
+      hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+      // IMPORTANT: Keep translateY(-50%) to maintain vertical centering
+      hederaTitle.style.transform = `translateY(-50%) scale(${scale.toFixed(3)})`;
+    }
   }
 
   // No special handling needed - network section will scroll naturally from below
