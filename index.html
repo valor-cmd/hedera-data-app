@@ -914,7 +914,7 @@
 
     /* Reduce first section height on mobile - less space between Hedera animation and Network Stats */
     #s1 {
-      min-height:25vh !important;
+      min-height:35vh !important;
     }
 
     /* Further reduce spacing on mobile */
@@ -4093,9 +4093,12 @@ function updateAllScrollEffects() {
     hederaTitle.style.opacity = opacity.toFixed(3);
 
     // On mobile, skip blur and scale for better scrolling performance
+    // Only apply transform if user has scrolled to avoid breaking typing animation
     if (isMobile) {
       hederaTitle.style.filter = 'none';
-      hederaTitle.style.transform = 'translateY(-50%)';
+      if (scrollY > 0) {
+        hederaTitle.style.transform = 'translateY(-50%)';
+      }
     } else {
       // Blur: 0px -> 30px
       const blurAmount = fadeProgress * 30;
