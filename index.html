@@ -133,6 +133,13 @@
     visibility:visible;
   }
 
+  /* Mobile: Show title immediately without waiting for body.loaded */
+  @media (max-width: 768px) {
+    #fixed-title {
+      visibility:visible !important;
+    }
+  }
+
   @keyframes typing {
     from { width:0; }
     to { width:8.1ch; }
@@ -1000,53 +1007,29 @@
       animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite !important;
     }
 
-    /* Hide 3D coin canvas on mobile - we'll use CSS animation instead */
+    /* MOBILE: Remove ALL blocking elements immediately via CSS */
+    #loadingOverlay {
+      display:none !important;
+    }
+
     #topLeftCoin {
       display:none !important;
     }
 
-    /* Mobile: Animated SVG HBAR logo */
-    #mobileCoinIcon {
-      display:block !important;
-      position:fixed !important;
-      width:60px !important;
-      height:60px !important;
-      top:10px !important;
-      left:10px !important;
-      z-index:200 !important;
-      animation:spinCoin 3s linear infinite;
-      filter:drop-shadow(0 0 10px rgba(139,92,246,0.6)) drop-shadow(0 0 20px rgba(0,212,255,0.4));
-      opacity:0;
-      transition:opacity 1s ease-in;
+    #coinCanvas {
+      display:none !important;
     }
 
-    /* Spinning animation with slight scale pulse */
-    @keyframes spinCoin {
-      0% { transform:rotate(0deg) scale(1); }
-      50% { transform:rotate(180deg) scale(1.08); }
-      100% { transform:rotate(360deg) scale(1); }
-    }
-
-    /* Adjust clickable overlay to match CSS coin on mobile */
-    #coinClickArea {
-      position:fixed !important;
-      width:60px !important;
-      height:60px !important;
-      top:10px !important;
-      left:10px !important;
-      z-index:201 !important;
-    }
-
-    /* Ensure 3D coin canvas is visible on mobile */
     #coin-canvas {
-      display:block !important;
-      position:fixed !important;
-      top:0 !important;
-      left:0 !important;
-      width:100vw !important;
-      height:100vh !important;
-      pointer-events:none !important;
-      z-index:5 !important;
+      display:none !important;
+    }
+
+    #coinClickArea {
+      display:none !important;
+    }
+
+    #mobileCoinIcon {
+      display:none !important;
     }
 
     /* Optimize search boxes and buttons for mobile - stack vertically */
@@ -1148,7 +1131,14 @@
 </style>
 </head>
 <body>
-  <!-- Loading overlay to force scroll to top on refresh - transparent on mobile -->
+  <!-- MOBILE: Immediate initialization - runs BEFORE any other content -->
+  <script>
+  if (window.innerWidth <= 768) {
+    document.body.classList.add('loaded');
+  }
+  </script>
+
+  <!-- Loading overlay - hidden on mobile via CSS -->
   <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;z-index:9999;pointer-events:none;"></div>
 
   <!-- Desktop Navigation Menu -->
