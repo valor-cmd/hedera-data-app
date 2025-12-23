@@ -948,6 +948,8 @@
     #fixed-title {
       top:25%;
       font-size:clamp(3.74rem,8.976vw,8.976rem);
+      /* Ensure typing animation works on mobile */
+      animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite !important;
     }
 
     /* Make top-left coin 20% smaller and position 10px from top/left on mobile */
@@ -4104,16 +4106,16 @@ function updateAllScrollEffects() {
   // HEDERA title fade+blur - smooth animation, reappears on scroll up
   const hederaTitle = document.getElementById('fixed-title');
   if (hederaTitle) {
-    // On mobile, don't apply any scroll effects to preserve typing animation
+    // On mobile, fade and blur out quickly when scrolling starts
     if (isMobile) {
-      // Faster fade on mobile (100px instead of 300px) to prevent blocking view
-      if (scrollY > 0) {
-        const mobileFadeDistance = 100;
-        const fadeProgress = Math.min(Math.max(scrollY / mobileFadeDistance, 0), 1.0);
-        const opacity = Math.max(1.0 - fadeProgress, 0);
-        hederaTitle.style.opacity = opacity.toFixed(3);
-        hederaTitle.style.filter = 'none';
-      }
+      // Very fast fade on mobile (50px) - disappears almost immediately on scroll
+      const mobileFadeDistance = 50;
+      const fadeProgress = Math.min(Math.max(scrollY / mobileFadeDistance, 0), 1.0);
+      const opacity = Math.max(1.0 - fadeProgress, 0);
+      const blurAmount = fadeProgress * 20; // Add blur on mobile too
+
+      hederaTitle.style.opacity = opacity.toFixed(3);
+      hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
     } else {
       // Desktop: full effects
       const fadeProgress = Math.min(Math.max(scrollY / hederaFadeDistance, 0), 1.0);
@@ -4138,8 +4140,17 @@ function updateAllScrollEffects() {
 // Throttle scroll updates with requestAnimationFrame for buttery smooth performance
 let scrollTicking = false;
 let lastScrollY = 0;
+let typingAnimationComplete = false;
+
+// Allow typing animation to complete before applying scroll effects
+setTimeout(() => {
+  typingAnimationComplete = true;
+}, 1600); // Typing is 1.5s, give 100ms buffer
 
 function throttledScrollHandler() {
+  // Don't apply scroll effects until typing animation completes
+  if (!typingAnimationComplete) return;
+
   lastScrollY = window.scrollY;
 
   if (!scrollTicking) {
