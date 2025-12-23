@@ -1126,6 +1126,9 @@
 <script src="https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
+  <!-- Loading overlay to force scroll to top on refresh -->
+  <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a0a;z-index:9999;"></div>
+
   <!-- Desktop Navigation Menu -->
   <nav class="nav-menu">
     <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
@@ -1298,39 +1301,48 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
-// Immediately scroll to top - runs before anything else
-window.scrollTo(0, 0);
-document.documentElement.scrollTop = 0;
-document.body.scrollTop = 0;
-
 // Disable scroll restoration completely
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 
-// Force scroll to top on any page show (including back/forward navigation and refresh)
-window.addEventListener('pageshow', function(event) {
+// Immediately force scroll to top
+window.scrollTo(0, 0);
+document.documentElement.scrollTop = 0;
+document.body.scrollTop = 0;
+
+// Function to ensure we're at top and remove overlay
+function ensureTopAndShow() {
+  // Force scroll multiple times to be sure
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
 
-  // Show content only after we're at top
-  setTimeout(function() {
-    document.body.classList.add('loaded');
-  }, 50);
-});
+  // Keep forcing scroll for 100ms
+  let scrollAttempts = 0;
+  const scrollInterval = setInterval(function() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    scrollAttempts++;
 
-// Also force on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
+    if (scrollAttempts > 5) {
+      clearInterval(scrollInterval);
+      // Remove overlay to show page
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+      document.body.classList.add('loaded');
+    }
+  }, 20);
+}
 
-  // Show content after scroll
-  setTimeout(function() {
-    document.body.classList.add('loaded');
-  }, 50);
-});
+// Run on pageshow (handles refresh, back/forward)
+window.addEventListener('pageshow', ensureTopAndShow);
+
+// Also run on load as backup
+window.addEventListener('load', ensureTopAndShow);
 
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
