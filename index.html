@@ -1294,6 +1294,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
+// Force scroll to top immediately on page load/refresh
+if (history.scrollRestoration) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
 
@@ -4436,18 +4442,6 @@ function scrollToSection(sectionId) {
   }
 }
 
-// Scroll to top on page load/refresh
-window.addEventListener('beforeunload', () => {
-  window.scrollTo(0, 0);
-});
-
-// Also ensure we start at top when page loads
-if (history.scrollRestoration) {
-  history.scrollRestoration = 'manual';
-}
-window.addEventListener('load', () => {
-  window.scrollTo(0, 0);
-});
 
 </script>
 </body>
