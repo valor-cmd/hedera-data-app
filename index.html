@@ -10,7 +10,6 @@
     src: url('StyreneB-Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
-    font-display: swap;
   }
 
   @font-face {
@@ -18,7 +17,6 @@
     src: url('StyreneB-Medium.otf') format('opentype');
     font-weight: 500;
     font-style: normal;
-    font-display: swap;
   }
 
   @font-face {
@@ -26,7 +24,6 @@
     src: url('StyreneB-Bold.otf') format('opentype');
     font-weight: bold;
     font-style: normal;
-    font-display: swap;
   }
 
   :root { --bg:#000000; --card:#0a0a0a; --accent:#00d4ff; }
@@ -127,10 +124,6 @@
     animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite;
     width:0;
     margin:0 auto;
-    visibility:hidden;
-  }
-  body.loaded #fixed-title {
-    visibility:visible;
   }
 
   @keyframes typing {
@@ -142,47 +135,6 @@
     from, to { border-color:transparent; }
     50% { border-color:white; }
   }
-
-  /* Hide mobile coin icon on desktop */
-  #mobileCoinIcon {
-    display:none;
-  }
-
-  /* Desktop Navigation Menu - under Hedera Data */
-  .nav-menu {
-    position:fixed;
-    top:58%;
-    left:50%;
-    transform:translateX(-50%);
-    display:flex;
-    justify-content:space-between;
-    width:auto;
-    max-width:1200px;
-    z-index:99;
-    pointer-events:auto;
-    opacity:0;
-    animation:navFadeIn 1s ease-in forwards;
-    animation-delay:1.5s;
-  }
-  @keyframes navFadeIn {
-    from { opacity:0; }
-    to { opacity:1; }
-  }
-  .nav-menu a {
-    color:#8b5cf6;
-    text-decoration:none;
-    font-size:1.8rem;
-    font-family:'Styrene', system-ui, sans-serif;
-    font-weight:300;
-    transition:color 0.3s ease;
-    cursor:pointer;
-    white-space:nowrap;
-    padding:0 2rem;
-  }
-  .nav-menu a:hover {
-    color:white;
-  }
-
   h2 {
     font-family:'Styrene', system-ui, sans-serif;
     font-size:clamp(2.5rem,6vw,5rem);
@@ -996,44 +948,23 @@
     #fixed-title {
       top:25%;
       font-size:clamp(3.74rem,8.976vw,8.976rem);
-      /* Ensure typing animation works on mobile */
-      animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite !important;
     }
 
-    /* Hide 3D coin canvas on mobile - we'll use CSS animation instead */
+    /* Make top-left coin 20% smaller and position 10px from top/left on mobile */
     #topLeftCoin {
-      display:none !important;
-    }
-
-    /* Mobile: Simple CSS-only spinning coin */
-    #mobileCoinIcon {
-      display:block !important;
       position:fixed !important;
-      width:60px !important;
-      height:60px !important;
-      top:10px !important;
-      left:10px !important;
+      width:1024px !important;
+      height:1024px !important;
+      top:-432px !important;
+      left:-464px !important;
       z-index:200 !important;
-      background:linear-gradient(135deg, #8b5cf6 0%, #00d4ff 100%);
-      border-radius:50%;
-      animation:spinCoin 3s linear infinite;
-      box-shadow:0 0 20px rgba(139,92,246,0.5);
-      opacity:0;
-      transition:opacity 1s ease-in;
     }
 
-    /* Spinning animation */
-    @keyframes spinCoin {
-      from { transform:rotate(0deg) scale(1); }
-      50% { transform:rotate(180deg) scale(1.05); }
-      to { transform:rotate(360deg) scale(1); }
-    }
-
-    /* Adjust clickable overlay to match CSS coin on mobile */
+    /* Adjust clickable overlay to match smaller coin - 20% smaller and 10px from edges */
     #coinClickArea {
       position:fixed !important;
-      width:60px !important;
-      height:60px !important;
+      width:38px !important;
+      height:38px !important;
       top:10px !important;
       left:10px !important;
       z-index:201 !important;
@@ -1141,35 +1072,18 @@
     #tokenBalancesChart {
       overflow-x:hidden !important;
     }
-
-    /* Hide desktop navigation on mobile */
-    .nav-menu {
-      display:none !important;
-    }
   }
 </style>
+<!-- Three.js for 3D coin - using older version with UMD GLTFLoader -->
+<script src="https://unpkg.com/three@0.137.5/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
-  <!-- Loading overlay to force scroll to top on refresh - transparent on mobile -->
-  <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;z-index:9999;"></div>
-
-  <!-- Desktop Navigation Menu -->
-  <nav class="nav-menu">
-    <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
-    <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
-    <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
-    <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
-  </nav>
-
   <!-- 3D HBAR Coin Canvas (behind everything) - HIDDEN FOR NOW -->
   <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;display:none;"></canvas>
 
-  <!-- Small fixed top-left spinning coin (desktop 3D) -->
+  <!-- Small fixed top-left spinning coin -->
   <canvas id="topLeftCoin" style="position:fixed;top:-540px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none!important;cursor:default;opacity:0;transition:opacity 1s ease-in;"></canvas>
-
-  <!-- Mobile: Simple CSS spinning coin -->
-  <div id="mobileCoinIcon"></div>
-
   <!-- Clickable overlay for the visible coin area only -->
   <div id="coinClickArea" style="position:fixed;top:36px;left:36px;width:47px;height:47px;z-index:201;cursor:pointer;border-radius:50%;"></div>
 
@@ -1242,7 +1156,7 @@
     </div>
   </section>
   
-  <section class="section" id="user-data">
+  <section class="section" id="user">
     <div class="gradient-orb" style="top:-300px;left:-300px;background:radial-gradient(circle,rgba(139,92,246,0.18),transparent);"></div>
     <h2>User Data</h2>
     <div style="text-align:center;margin-bottom:3rem;white-space:nowrap;">
@@ -1326,240 +1240,69 @@
     <p style="font-size:1.5rem;opacity:0.7;margin-top:2rem;">Powered by Hgraph API</p>
   </section>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
-// MOBILE PERFORMANCE OPTIMIZATION: Lazy load heavy libraries only on desktop
-const isMobileDevice = window.innerWidth <= 768;
-let gsapLoaded = false;
-let threeJsLoaded = false;
-
-// On desktop: Load GSAP and Three.js
-// On mobile: Skip heavy libraries, use CSS animations instead
-if (!isMobileDevice) {
-  // Load GSAP first (needed for scroll animations)
-  const gsapScript = document.createElement('script');
-  gsapScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
-  gsapScript.async = false;
-  gsapScript.onload = () => {
-    const scrollTriggerScript = document.createElement('script');
-    scrollTriggerScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js';
-    scrollTriggerScript.async = false;
-    scrollTriggerScript.onload = () => {
-      gsapLoaded = true;
-      console.log('✅ GSAP loaded (desktop only)');
-      initGSAPAnimations();
-    };
-    document.head.appendChild(scrollTriggerScript);
-  };
-  document.head.appendChild(gsapScript);
-
-  // Load Three.js (for 3D coin)
-  const threeScript = document.createElement('script');
-  threeScript.src = 'https://unpkg.com/three@0.137.5/build/three.min.js';
-  threeScript.async = true;
-  threeScript.onload = () => {
-    const gltfScript = document.createElement('script');
-    gltfScript.src = 'https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js';
-    gltfScript.async = true;
-    gltfScript.onload = () => {
-      threeJsLoaded = true;
-      console.log('✅ Three.js loaded (desktop only)');
-      console.log('🚀 Initializing top-left spinning coin...');
-
-      // Make sure the page is fully loaded before initializing the coin
-      if (document.readyState === 'complete') {
-        if (typeof initTopLeftCoin === 'function') {
-          initTopLeftCoin();
-
-          // Fade in the coin after "Hedera Data" typing animation completes
-          setTimeout(() => {
-            const topLeftCanvas = document.getElementById('topLeftCoin');
-            if (topLeftCanvas) {
-              topLeftCanvas.style.opacity = '1';
-              console.log('✨ Top-left coin fading in...');
-            }
-          }, 1600);
-        }
-      } else {
-        window.addEventListener('load', () => {
-          if (typeof initTopLeftCoin === 'function') {
-            initTopLeftCoin();
-          }
-
-          // Fade in the coin after initialization
-          setTimeout(() => {
-            const topLeftCanvas = document.getElementById('topLeftCoin');
-            if (topLeftCanvas) {
-              topLeftCanvas.style.opacity = '1';
-              console.log('✨ Top-left coin fading in...');
-            }
-          }, 1600);
-        });
-      }
-    };
-    document.head.appendChild(gltfScript);
-  };
-  document.head.appendChild(threeScript);
-} else {
-  // Mobile: Show CSS coin immediately
-  console.log('📱 Mobile detected - using CSS animations only');
-  setTimeout(() => {
-    const mobileCoin = document.getElementById('mobileCoinIcon');
-    if (mobileCoin) {
-      mobileCoin.style.opacity = '1';
-    }
-  }, 1600); // Match desktop timing - after typing animation
-}
-
-// Disable scroll restoration completely
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual';
-}
-
-// Immediately force scroll to top
-window.scrollTo(0, 0);
-document.documentElement.scrollTop = 0;
-document.body.scrollTop = 0;
-
-// Function to ensure we're at top and remove overlay
-function ensureTopAndShow() {
-  // Force scroll multiple times to be sure
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-
-  // Keep forcing scroll for 100ms
-  let scrollAttempts = 0;
-  const scrollInterval = setInterval(function() {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    scrollAttempts++;
-
-    if (scrollAttempts > 5) {
-      clearInterval(scrollInterval);
-      // Remove overlay to show page
-      const overlay = document.getElementById('loadingOverlay');
-      if (overlay) {
-        overlay.style.display = 'none';
-      }
-      document.body.classList.add('loaded');
-    }
-  }, 20);
-}
-
-// Mobile: Remove overlay immediately without waiting for resources
-// Desktop: Wait for resources to ensure smooth experience
-if (isMobileDevice) {
-  // Mobile: Remove overlay as soon as DOM is ready (don't wait for images/resources)
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureTopAndShow);
-  } else {
-    // DOM already ready, remove immediately
-    ensureTopAndShow();
-  }
-} else {
-  // Desktop: Use original approach with pageshow and load events
-  window.addEventListener('pageshow', ensureTopAndShow);
-  window.addEventListener('load', ensureTopAndShow);
-}
-
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
 
-// GSAP animations (loaded only on desktop via lazy load)
-function initGSAPAnimations() {
-  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-    console.warn('GSAP not loaded yet');
-    return;
-  }
+// Disabled GSAP animation - now handled by updateAllScrollEffects() for better control
+// gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
+//   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
+// });
 
-  // Disabled GSAP animation - now handled by updateAllScrollEffects() for better control
-  // gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
-  //   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
-  // });
+// Disable ScrollTrigger animations on mobile for smoother scrolling
+const isMobileDevice = window.innerWidth <= 768;
 
-  // Only use GSAP if it's loaded
-  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-    gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
-      scrollTrigger: {trigger:"#network", start:"top 70%"}
-    });
-    gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
-      scrollTrigger: {trigger:"#network", start:"top 60%"}
-    });
-
-    // Auto-load network data when section comes into view
-    ScrollTrigger.create({
-      trigger: "#network",
-      start: "top 80%",
-      once: true,
-      onEnter: () => {
-        // Ensure carousels are initialized before querying
-        if (!carouselsInitialized) {
-          initCarousels();
-        }
-        queryNetwork();
-
-        // Start live TPS updates
-        startLiveTPSUpdates();
-
-        // Staggered refresh intervals for different stats
-        // HBAR Price & Market Cap - every 8 seconds
-        setInterval(() => updatePriceAndMarketCap(), 8000);
-
-        // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
-        setTimeout(() => {
-          updateConsensusAndFees();
-          setInterval(() => updateConsensusAndFees(), 12000);
-        }, 4000);
-
-        // HBAR Released & Accounts - every 15 seconds (offset by 8s)
-        setTimeout(() => {
-          updateHbarAndAccounts();
-          setInterval(() => updateHbarAndAccounts(), 15000);
-        }, 8000);
-      }
-    });
-  }
-}
-
-// Mobile: Show network section immediately and load data on scroll
-if (isMobileDevice) {
+if (!isMobileDevice) {
+  gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
+    scrollTrigger: {trigger:"#network", start:"top 70%"}
+  });
+  gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
+    scrollTrigger: {trigger:"#network", start:"top 60%"}
+  });
+} else {
+  // On mobile, just show elements immediately without ScrollTrigger
   document.querySelector("#network h2").style.opacity = 1;
   document.querySelector("#network h2").style.transform = 'scale(1)';
   const networkOrb = document.querySelector("#network .gradient-orb");
   if (networkOrb) {
     networkOrb.style.opacity = 1;
   }
-
-  // Mobile: Simple scroll-based trigger for network data (no GSAP)
-  let networkDataLoaded = false;
-  window.addEventListener('scroll', () => {
-    if (networkDataLoaded) return;
-    const networkSection = document.getElementById('network');
-    if (networkSection) {
-      const rect = networkSection.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 0.8) {
-        networkDataLoaded = true;
-        if (!carouselsInitialized) {
-          initCarousels();
-        }
-        queryNetwork();
-        startLiveTPSUpdates();
-
-        // Staggered refresh intervals
-        setInterval(() => updatePriceAndMarketCap(), 8000);
-        setTimeout(() => {
-          updateConsensusAndFees();
-          setInterval(() => updateConsensusAndFees(), 12000);
-        }, 4000);
-        setTimeout(() => {
-          updateHbarAndAccounts();
-          setInterval(() => updateHbarAndAccounts(), 15000);
-        }, 8000);
-      }
-    }
-  });
 }
+
+// Auto-load network data when section comes into view
+ScrollTrigger.create({
+  trigger: "#network",
+  start: "top 80%",
+  once: true,
+  onEnter: () => {
+    // Ensure carousels are initialized before querying
+    if (!carouselsInitialized) {
+      initCarousels();
+    }
+    queryNetwork();
+
+    // Start live TPS updates
+    startLiveTPSUpdates();
+
+    // Staggered refresh intervals for different stats
+    // HBAR Price & Market Cap - every 8 seconds
+    setInterval(() => updatePriceAndMarketCap(), 8000);
+
+    // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
+    setTimeout(() => {
+      updateConsensusAndFees();
+      setInterval(() => updateConsensusAndFees(), 12000);
+    }, 4000);
+
+    // HBAR Released & Accounts - every 15 seconds (offset by 8s)
+    setTimeout(() => {
+      updateHbarAndAccounts();
+      setInterval(() => updateHbarAndAccounts(), 15000);
+    }, 8000);
+  }
+});
 
 // Initialize carousels when DOM is fully ready
 let carouselsInitialized = false;
@@ -4348,54 +4091,45 @@ function updateCoinOnScroll() {
   // No longer needed - animation loop handles everything
 }
 
-// Main 3D coin removed - only using top-left spinning coin now
-// (Code kept for reference but not initialized)
+// Initialize on load
+window.addEventListener('load', () => {
+  console.log('🚀 Page loaded, initializing 3D coin...');
+  console.log('THREE exists?', typeof THREE);
+  console.log('THREE.GLTFLoader exists?', typeof THREE?.GLTFLoader);
+  init3DCoin();
+});
 
-// Combined scroll update function for HEDERA fade and network section
+// Combined scroll update function for coin, HEDERA fade, and network section
 function updateAllScrollEffects() {
+  // Skip heavy 3D coin updates on mobile for smoother scrolling
   const isMobile = window.innerWidth <= 768;
+
+  if (!isMobile) {
+    updateCoinOnScroll();
+  }
+
   const scrollY = window.scrollY;
   const coinZoomDistance = 300;
   const hederaFadeDistance = 300; // Complete fade+blur at EXACTLY same time as coin - both finish at 300px
 
   // HEDERA title fade+blur - smooth animation, reappears on scroll up
   const hederaTitle = document.getElementById('fixed-title');
-  const navMenu = document.querySelector('.nav-menu');
-
-  console.log('Scroll handler running! scrollY:', scrollY, 'isMobile:', isMobile);
-
   if (hederaTitle) {
-    // On mobile, fade and blur out quickly when scrolling starts
+    // On mobile, don't apply any scroll effects to preserve typing animation
     if (isMobile) {
-      // Very fast fade on mobile (50px) - disappears almost immediately on scroll
-      const mobileFadeDistance = 50;
-      const fadeProgress = Math.min(Math.max(scrollY / mobileFadeDistance, 0), 1.0);
-      const opacity = Math.max(1.0 - fadeProgress, 0);
-      const blurAmount = fadeProgress * 20; // Add blur on mobile too
-
-      hederaTitle.style.opacity = opacity;
-      hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
-      // Completely hide when faded out
-      hederaTitle.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
-
-      // Navigation menu fades/blurs same as title on mobile
-      if (navMenu) {
-        // Override CSS animation to allow complete fade
-        navMenu.style.animation = 'none';
-        navMenu.style.opacity = opacity;
-        navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
-        navMenu.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
-        // Disable pointer events when faded out
-        navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
+      // Faster fade on mobile (100px instead of 300px) to prevent blocking view
+      if (scrollY > 0) {
+        const mobileFadeDistance = 100;
+        const fadeProgress = Math.min(Math.max(scrollY / mobileFadeDistance, 0), 1.0);
+        const opacity = Math.max(1.0 - fadeProgress, 0);
+        hederaTitle.style.opacity = opacity.toFixed(3);
+        hederaTitle.style.filter = 'none';
       }
     } else {
       // Desktop: full effects
       const fadeProgress = Math.min(Math.max(scrollY / hederaFadeDistance, 0), 1.0);
       const opacity = Math.max(1.0 - fadeProgress, 0);
-
-      console.log('Desktop fade - scrollY:', scrollY, 'fadeProgress:', fadeProgress, 'opacity:', opacity);
-
-      hederaTitle.style.opacity = opacity;
+      hederaTitle.style.opacity = opacity.toFixed(3);
 
       // Blur: 0px -> 30px
       const blurAmount = fadeProgress * 30;
@@ -4406,21 +4140,6 @@ function updateAllScrollEffects() {
       hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
       // IMPORTANT: Keep translateY(-50%) to maintain vertical centering
       hederaTitle.style.transform = `translateY(-50%) scale(${scale.toFixed(3)})`;
-      // Completely hide when faded out
-      hederaTitle.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
-
-      console.log('Applied to title - opacity:', hederaTitle.style.opacity, 'visibility:', hederaTitle.style.visibility);
-
-      // Navigation menu fades/blurs same as title on desktop
-      if (navMenu) {
-        // Override CSS animation to allow complete fade
-        navMenu.style.animation = 'none';
-        navMenu.style.opacity = opacity;
-        navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
-        navMenu.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
-        // Disable pointer events when faded out
-        navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
-      }
     }
   }
 
@@ -4430,21 +4149,8 @@ function updateAllScrollEffects() {
 // Throttle scroll updates with requestAnimationFrame for buttery smooth performance
 let scrollTicking = false;
 let lastScrollY = 0;
-let typingAnimationComplete = false;
-
-// Allow typing animation to complete before applying scroll effects
-setTimeout(() => {
-  typingAnimationComplete = true;
-  console.log('✅ Typing animation complete - scroll effects now enabled');
-}, 1600); // Typing is 1.5s, give 100ms buffer
 
 function throttledScrollHandler() {
-  // Don't apply scroll effects until typing animation completes
-  if (!typingAnimationComplete) {
-    console.log('⏳ Scroll blocked - waiting for typing animation');
-    return;
-  }
-
   lastScrollY = window.scrollY;
 
   if (!scrollTicking) {
@@ -4600,8 +4306,24 @@ function animateTopLeftCoin() {
   }
 }
 
-// Initialize top-left coin - called by lazy loader after Three.js loads (desktop only)
-// Moved to lazy loading section above to avoid loading on mobile
+// Initialize top-left coin when page loads
+window.addEventListener('load', () => {
+  console.log('🚀 Initializing top-left spinning coin on page load...');
+  // Small delay to ensure Three.js and main coin are initialized first
+  setTimeout(() => {
+    initTopLeftCoin();
+
+    // Fade in the coin after "Hedera Data" typing animation completes
+    // Typing animation is 1.5s, so fade in at 1.6s
+    setTimeout(() => {
+      const topLeftCanvas = document.getElementById('topLeftCoin');
+      if (topLeftCanvas) {
+        topLeftCanvas.style.opacity = '1';
+        console.log('✨ Top-left coin fading in...');
+      }
+    }, 1600);
+  }, 500);
+});
 
 // Make coin clickable - scroll to top and restart typing animation
 document.getElementById('coinClickArea').addEventListener('click', () => {
@@ -4624,22 +4346,6 @@ document.getElementById('coinClickArea').addEventListener('click', () => {
     title.style.animation = 'typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite';
   }
 });
-
-// Smooth scroll to section function for navigation menu
-function scrollToSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (section) {
-    const headerOffset = 0; // Adjust if you want offset from top
-    const sectionPosition = section.getBoundingClientRect().top + window.pageYOffset;
-    const offsetPosition = sectionPosition - headerOffset;
-
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: 'smooth'
-    });
-  }
-}
-
 
 </script>
 </body>
