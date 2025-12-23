@@ -1294,11 +1294,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
-// Force scroll to top immediately on page load/refresh
-if (history.scrollRestoration) {
+// Force page to reload from top on refresh
+if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
-window.scrollTo(0, 0);
+
+// Detect page refresh and force reload from top
+window.onbeforeunload = function () {
+  window.scrollTo(0, 0);
+};
+
+// On page load, check if we're not at the top and reload if needed
+window.addEventListener('load', function() {
+  if (window.pageYOffset !== 0) {
+    window.scrollTo(0, 0);
+    setTimeout(function() {
+      window.location.reload(true);
+    }, 10);
+  }
+});
 
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
