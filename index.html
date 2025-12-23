@@ -4091,23 +4091,12 @@ function updateCoinOnScroll() {
   // No longer needed - animation loop handles everything
 }
 
-// Initialize on load
-window.addEventListener('load', () => {
-  console.log('🚀 Page loaded, initializing 3D coin...');
-  console.log('THREE exists?', typeof THREE);
-  console.log('THREE.GLTFLoader exists?', typeof THREE?.GLTFLoader);
-  init3DCoin();
-});
+// Main 3D coin removed - only using top-left spinning coin now
+// (Code kept for reference but not initialized)
 
-// Combined scroll update function for coin, HEDERA fade, and network section
+// Combined scroll update function for HEDERA fade and network section
 function updateAllScrollEffects() {
-  // Skip heavy 3D coin updates on mobile for smoother scrolling
   const isMobile = window.innerWidth <= 768;
-
-  if (!isMobile) {
-    updateCoinOnScroll();
-  }
-
   const scrollY = window.scrollY;
   const coinZoomDistance = 300;
   const hederaFadeDistance = 300; // Complete fade+blur at EXACTLY same time as coin - both finish at 300px
@@ -4306,10 +4295,13 @@ function animateTopLeftCoin() {
   }
 }
 
-// Initialize top-left coin when page loads
+// Initialize top-left coin when page loads - only coin animation now
 window.addEventListener('load', () => {
+  const isMobile = window.innerWidth <= 768;
+  const delay = isMobile ? 1000 : 500; // 1s delay on mobile, 0.5s on desktop
+
   console.log('🚀 Initializing top-left spinning coin on page load...');
-  // Small delay to ensure Three.js and main coin are initialized first
+  // Small delay to ensure Three.js is loaded
   setTimeout(() => {
     initTopLeftCoin();
 
@@ -4322,7 +4314,7 @@ window.addEventListener('load', () => {
         console.log('✨ Top-left coin fading in...');
       }
     }, 1600);
-  }, 500);
+  }, delay);
 });
 
 // Make coin clickable - scroll to top and restart typing animation
