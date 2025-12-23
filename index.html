@@ -1425,14 +1425,31 @@ if (!isMobileDevice) {
   };
   document.head.appendChild(threeScript);
 } else {
-  // Mobile: Show CSS coin immediately
-  console.log('📱 Mobile detected - using CSS animations only');
-  setTimeout(() => {
-    const mobileCoin = document.getElementById('mobileCoinIcon');
-    if (mobileCoin) {
-      mobileCoin.style.opacity = '1';
-    }
-  }, 1600); // Match desktop timing - after typing animation
+  // Mobile: No 3D coin - completely remove coin elements to fix touch scrolling
+  console.log('📱 Mobile detected - removing coin elements for better performance');
+
+  // Completely hide and disable all coin-related elements on mobile
+  const topLeftCoin = document.getElementById('topLeftCoin');
+  const coinCanvas = document.getElementById('coinCanvas');
+  const coinClickArea = document.getElementById('coinClickArea');
+  const mobileCoin = document.getElementById('mobileCoinIcon');
+
+  if (topLeftCoin) {
+    topLeftCoin.style.display = 'none';
+    topLeftCoin.remove(); // Remove from DOM completely
+  }
+  if (coinCanvas) {
+    coinCanvas.style.display = 'none';
+    coinCanvas.remove(); // Remove from DOM completely
+  }
+  if (coinClickArea) {
+    coinClickArea.style.display = 'none';
+    coinClickArea.remove(); // Remove from DOM completely - this blocks touch!
+  }
+  if (mobileCoin) {
+    mobileCoin.style.display = 'none';
+    mobileCoin.remove(); // Remove SVG coin too
+  }
 }
 
 // Disable scroll restoration completely
@@ -1475,13 +1492,13 @@ function ensureTopAndShow() {
 // Mobile: Remove overlay immediately without waiting for resources
 // Desktop: Wait for resources to ensure smooth experience
 if (isMobileDevice) {
-  // Mobile: Remove overlay as soon as DOM is ready (don't wait for images/resources)
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureTopAndShow);
-  } else {
-    // DOM already ready, remove immediately
-    ensureTopAndShow();
+  // Mobile: Immediately show page - no delays!
+  window.scrollTo(0, 0);
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.remove(); // Remove from DOM completely
   }
+  document.body.classList.add('loaded');
 } else {
   // Desktop: Use original approach with pageshow and load events
   window.addEventListener('pageshow', ensureTopAndShow);
@@ -3753,14 +3770,30 @@ function stopTransactionFeed() {
 }
 
 // Auto-start transaction feed when section comes into view
-ScrollTrigger.create({
-  trigger: "#live-transactions",
-  start: "top 80%",
-  once: true,
-  onEnter: () => {
-    startTransactionFeed();
+if (typeof ScrollTrigger !== 'undefined') {
+  ScrollTrigger.create({
+    trigger: "#live-transactions",
+    start: "top 80%",
+    once: true,
+    onEnter: () => {
+      startTransactionFeed();
+    }
+  });
+} else {
+  // Mobile fallback: Use IntersectionObserver instead of GSAP
+  const liveTransactionsSection = document.getElementById('live-transactions');
+  if (liveTransactionsSection) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          startTransactionFeed();
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+    observer.observe(liveTransactionsSection);
   }
-});
+}
 
 // Rich List Functions
 async function loadRichList() {
@@ -4086,14 +4119,30 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
 }
 
 // Auto-load rich list when section comes into view
-ScrollTrigger.create({
-  trigger: "#richlist",
-  start: "top 80%",
-  once: true,
-  onEnter: () => {
-    loadRichList();
+if (typeof ScrollTrigger !== 'undefined') {
+  ScrollTrigger.create({
+    trigger: "#richlist",
+    start: "top 80%",
+    once: true,
+    onEnter: () => {
+      loadRichList();
+    }
+  });
+} else {
+  // Mobile fallback: Use IntersectionObserver instead of GSAP
+  const richlistSection = document.getElementById('richlist');
+  if (richlistSection) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          loadRichList();
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+    observer.observe(richlistSection);
   }
-});
+}
 
 // Add event listener for the Check Rank button
 document.getElementById('checkRankBtn').addEventListener('click', (e) => {
@@ -4618,27 +4667,30 @@ function animateTopLeftCoin() {
 // Initialize top-left coin - called by lazy loader after Three.js loads (desktop only)
 // Moved to lazy loading section above to avoid loading on mobile
 
-// Make coin clickable - scroll to top and restart typing animation
-document.getElementById('coinClickArea').addEventListener('click', () => {
-  console.log('🔝 Coin clicked - scrolling to top and restarting animation...');
+// Make coin clickable - scroll to top and restart typing animation (desktop only)
+const coinClickElement = document.getElementById('coinClickArea');
+if (coinClickElement) {
+  coinClickElement.addEventListener('click', () => {
+    console.log('🔝 Coin clicked - scrolling to top and restarting animation...');
 
-  // Smooth scroll to top
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
+    // Smooth scroll to top
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    // Restart the typing animation
+    const title = document.getElementById('fixed-title');
+    if (title) {
+      // Remove and re-add animation
+      title.style.animation = 'none';
+      // Force reflow
+      void title.offsetWidth;
+      // Restart animation
+      title.style.animation = 'typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite';
+    }
   });
-
-  // Restart the typing animation
-  const title = document.getElementById('fixed-title');
-  if (title) {
-    // Remove and re-add animation
-    title.style.animation = 'none';
-    // Force reflow
-    void title.offsetWidth;
-    // Restart animation
-    title.style.animation = 'typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite';
-  }
-});
+}
 
 // Smooth scroll to section function for navigation menu
 function scrollToSection(sectionId) {
