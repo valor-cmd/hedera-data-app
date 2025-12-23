@@ -4170,8 +4170,12 @@ function updateAllScrollEffects() {
 
       // Navigation menu fades/blurs same as title on mobile
       if (navMenu) {
+        // Override CSS animation to allow complete fade
+        navMenu.style.animation = 'none';
         navMenu.style.opacity = opacity.toFixed(3);
         navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        // Disable pointer events when faded out
+        navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
       }
     } else {
       // Desktop: full effects
@@ -4191,8 +4195,12 @@ function updateAllScrollEffects() {
 
       // Navigation menu fades/blurs same as title on desktop
       if (navMenu) {
+        // Override CSS animation to allow complete fade
+        navMenu.style.animation = 'none';
         navMenu.style.opacity = opacity.toFixed(3);
         navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        // Disable pointer events when faded out
+        navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
       }
     }
   }
