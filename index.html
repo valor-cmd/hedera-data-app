@@ -910,13 +910,11 @@
     /* Disable GPU-intensive effects on mobile for smoother scrolling */
     #fixed-title {
       will-change:opacity !important;
-      position:fixed !important;
-      z-index:100 !important;
     }
 
-    /* First section needs proper height on mobile */
+    /* Reduce first section height on mobile - less space between Hedera animation and Network Stats */
     #s1 {
-      min-height:100vh !important;
+      min-height:25vh !important;
     }
 
     /* Further reduce spacing on mobile */
