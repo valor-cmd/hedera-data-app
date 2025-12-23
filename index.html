@@ -1365,18 +1365,32 @@ if (!isMobileDevice) {
       console.log('✅ Three.js loaded (desktop only)');
       console.log('🚀 Initializing top-left spinning coin...');
 
-      // Initialize the 3D coin
-      initTopLeftCoin();
+      // Make sure the page is fully loaded before initializing the coin
+      if (document.readyState === 'complete') {
+        initTopLeftCoin();
 
-      // Fade in the coin after "Hedera Data" typing animation completes
-      // Typing animation is 1.5s, so fade in at 1.6s
-      setTimeout(() => {
-        const topLeftCanvas = document.getElementById('topLeftCoin');
-        if (topLeftCanvas) {
-          topLeftCanvas.style.opacity = '1';
-          console.log('✨ Top-left coin fading in...');
-        }
-      }, 1600);
+        // Fade in the coin after "Hedera Data" typing animation completes
+        setTimeout(() => {
+          const topLeftCanvas = document.getElementById('topLeftCoin');
+          if (topLeftCanvas) {
+            topLeftCanvas.style.opacity = '1';
+            console.log('✨ Top-left coin fading in...');
+          }
+        }, 1600);
+      } else {
+        window.addEventListener('load', () => {
+          initTopLeftCoin();
+
+          // Fade in the coin after initialization
+          setTimeout(() => {
+            const topLeftCanvas = document.getElementById('topLeftCoin');
+            if (topLeftCanvas) {
+              topLeftCanvas.style.opacity = '1';
+              console.log('✨ Top-left coin fading in...');
+            }
+          }, 1600);
+        });
+      }
     };
     document.head.appendChild(gltfScript);
   };
@@ -1402,14 +1416,14 @@ window.scrollTo(0, 0);
 document.documentElement.scrollTop = 0;
 document.body.scrollTop = 0;
 
-// Function to ensure we're at top and remove overlay
+// Function to ensure we're at top and remove overlay FAST
 function ensureTopAndShow() {
   // Force scroll multiple times to be sure
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
 
-  // Keep forcing scroll for 100ms
+  // Keep forcing scroll for a brief moment
   let scrollAttempts = 0;
   const scrollInterval = setInterval(function() {
     window.scrollTo(0, 0);
@@ -1417,7 +1431,7 @@ function ensureTopAndShow() {
     document.body.scrollTop = 0;
     scrollAttempts++;
 
-    if (scrollAttempts > 5) {
+    if (scrollAttempts > 3) {  // Reduced from 5 to 3 for faster removal
       clearInterval(scrollInterval);
       // Remove overlay to show page
       const overlay = document.getElementById('loadingOverlay');
@@ -1426,14 +1440,21 @@ function ensureTopAndShow() {
       }
       document.body.classList.add('loaded');
     }
-  }, 20);
+  }, 10);  // Reduced from 20ms to 10ms
 }
+
+// Run IMMEDIATELY - don't wait for any events
+ensureTopAndShow();
 
 // Run on pageshow (handles refresh, back/forward)
 window.addEventListener('pageshow', ensureTopAndShow);
 
-// Also run on load as backup
-window.addEventListener('load', ensureTopAndShow);
+// Also run on DOMContentLoaded for faster removal on mobile
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', ensureTopAndShow);
+} else {
+  ensureTopAndShow();
+}
 
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
@@ -4388,13 +4409,19 @@ let scrollTicking = false;
 let lastScrollY = 0;
 let typingAnimationComplete = false;
 
-// Allow typing animation to complete before applying scroll effects
-setTimeout(() => {
+// Allow typing animation to complete before applying scroll effects (mobile only)
+const isMobileForTyping = window.innerWidth <= 768;
+if (isMobileForTyping) {
+  setTimeout(() => {
+    typingAnimationComplete = true;
+  }, 1600); // Typing is 1.5s, give 100ms buffer
+} else {
+  // Desktop: allow scroll effects immediately
   typingAnimationComplete = true;
-}, 1600); // Typing is 1.5s, give 100ms buffer
+}
 
 function throttledScrollHandler() {
-  // Don't apply scroll effects until typing animation completes
+  // Don't apply scroll effects until typing animation completes (mobile protection)
   if (!typingAnimationComplete) return;
 
   lastScrollY = window.scrollY;
