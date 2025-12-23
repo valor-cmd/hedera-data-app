@@ -124,6 +124,10 @@
     animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite;
     width:0;
     margin:0 auto;
+    visibility:hidden;
+  }
+  body.loaded #fixed-title {
+    visibility:visible;
   }
 
   @keyframes typing {
@@ -1296,6 +1300,8 @@
 <script>
 // Immediately scroll to top - runs before anything else
 window.scrollTo(0, 0);
+document.documentElement.scrollTop = 0;
+document.body.scrollTop = 0;
 
 // Disable scroll restoration completely
 if ('scrollRestoration' in history) {
@@ -1305,11 +1311,25 @@ if ('scrollRestoration' in history) {
 // Force scroll to top on any page show (including back/forward navigation and refresh)
 window.addEventListener('pageshow', function(event) {
   window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  // Show content only after we're at top
+  setTimeout(function() {
+    document.body.classList.add('loaded');
+  }, 50);
 });
 
 // Also force on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
   window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  // Show content after scroll
+  setTimeout(function() {
+    document.body.classList.add('loaded');
+  }, 50);
 });
 
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
