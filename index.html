@@ -1150,8 +1150,8 @@
 </style>
 </head>
 <body>
-  <!-- Loading overlay to force scroll to top on refresh -->
-  <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a0a;z-index:9999;"></div>
+  <!-- Loading overlay to force scroll to top on refresh - transparent on mobile -->
+  <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;z-index:9999;"></div>
 
   <!-- Desktop Navigation Menu -->
   <nav class="nav-menu">
@@ -1367,19 +1367,23 @@ if (!isMobileDevice) {
 
       // Make sure the page is fully loaded before initializing the coin
       if (document.readyState === 'complete') {
-        initTopLeftCoin();
+        if (typeof initTopLeftCoin === 'function') {
+          initTopLeftCoin();
 
-        // Fade in the coin after "Hedera Data" typing animation completes
-        setTimeout(() => {
-          const topLeftCanvas = document.getElementById('topLeftCoin');
-          if (topLeftCanvas) {
-            topLeftCanvas.style.opacity = '1';
-            console.log('✨ Top-left coin fading in...');
-          }
-        }, 1600);
+          // Fade in the coin after "Hedera Data" typing animation completes
+          setTimeout(() => {
+            const topLeftCanvas = document.getElementById('topLeftCoin');
+            if (topLeftCanvas) {
+              topLeftCanvas.style.opacity = '1';
+              console.log('✨ Top-left coin fading in...');
+            }
+          }, 1600);
+        }
       } else {
         window.addEventListener('load', () => {
-          initTopLeftCoin();
+          if (typeof initTopLeftCoin === 'function') {
+            initTopLeftCoin();
+          }
 
           // Fade in the coin after initialization
           setTimeout(() => {
@@ -1474,45 +1478,48 @@ function initGSAPAnimations() {
   //   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
   // });
 
-  gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
-    scrollTrigger: {trigger:"#network", start:"top 70%"}
-  });
-  gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
-    scrollTrigger: {trigger:"#network", start:"top 60%"}
-  });
+  // Only use GSAP if it's loaded
+  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+    gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
+      scrollTrigger: {trigger:"#network", start:"top 70%"}
+    });
+    gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
+      scrollTrigger: {trigger:"#network", start:"top 60%"}
+    });
 
-  // Auto-load network data when section comes into view
-  ScrollTrigger.create({
-    trigger: "#network",
-    start: "top 80%",
-    once: true,
-    onEnter: () => {
-      // Ensure carousels are initialized before querying
-      if (!carouselsInitialized) {
-        initCarousels();
+    // Auto-load network data when section comes into view
+    ScrollTrigger.create({
+      trigger: "#network",
+      start: "top 80%",
+      once: true,
+      onEnter: () => {
+        // Ensure carousels are initialized before querying
+        if (!carouselsInitialized) {
+          initCarousels();
+        }
+        queryNetwork();
+
+        // Start live TPS updates
+        startLiveTPSUpdates();
+
+        // Staggered refresh intervals for different stats
+        // HBAR Price & Market Cap - every 8 seconds
+        setInterval(() => updatePriceAndMarketCap(), 8000);
+
+        // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
+        setTimeout(() => {
+          updateConsensusAndFees();
+          setInterval(() => updateConsensusAndFees(), 12000);
+        }, 4000);
+
+        // HBAR Released & Accounts - every 15 seconds (offset by 8s)
+        setTimeout(() => {
+          updateHbarAndAccounts();
+          setInterval(() => updateHbarAndAccounts(), 15000);
+        }, 8000);
       }
-      queryNetwork();
-
-      // Start live TPS updates
-      startLiveTPSUpdates();
-
-      // Staggered refresh intervals for different stats
-      // HBAR Price & Market Cap - every 8 seconds
-      setInterval(() => updatePriceAndMarketCap(), 8000);
-
-      // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
-      setTimeout(() => {
-        updateConsensusAndFees();
-        setInterval(() => updateConsensusAndFees(), 12000);
-      }, 4000);
-
-      // HBAR Released & Accounts - every 15 seconds (offset by 8s)
-      setTimeout(() => {
-        updateHbarAndAccounts();
-        setInterval(() => updateHbarAndAccounts(), 15000);
-      }, 8000);
-    }
-  });
+    });
+  }
 }
 
 // Mobile: Show network section immediately and load data on scroll
@@ -4355,6 +4362,8 @@ function updateAllScrollEffects() {
   const hederaTitle = document.getElementById('fixed-title');
   const navMenu = document.querySelector('.nav-menu');
 
+  console.log('Scroll handler running! scrollY:', scrollY, 'isMobile:', isMobile);
+
   if (hederaTitle) {
     // On mobile, fade and blur out quickly when scrolling starts
     if (isMobile) {
@@ -4364,15 +4373,18 @@ function updateAllScrollEffects() {
       const opacity = Math.max(1.0 - fadeProgress, 0);
       const blurAmount = fadeProgress * 20; // Add blur on mobile too
 
-      hederaTitle.style.opacity = opacity.toFixed(3);
+      hederaTitle.style.opacity = opacity;
       hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+      // Completely hide when faded out
+      hederaTitle.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
 
       // Navigation menu fades/blurs same as title on mobile
       if (navMenu) {
         // Override CSS animation to allow complete fade
         navMenu.style.animation = 'none';
-        navMenu.style.opacity = opacity.toFixed(3);
+        navMenu.style.opacity = opacity;
         navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        navMenu.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
         // Disable pointer events when faded out
         navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
       }
@@ -4380,7 +4392,10 @@ function updateAllScrollEffects() {
       // Desktop: full effects
       const fadeProgress = Math.min(Math.max(scrollY / hederaFadeDistance, 0), 1.0);
       const opacity = Math.max(1.0 - fadeProgress, 0);
-      hederaTitle.style.opacity = opacity.toFixed(3);
+
+      console.log('Desktop fade - scrollY:', scrollY, 'fadeProgress:', fadeProgress, 'opacity:', opacity);
+
+      hederaTitle.style.opacity = opacity;
 
       // Blur: 0px -> 30px
       const blurAmount = fadeProgress * 30;
@@ -4391,13 +4406,18 @@ function updateAllScrollEffects() {
       hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
       // IMPORTANT: Keep translateY(-50%) to maintain vertical centering
       hederaTitle.style.transform = `translateY(-50%) scale(${scale.toFixed(3)})`;
+      // Completely hide when faded out
+      hederaTitle.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
+
+      console.log('Applied to title - opacity:', hederaTitle.style.opacity, 'visibility:', hederaTitle.style.visibility);
 
       // Navigation menu fades/blurs same as title on desktop
       if (navMenu) {
         // Override CSS animation to allow complete fade
         navMenu.style.animation = 'none';
-        navMenu.style.opacity = opacity.toFixed(3);
+        navMenu.style.opacity = opacity;
         navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        navMenu.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
         // Disable pointer events when faded out
         navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
       }
@@ -4415,11 +4435,15 @@ let typingAnimationComplete = false;
 // Allow typing animation to complete before applying scroll effects
 setTimeout(() => {
   typingAnimationComplete = true;
+  console.log('✅ Typing animation complete - scroll effects now enabled');
 }, 1600); // Typing is 1.5s, give 100ms buffer
 
 function throttledScrollHandler() {
   // Don't apply scroll effects until typing animation completes
-  if (!typingAnimationComplete) return;
+  if (!typingAnimationComplete) {
+    console.log('⏳ Scroll blocked - waiting for typing animation');
+    return;
+  }
 
   lastScrollY = window.scrollY;
 
