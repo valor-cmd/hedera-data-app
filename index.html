@@ -1416,14 +1416,14 @@ window.scrollTo(0, 0);
 document.documentElement.scrollTop = 0;
 document.body.scrollTop = 0;
 
-// Function to ensure we're at top and remove overlay FAST
+// Function to ensure we're at top and remove overlay
 function ensureTopAndShow() {
   // Force scroll multiple times to be sure
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
 
-  // Keep forcing scroll for a brief moment
+  // Keep forcing scroll for 100ms
   let scrollAttempts = 0;
   const scrollInterval = setInterval(function() {
     window.scrollTo(0, 0);
@@ -1431,7 +1431,7 @@ function ensureTopAndShow() {
     document.body.scrollTop = 0;
     scrollAttempts++;
 
-    if (scrollAttempts > 3) {  // Reduced from 5 to 3 for faster removal
+    if (scrollAttempts > 5) {
       clearInterval(scrollInterval);
       // Remove overlay to show page
       const overlay = document.getElementById('loadingOverlay');
@@ -1440,20 +1440,23 @@ function ensureTopAndShow() {
       }
       document.body.classList.add('loaded');
     }
-  }, 10);  // Reduced from 20ms to 10ms
+  }, 20);
 }
 
-// Run IMMEDIATELY - don't wait for any events
-ensureTopAndShow();
-
-// Run on pageshow (handles refresh, back/forward)
-window.addEventListener('pageshow', ensureTopAndShow);
-
-// Also run on DOMContentLoaded for faster removal on mobile
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', ensureTopAndShow);
+// Mobile: Remove overlay immediately without waiting for resources
+// Desktop: Wait for resources to ensure smooth experience
+if (isMobileDevice) {
+  // Mobile: Remove overlay as soon as DOM is ready (don't wait for images/resources)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureTopAndShow);
+  } else {
+    // DOM already ready, remove immediately
+    ensureTopAndShow();
+  }
 } else {
-  ensureTopAndShow();
+  // Desktop: Use original approach with pageshow and load events
+  window.addEventListener('pageshow', ensureTopAndShow);
+  window.addEventListener('load', ensureTopAndShow);
 }
 
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
@@ -4409,19 +4412,13 @@ let scrollTicking = false;
 let lastScrollY = 0;
 let typingAnimationComplete = false;
 
-// Allow typing animation to complete before applying scroll effects (mobile only)
-const isMobileForTyping = window.innerWidth <= 768;
-if (isMobileForTyping) {
-  setTimeout(() => {
-    typingAnimationComplete = true;
-  }, 1600); // Typing is 1.5s, give 100ms buffer
-} else {
-  // Desktop: allow scroll effects immediately
+// Allow typing animation to complete before applying scroll effects
+setTimeout(() => {
   typingAnimationComplete = true;
-}
+}, 1600); // Typing is 1.5s, give 100ms buffer
 
 function throttledScrollHandler() {
-  // Don't apply scroll effects until typing animation completes (mobile protection)
+  // Don't apply scroll effects until typing animation completes
   if (!typingAnimationComplete) return;
 
   lastScrollY = window.scrollY;
