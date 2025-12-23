@@ -804,10 +804,10 @@
       height:105px;
     }
 
-    /* User Data section cards: 40% less wide, 50% taller on mobile */
+    /* User Data section cards: 30% less wide, 85% taller on mobile */
     #userCarousel .card {
-      flex:0 0 72px;
-      height:105px;
+      flex:0 0 84px;
+      height:130px;
     }
 
     /* Reduce spacing between sections on mobile */
@@ -853,6 +853,15 @@
       overflow-y:visible;
       -webkit-overflow-scrolling:touch;
       touch-action:pan-x pan-y;
+    }
+
+    /* Hide scrollbars on mobile for cleaner look */
+    .carousel-scroll::-webkit-scrollbar {
+      display:none;
+    }
+    .carousel-scroll {
+      -ms-overflow-style:none;
+      scrollbar-width:none;
     }
 
     /* Live Transactions map - 16:9 landscape ratio on mobile */
@@ -901,12 +910,13 @@
     /* Disable GPU-intensive effects on mobile for smoother scrolling */
     #fixed-title {
       will-change:opacity !important;
+      position:fixed !important;
+      z-index:100 !important;
     }
 
-    /* Optimize all animations for mobile */
-    * {
-      -webkit-transform:translateZ(0);
-      transform:translateZ(0);
+    /* First section needs proper height on mobile */
+    #s1 {
+      min-height:100vh !important;
     }
 
     /* Further reduce spacing on mobile */
@@ -939,18 +949,22 @@
 
     /* Make top-left coin 20% smaller and position 10px from top/left on mobile */
     #topLeftCoin {
+      position:fixed !important;
       width:1024px !important;
       height:1024px !important;
       top:-432px !important;
       left:-464px !important;
+      z-index:200 !important;
     }
 
     /* Adjust clickable overlay to match smaller coin - 20% smaller and 10px from edges */
     #coinClickArea {
+      position:fixed !important;
       width:38px !important;
       height:38px !important;
       top:10px !important;
       left:10px !important;
+      z-index:201 !important;
     }
 
     /* Ensure 3D coin canvas is visible on mobile */
@@ -1035,6 +1049,14 @@
     .richlist-subtitle {
       margin-top:3rem !important;
       font-size:1.2rem !important;
+    }
+
+    /* Token Balances: disable horizontal scroll on mobile */
+    #tokenBalancesList {
+      overflow-x:hidden !important;
+    }
+    #tokenBalancesChart {
+      overflow-x:hidden !important;
     }
   }
 </style>
