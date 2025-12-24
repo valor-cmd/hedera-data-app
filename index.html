@@ -1779,7 +1779,7 @@
 
     <div class="chat-container">
       <div class="chat-input-wrapper">
-        <input type="text" class="chat-input" id="chatInput" autocomplete="off">
+        <input type="text" class="chat-input" id="chatInput" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
         <div class="chat-placeholder" id="chatPlaceholder">
           <span id="chatPlaceholderText"></span>
           <span class="chat-cursor"></span>
@@ -5582,16 +5582,25 @@ function initChatPlaceholder() {
 function resumeAnimation() {
   const placeholder = document.getElementById('chatPlaceholder');
   const chatInput = document.getElementById('chatInput');
+  const placeholderText = document.getElementById('chatPlaceholderText');
 
-  if (!placeholder || !chatInput) return;
+  if (!placeholder || !chatInput || !placeholderText) return;
+
+  // Clear any existing timeout
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+  }
 
   animationPaused = false;
+
+  // Only resume if input is empty and not focused
   if (chatInput.value.length === 0 && document.activeElement !== chatInput) {
     placeholder.classList.remove('hidden');
     // Clear any existing text and start fresh
-    const placeholderText = document.getElementById('chatPlaceholderText');
-    if (placeholderText) placeholderText.textContent = '';
-    typeNextExample();
+    placeholderText.textContent = '';
+    // Small delay before starting animation
+    typingTimeout = setTimeout(typeNextExample, 300);
   }
 }
 
@@ -5718,7 +5727,8 @@ async function sendChatMessage() {
   // Scroll to bottom
   responseArea.scrollTop = responseArea.scrollHeight;
 
-  // Resume animation after response is generated
+  // Blur input and resume animation after response is generated
+  chatInput.blur();
   resumeAnimation();
 }
 
@@ -5850,23 +5860,26 @@ async function processNaturalLanguageQuery(query) {
     }
   }
 
-  // Check for specific account ID (after NFT/token checks)
-  const accountMatch = lowerQuery.match(/0\.0\.(\d+)/) ||
-                       lowerQuery.match(/account\s*#?\s*(\d+)/i) ||
-                       lowerQuery.match(/account\s+id\s*:?\s*(\d+)/i);
-  if (accountMatch) {
-    let accountNum = accountMatch[1] || accountMatch[0].replace('0.0.', '');
-    return await queryAccountDetailed(accountNum);
-  }
-
-  // Transaction queries - more comprehensive
+  // Transaction queries - check BEFORE account queries so "transactions for 0.0.X" works
   if (lowerQuery.includes('transaction') || lowerQuery.includes('tx')) {
     // Specific transaction hash
     const txHashMatch = lowerQuery.match(/([a-f0-9]{64})/i);
     if (txHashMatch) {
       return await queryTransactionByHash(txHashMatch[1]);
     }
-    // How many / count queries - check this BEFORE "recent/latest/last"
+    // Transactions by/for a specific account - check for account ID in query
+    const txAccountMatch = lowerQuery.match(/(0\.0\.\d+)/i) ||
+                           lowerQuery.match(/(?:from|by|for|has|made)\s*(?:account\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (txAccountMatch) {
+      const accountId = txAccountMatch[1] || txAccountMatch[0];
+      // Determine time period
+      let period = 'day';
+      if (lowerQuery.includes('month')) period = 'month';
+      else if (lowerQuery.includes('week')) period = 'week';
+      else if (lowerQuery.includes('hour')) period = 'hour';
+      return await queryAccountTransactionCount(accountId, period);
+    }
+    // How many / count queries for network-wide
     if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
       // Check for time period
       if (lowerQuery.includes('hour')) {
@@ -5886,11 +5899,6 @@ async function processNaturalLanguageQuery(query) {
       const count = Math.min(parseInt(lastCountMatch[1]), 20);
       return await queryRecentTransactions(count);
     }
-    // Transactions by account
-    const txAccountMatch = lowerQuery.match(/(?:from|by|for)\s*(?:account\s*)?(\d+\.\d+\.\d+|\d+)/i);
-    if (txAccountMatch) {
-      return await queryAccountTransactions(txAccountMatch[1]);
-    }
     // Transaction types
     if (lowerQuery.includes('type')) {
       return await queryTransactionTypes();
@@ -5905,6 +5913,15 @@ async function processNaturalLanguageQuery(query) {
     }
     // Daily count as fallback (includes "last day", "today", "24 hours", etc.)
     return await queryDailyTransactions();
+  }
+
+  // Check for specific account ID (after NFT/token/transaction checks)
+  const accountMatch = lowerQuery.match(/0\.0\.(\d+)/) ||
+                       lowerQuery.match(/account\s*#?\s*(\d+)/i) ||
+                       lowerQuery.match(/account\s+id\s*:?\s*(\d+)/i);
+  if (accountMatch) {
+    let accountNum = accountMatch[1] || accountMatch[0].replace('0.0.', '');
+    return await queryAccountDetailed(accountNum);
   }
 
   // Topic/HCS queries
@@ -6246,15 +6263,12 @@ async function queryAccountNFTs(accountId) {
   if (!accountId.includes('.')) accountId = parseInt(accountId);
   else accountId = parseInt(accountId.split('.').pop());
 
-  const response = await fetch(HGRAPH_API, {
+  // First get the count
+  const countResponse = await fetch(HGRAPH_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
     body: JSON.stringify({
-      query: `query GetAccountNFTs($accountId: bigint!) {
-        nft(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}, limit: 20, order_by: {created_timestamp: desc}) {
-          token_id serial_number metadata
-          token { name symbol }
-        }
+      query: `query GetNFTCount($accountId: bigint!) {
         nft_aggregate(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}) {
           aggregate { count }
         }
@@ -6262,9 +6276,24 @@ async function queryAccountNFTs(accountId) {
       variables: { accountId }
     })
   });
-  const result = await response.json();
+  const countResult = await countResponse.json();
+  const total = countResult.data?.nft_aggregate?.aggregate?.count || 0;
 
-  const total = result.data?.nft_aggregate?.aggregate?.count || 0;
+  // Then get all NFTs (up to 500 to be reasonable)
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountNFTs($accountId: bigint!, $limit: Int!) {
+        nft(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}, limit: $limit, order_by: {created_timestamp: desc}) {
+          token_id serial_number metadata
+          token { name symbol }
+        }
+      }`,
+      variables: { accountId, limit: Math.min(total, 500) }
+    })
+  });
+  const result = await response.json();
   const nfts = result.data?.nft || [];
 
   let html = `<strong>NFTs owned by 0.0.${accountId}</strong><br>`;
@@ -6276,7 +6305,7 @@ async function queryAccountNFTs(accountId) {
     nfts.forEach(n => {
       html += `• ${n.token?.name || 'Unknown'} #${n.serial_number} (0.0.${n.token_id})<br>`;
     });
-    if (total > 20) html += `<br><em>Showing first 20 of ${total}</em>`;
+    if (total > 500) html += `<br><em>Showing first 500 of ${total}</em>`;
   }
 
   return html;
@@ -6394,6 +6423,52 @@ async function queryAccountTransactions(accountId) {
   });
 
   return html;
+}
+
+async function queryAccountTransactionCount(accountId, period = 'day') {
+  if (typeof accountId === 'string' && !accountId.includes('.')) accountId = parseInt(accountId);
+  else if (typeof accountId === 'string') accountId = parseInt(accountId.split('.').pop());
+
+  // Calculate timestamp for the time period
+  const now = Date.now();
+  let startTime;
+  let periodLabel;
+
+  switch (period) {
+    case 'hour':
+      startTime = (now - 60 * 60 * 1000) * 1000000; // 1 hour ago in nanoseconds
+      periodLabel = 'the last hour';
+      break;
+    case 'week':
+      startTime = (now - 7 * 24 * 60 * 60 * 1000) * 1000000; // 7 days ago
+      periodLabel = 'the last week';
+      break;
+    case 'month':
+      startTime = (now - 30 * 24 * 60 * 60 * 1000) * 1000000; // 30 days ago
+      periodLabel = 'the last month';
+      break;
+    default:
+      startTime = (now - 24 * 60 * 60 * 1000) * 1000000; // 24 hours ago
+      periodLabel = 'the last 24 hours';
+  }
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountTxCount($accountId: bigint!, $startTime: bigint!) {
+        transaction_aggregate(where: {payer_account_id: {_eq: $accountId}, consensus_timestamp: {_gte: $startTime}}) {
+          aggregate { count }
+        }
+      }`,
+      variables: { accountId, startTime: startTime.toString() }
+    })
+  });
+  const result = await response.json();
+
+  const count = result.data?.transaction_aggregate?.aggregate?.count || 0;
+
+  return `Account <strong>0.0.${accountId}</strong> has made <span class="data-value">${count.toLocaleString()}</span> transactions in ${periodLabel}.`;
 }
 
 // Transaction types breakdown
