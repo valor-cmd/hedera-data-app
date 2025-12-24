@@ -1099,13 +1099,15 @@
       display:none !important;
     }
 
-    /* Hide toggle switch on mobile - cards only */
-    #networkViewToggle {
+    /* Hide toggle switches on mobile - cards only */
+    #networkViewToggle,
+    #userDataViewToggle {
       display:none !important;
     }
 
-    /* Hide chart view on mobile */
-    .network-chart-view {
+    /* Hide chart views on mobile */
+    .network-chart-view,
+    #userChartView {
       display:none !important;
     }
 
@@ -1403,7 +1405,18 @@
       <button type="button" class="search-btn" onclick="queryAccount(); return false;" style="display:inline-block;vertical-align:middle;">Query Account</button>
       <div class="loading" id="accountLoading">Loading...</div>
     </div>
-    <div class="cards-wrapper">
+
+    <!-- Desktop Only: Toggle Switch for User Data -->
+    <div class="view-toggle-container" id="userDataViewToggle">
+      <span class="view-toggle-label active" id="userCardsLabel">Cards</span>
+      <div class="view-toggle" id="userViewToggleSwitch" onclick="toggleUserDataView()">
+        <div class="view-toggle-knob"></div>
+      </div>
+      <span class="view-toggle-label" id="userChartLabel">Chart</span>
+    </div>
+
+    <!-- Cards View (Default) -->
+    <div class="cards-wrapper" id="userCardsView">
       <div class="carousel-scroll">
         <div class="carousel" id="userCarousel">
           <div class="card"><div class="card-title">Created</div><div class="card-value" id="created">---</div></div>
@@ -1438,6 +1451,16 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Chart/Text View for User Data (Hidden by default) -->
+    <div class="network-chart-view" id="userChartView">
+      <div class="chart-row"><span class="chart-label">Created</span><span class="chart-value" id="chartCreated">---</span></div>
+      <div class="chart-row"><span class="chart-label">Account ID</span><span class="chart-value" id="chartAccountId">---</span></div>
+      <div class="chart-row"><span class="chart-label">Balance</span><span class="chart-value" id="chartBalance">---</span></div>
+      <div class="chart-row"><span class="chart-label">Total Staked</span><span class="chart-value" id="chartStakedBalance">---</span></div>
+      <div class="chart-row"><span class="chart-label">Received Rewards</span><span class="chart-value" id="chartReceivedRewards">---</span></div>
+      <div class="chart-row" id="chartStakedToAccountRow" style="display:none;"><span class="chart-label">Staked to Account</span><span class="chart-value" id="chartStakedToAccount">---</span></div>
     </div>
 
     <!-- Token Balances Chart -->
@@ -4859,7 +4882,69 @@ setInterval(() => {
   if (isChartView) {
     syncChartValues();
   }
+  if (isUserChartView) {
+    syncUserChartValues();
+  }
 }, 1000);
+
+// User Data View Toggle (Desktop Only)
+let isUserChartView = false;
+
+function toggleUserDataView() {
+  isUserChartView = !isUserChartView;
+
+  const toggle = document.getElementById('userViewToggleSwitch');
+  const cardsView = document.getElementById('userCardsView');
+  const chartView = document.getElementById('userChartView');
+  const cardsLabel = document.getElementById('userCardsLabel');
+  const chartLabel = document.getElementById('userChartLabel');
+
+  if (isUserChartView) {
+    // Switch to Chart view
+    toggle.classList.add('chart-active');
+    cardsView.style.display = 'none';
+    chartView.classList.add('active');
+    cardsLabel.classList.remove('active');
+    chartLabel.classList.add('active');
+
+    // Sync chart values with card values
+    syncUserChartValues();
+  } else {
+    // Switch to Cards view
+    toggle.classList.remove('chart-active');
+    cardsView.style.display = '';
+    chartView.classList.remove('active');
+    cardsLabel.classList.add('active');
+    chartLabel.classList.remove('active');
+  }
+}
+
+function syncUserChartValues() {
+  // Copy values from cards to chart view
+  const mappings = [
+    ['created', 'chartCreated'],
+    ['accountId', 'chartAccountId'],
+    ['balance', 'chartBalance'],
+    ['stakedBalance', 'chartStakedBalance'],
+    ['receivedRewards', 'chartReceivedRewards'],
+    ['stakedToAccount', 'chartStakedToAccount']
+  ];
+
+  mappings.forEach(([cardId, chartId]) => {
+    const cardEl = document.getElementById(cardId);
+    const chartEl = document.getElementById(chartId);
+    if (cardEl && chartEl) {
+      chartEl.textContent = cardEl.textContent;
+    }
+  });
+
+  // Show/hide staked to account row based on card visibility
+  const stakedToAccountCard = document.getElementById('stakedToAccountCard');
+  const chartStakedToAccountRow = document.getElementById('chartStakedToAccountRow');
+  if (stakedToAccountCard && chartStakedToAccountRow) {
+    chartStakedToAccountRow.style.display = stakedToAccountCard.style.display === 'none' ? 'none' : 'flex';
+  }
+}
 
 // Make coin clickable - scroll to top and restart typing animation (desktop only)
 const coinClickElement = document.getElementById('coinClickArea');
