@@ -859,9 +859,9 @@
       height:105px;
     }
 
-    /* User Data section cards: 30% less wide, 85% taller on mobile */
+    /* User Data section cards: HALF width on mobile */
     #userCarousel .card {
-      flex:0 0 84px;
+      flex:0 0 42px;
       height:130px;
     }
 
@@ -877,6 +877,10 @@
 
     .card-value {
       font-size:0.9rem;
+      /* Solid purple instead of gradient on mobile */
+      background:none !important;
+      -webkit-background-clip:unset !important;
+      -webkit-text-fill-color:#8b5cf6 !important;
     }
 
     /* Make Received Rewards font size match other card values on mobile */
@@ -1051,6 +1055,8 @@
       width:95%;
       max-width:100%;
       margin:0 auto 1rem auto;
+      /* Solid purple instead of gradient on mobile */
+      background:#8b5cf6 !important;
     }
 
     /* Optimize transaction feed for mobile */
@@ -1098,6 +1104,20 @@
     .rank-badge {
       font-size:1.2rem !important;
       min-width:40px;
+    }
+
+    /* Rank result: 30% smaller, "Rank" white, number purple */
+    .rank-number {
+      font-size:2.1rem !important; /* 30% smaller than 3rem */
+      background:none !important;
+      -webkit-background-clip:unset !important;
+      -webkit-text-fill-color:unset !important;
+    }
+    .rank-label {
+      color:white !important;
+    }
+    .rank-value {
+      color:#8b5cf6 !important;
     }
 
     /* Make richlist back button smaller on mobile and add space above subtitle */
@@ -3978,7 +3998,7 @@ async function checkRank() {
     // Display results
     const resultDiv = document.getElementById('rankResult');
     resultDiv.innerHTML = `
-      <div class="rank-number">Rank #${rank.toLocaleString()}</div>
+      <div class="rank-number"><span class="rank-label">Rank </span><span class="rank-value">#${rank.toLocaleString()}</span></div>
       <div class="rank-balance">${balanceHbar} ℏ</div>
       <div class="rank-percentile ${badgeClass}">${badgeText}</div>
       <p style="margin-top:1rem;opacity:0.7;">Out of ${totalAccounts.toLocaleString()} active accounts</p>
