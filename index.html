@@ -5814,20 +5814,33 @@ async function processNaturalLanguageQuery(query) {
     return showSchemaHelp();
   }
 
-  // Check for specific account ID first (highest priority)
-  const accountMatch = lowerQuery.match(/0\.0\.(\d+)/) ||
-                       lowerQuery.match(/account\s*#?\s*(\d+)/i) ||
-                       lowerQuery.match(/account\s+id\s*:?\s*(\d+)/i);
-  if (accountMatch) {
-    let accountNum = accountMatch[1] || accountMatch[0].replace('0.0.', '');
-    return await queryAccountDetailed(accountNum);
+  // NFT queries - check BEFORE account queries so "NFTs for 0.0.X" works
+  if (lowerQuery.includes('nft')) {
+    const nftMatch = lowerQuery.match(/(\d+\.\d+\.\d+|\d+).*?(?:serial|#)\s*(\d+)/i);
+    if (nftMatch) {
+      return await queryNFTInfo(nftMatch[1], nftMatch[2]);
+    }
+    if (lowerQuery.includes('collection') || lowerQuery.includes('top')) {
+      return await queryTopNFTCollections();
+    }
+    // NFTs owned by account - match account ID anywhere in query
+    const nftAccountMatch = lowerQuery.match(/(0\.0\.\d+)/i) ||
+                            lowerQuery.match(/(?:owned by|held by|for account|account|does)\s*(\d+\.\d+\.\d+|\d+)/i);
+    if (nftAccountMatch) {
+      const accountId = nftAccountMatch[1] || nftAccountMatch[0];
+      return await queryAccountNFTs(accountId);
+    }
+    // General NFT stats if no account specified
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total')) {
+      return await queryNFTStats();
+    }
   }
 
-  // Token queries
-  const tokenMatch = lowerQuery.match(/token\s*(?:id\s*)?(\d+\.\d+\.\d+|\d+)/i);
-  if (tokenMatch || (lowerQuery.includes('token') && !lowerQuery.includes('account'))) {
-    if (tokenMatch) {
-      return await queryTokenInfo(tokenMatch[1]);
+  // Token queries - check BEFORE account queries so "tokens for 0.0.X" works
+  if (lowerQuery.includes('token') && !lowerQuery.includes('nft')) {
+    const tokenIdMatch = lowerQuery.match(/token\s*(?:id\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (tokenIdMatch) {
+      return await queryTokenInfo(tokenIdMatch[1]);
     }
     if (lowerQuery.includes('top') || lowerQuery.includes('popular') || lowerQuery.includes('list')) {
       return await queryTopTokens();
@@ -5837,23 +5850,13 @@ async function processNaturalLanguageQuery(query) {
     }
   }
 
-  // NFT queries
-  if (lowerQuery.includes('nft')) {
-    const nftMatch = lowerQuery.match(/(\d+\.\d+\.\d+|\d+).*?(?:serial|#)\s*(\d+)/i);
-    if (nftMatch) {
-      return await queryNFTInfo(nftMatch[1], nftMatch[2]);
-    }
-    if (lowerQuery.includes('collection') || lowerQuery.includes('top')) {
-      return await queryTopNFTCollections();
-    }
-    if (lowerQuery.includes('how many') || lowerQuery.includes('total')) {
-      return await queryNFTStats();
-    }
-    // NFTs owned by account
-    const nftAccountMatch = lowerQuery.match(/(?:owned by|held by|for account|account)\s*(\d+\.\d+\.\d+|\d+)/i);
-    if (nftAccountMatch) {
-      return await queryAccountNFTs(nftAccountMatch[1]);
-    }
+  // Check for specific account ID (after NFT/token checks)
+  const accountMatch = lowerQuery.match(/0\.0\.(\d+)/) ||
+                       lowerQuery.match(/account\s*#?\s*(\d+)/i) ||
+                       lowerQuery.match(/account\s+id\s*:?\s*(\d+)/i);
+  if (accountMatch) {
+    let accountNum = accountMatch[1] || accountMatch[0].replace('0.0.', '');
+    return await queryAccountDetailed(accountNum);
   }
 
   // Transaction queries - more comprehensive
@@ -5865,6 +5868,10 @@ async function processNaturalLanguageQuery(query) {
     }
     // How many / count queries - check this BEFORE "recent/latest/last"
     if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
+      // Check for time period
+      if (lowerQuery.includes('hour')) {
+        return await queryHourlyTransactions();
+      }
       return await queryDailyTransactions();
     }
     // Recent transactions (show individual transactions)
@@ -5891,6 +5898,10 @@ async function processNaturalLanguageQuery(query) {
     // Per second check
     if (lowerQuery.includes('per second') || lowerQuery.includes('tps')) {
       return await queryTPS();
+    }
+    // Check for hourly without "how many"
+    if (lowerQuery.includes('hour')) {
+      return await queryHourlyTransactions();
     }
     // Daily count as fallback (includes "last day", "today", "24 hours", etc.)
     return await queryDailyTransactions();
@@ -6700,6 +6711,19 @@ async function queryDailyTransactions() {
   const result = await response.json();
   const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
   return `There have been <span class="data-value">${txs}</span> <strong>transactions in the last 24 hours</strong> on the Hedera network.`;
+}
+
+async function queryHourlyTransactions() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { transactions: ecosystem_metric(where: {name: {_eq: "new_transactions"}, period: {_eq: "hour"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There have been <span class="data-value">${txs}</span> <strong>transactions in the last hour</strong> on the Hedera network.`;
 }
 
 async function queryTotalAccounts() {
