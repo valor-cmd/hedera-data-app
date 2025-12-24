@@ -5521,6 +5521,33 @@ function scrollToSection(sectionId) {
 // Hedera Data Chat - Natural Language Query
 // ============================================
 
+// OpenAI Configuration (via secure backend proxy)
+const OPENAI_PROXY_URL = '/api/openai'; // Backend proxy endpoint
+const OPENAI_MODEL = 'gpt-4';
+
+// Conversation history for context
+let conversationHistory = [];
+const MAX_HISTORY = 10; // Keep last 10 messages for context
+
+// System prompt for the LLM
+const HEDERA_SYSTEM_PROMPT = `You are a helpful assistant for the Hedera network dashboard. You help users query and understand data from the Hedera blockchain.
+
+You have access to real-time Hedera network data through the Hgraph API. When users ask questions, you'll receive the actual data from the network and should explain it clearly.
+
+Key Hedera concepts:
+- HBAR is the native cryptocurrency (1 HBAR = 100,000,000 tinybars)
+- Account IDs are in format 0.0.XXXXX (shard.realm.num)
+- Hedera uses hashgraph consensus with ~3-5 second finality
+- The network supports tokens (fungible), NFTs, smart contracts, and HCS (Hedera Consensus Service) topics
+
+When answering:
+- Be concise but informative
+- If data is provided, reference specific numbers
+- For follow-up questions, use context from the conversation
+- If you can't answer something, suggest what data the user could ask for
+
+Available query types: account info, token info, NFT holdings, transaction counts, network stats (TPS, price, market cap), staking info, and more.`;
+
 const chatExampleQueries = [
   "What is the current HBAR price?",
   "How many transactions happened today?",
@@ -5683,6 +5710,88 @@ function useExampleQuery(btn) {
   chatInput.focus();
 }
 
+// Call OpenAI API via secure backend proxy
+async function callOpenAI(userMessage, hgraphData = null) {
+  try {
+    // Build messages array with conversation history
+    const messages = [
+      { role: 'system', content: HEDERA_SYSTEM_PROMPT }
+    ];
+
+    // Add conversation history for context
+    conversationHistory.forEach(msg => {
+      messages.push(msg);
+    });
+
+    // Add current user message with any Hgraph data
+    let currentMessage = userMessage;
+    if (hgraphData) {
+      currentMessage = `User question: "${userMessage}"\n\nHere is the relevant data from the Hedera network:\n${hgraphData}\n\nPlease provide a helpful response based on this data. If the user is asking a follow-up question, use the conversation context.`;
+    }
+    messages.push({ role: 'user', content: currentMessage });
+
+    const response = await fetch(OPENAI_PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: messages,
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('OpenAI proxy error:', response.status, errorData);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error('OpenAI API error:', data.error);
+      return null;
+    }
+
+    const assistantMessage = data.choices?.[0]?.message?.content;
+
+    if (!assistantMessage) {
+      return null;
+    }
+
+    // Update conversation history
+    conversationHistory.push({ role: 'user', content: userMessage });
+    conversationHistory.push({ role: 'assistant', content: assistantMessage });
+
+    // Keep history limited
+    while (conversationHistory.length > MAX_HISTORY * 2) {
+      conversationHistory.shift();
+    }
+
+    return assistantMessage;
+  } catch (error) {
+    console.error('OpenAI proxy error:', error);
+    return null;
+  }
+}
+
+// Check if query is a follow-up question
+function isFollowUpQuestion(query) {
+  const followUpIndicators = [
+    'what about', 'how about', 'and what', 'also', 'tell me more',
+    'more info', 'more details', 'explain', 'why', 'what does that mean',
+    'can you', 'could you', 'what else', 'anything else', 'compare',
+    'that account', 'this account', 'the same', 'their', 'its', 'those',
+    'what if', 'how come', 'is that', 'are they', 'do they', 'does it'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return followUpIndicators.some(indicator => lowerQuery.includes(indicator)) ||
+         (conversationHistory.length > 0 && query.split(' ').length < 6);
+}
+
 async function sendChatMessage() {
   const chatInput = document.getElementById('chatInput');
   const responseArea = document.getElementById('chatResponseArea');
@@ -5708,17 +5817,53 @@ async function sendChatMessage() {
   const loadingId = addLoadingMessage();
 
   try {
-    // Parse the natural language query and execute
-    const result = await processNaturalLanguageQuery(query);
+    // First, get data from Hgraph API using existing pattern matching
+    const hgraphResult = await processNaturalLanguageQuery(query);
+
+    // Check if this is a follow-up or question that benefits from LLM
+    const isFollowUp = isFollowUpQuestion(query);
+
+    let finalResult;
+    let usedOpenAI = false;
+
+    if (isFollowUp || query.includes('?')) {
+      // Try OpenAI to enhance the response or handle follow-ups
+      try {
+        const llmResponse = await callOpenAI(query, hgraphResult);
+        if (llmResponse) {
+          finalResult = llmResponse;
+          usedOpenAI = true;
+        }
+      } catch (openaiError) {
+        console.warn('OpenAI fallback triggered:', openaiError.message);
+      }
+    }
+
+    // Fallback to Hgraph result if OpenAI wasn't used or failed
+    if (!usedOpenAI) {
+      finalResult = hgraphResult;
+      // Store in history for context even without OpenAI
+      conversationHistory.push({ role: 'user', content: query });
+      conversationHistory.push({ role: 'assistant', content: hgraphResult });
+      while (conversationHistory.length > MAX_HISTORY * 2) {
+        conversationHistory.shift();
+      }
+    }
 
     // Remove loading message
     removeLoadingMessage(loadingId);
 
     // Add assistant response
-    addChatMessage('assistant', result);
+    addChatMessage('assistant', finalResult);
   } catch (error) {
     removeLoadingMessage(loadingId);
-    addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+    // Final fallback - try to at least show Hgraph data
+    try {
+      const fallbackResult = await processNaturalLanguageQuery(query);
+      addChatMessage('assistant', fallbackResult);
+    } catch (fallbackError) {
+      addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+    }
   }
 
   // Re-enable send button
