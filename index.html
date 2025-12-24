@@ -5723,93 +5723,836 @@ function removeLoadingMessage(id) {
   if (el) el.remove();
 }
 
-// Natural language query processor
+// Hgraph GraphQL Schema Reference for intelligent query generation
+const HGRAPH_SCHEMA = {
+  tables: {
+    entity: ['id', 'num', 'realm', 'shard', 'type', 'balance', 'memo', 'created_timestamp', 'deleted', 'expiration_timestamp', 'auto_renew_period', 'key', 'public_key', 'evm_address', 'staked_node_id', 'staked_account_id', 'stake_period_start', 'pending_reward', 'decline_reward'],
+    transaction: ['id', 'consensus_timestamp', 'type', 'result', 'payer_account_id', 'node_account_id', 'charged_tx_fee', 'max_fee', 'memo', 'scheduled', 'nonce', 'transaction_hash', 'valid_start_ns'],
+    token: ['token_id', 'name', 'symbol', 'type', 'decimals', 'total_supply', 'max_supply', 'treasury_account_id', 'created_timestamp', 'freeze_default', 'pause_status', 'supply_type', 'metadata'],
+    nft: ['token_id', 'serial_number', 'account_id', 'metadata', 'created_timestamp', 'modified_timestamp', 'deleted', 'spender'],
+    token_account: ['token_id', 'account_id', 'balance', 'associated', 'created_timestamp', 'freeze_status', 'kyc_status'],
+    token_transfer: ['token_id', 'account_id', 'amount', 'consensus_timestamp', 'is_approval'],
+    crypto_transfer: ['entity_id', 'amount', 'consensus_timestamp', 'is_approval', 'payer_account_id'],
+    topic_message: ['topic_id', 'consensus_timestamp', 'message', 'sequence_number', 'payer_account_id'],
+    contract: ['id', 'evm_address', 'file_id', 'created_timestamp', 'runtime_bytecode'],
+    ecosystem_metric: ['name', 'period', 'total', 'start_date', 'end_date', 'description'],
+    entity_stake: ['id', 'staked_to_me', 'staked_node_id_start'],
+    network_stake: ['consensus_timestamp', 'stake_total', 'staking_period'],
+    node_stake: ['node_id', 'stake', 'stake_rewarded', 'stake_not_rewarded', 'min_stake', 'max_stake']
+  },
+  metricNames: ['avg_usd_conversion', 'hbar_market_cap', 'total_accounts', 'active_accounts', 'new_accounts', 'new_transactions', 'network_fee', 'hbar_total_released', 'avg_time_to_consensus', 'total_staked']
+};
+
+// Natural language query processor - comprehensive pattern matching
 async function processNaturalLanguageQuery(query) {
   const lowerQuery = query.toLowerCase();
+  const originalQuery = query;
+
+  // Check for raw GraphQL query
+  if (lowerQuery.includes('query') && (lowerQuery.includes('{') || lowerQuery.includes('graphql'))) {
+    return await executeRawGraphQL(originalQuery);
+  }
+
+  // Help/schema queries
+  if (lowerQuery.includes('help') || lowerQuery.includes('what can') || lowerQuery.includes('schema') || lowerQuery.includes('available')) {
+    return showSchemaHelp();
+  }
+
+  // Check for specific account ID first (highest priority)
+  const accountMatch = lowerQuery.match(/0\.0\.(\d+)/) ||
+                       lowerQuery.match(/account\s*#?\s*(\d+)/i) ||
+                       lowerQuery.match(/account\s+id\s*:?\s*(\d+)/i);
+  if (accountMatch) {
+    let accountNum = accountMatch[1] || accountMatch[0].replace('0.0.', '');
+    return await queryAccountDetailed(accountNum);
+  }
+
+  // Token queries
+  const tokenMatch = lowerQuery.match(/token\s*(?:id\s*)?(\d+\.\d+\.\d+|\d+)/i);
+  if (tokenMatch || (lowerQuery.includes('token') && !lowerQuery.includes('account'))) {
+    if (tokenMatch) {
+      return await queryTokenInfo(tokenMatch[1]);
+    }
+    if (lowerQuery.includes('top') || lowerQuery.includes('popular') || lowerQuery.includes('list')) {
+      return await queryTopTokens();
+    }
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
+      return await queryTokenCount();
+    }
+  }
+
+  // NFT queries
+  if (lowerQuery.includes('nft')) {
+    const nftMatch = lowerQuery.match(/(\d+\.\d+\.\d+|\d+).*?(?:serial|#)\s*(\d+)/i);
+    if (nftMatch) {
+      return await queryNFTInfo(nftMatch[1], nftMatch[2]);
+    }
+    if (lowerQuery.includes('collection') || lowerQuery.includes('top')) {
+      return await queryTopNFTCollections();
+    }
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total')) {
+      return await queryNFTStats();
+    }
+    // NFTs owned by account
+    const nftAccountMatch = lowerQuery.match(/(?:owned by|held by|for account|account)\s*(\d+\.\d+\.\d+|\d+)/i);
+    if (nftAccountMatch) {
+      return await queryAccountNFTs(nftAccountMatch[1]);
+    }
+  }
+
+  // Transaction queries - more comprehensive
+  if (lowerQuery.includes('transaction') || lowerQuery.includes('tx')) {
+    // Specific transaction hash
+    const txHashMatch = lowerQuery.match(/([a-f0-9]{64})/i);
+    if (txHashMatch) {
+      return await queryTransactionByHash(txHashMatch[1]);
+    }
+    // Recent transactions
+    if (lowerQuery.includes('recent') || lowerQuery.includes('latest') || lowerQuery.includes('last')) {
+      const countMatch = lowerQuery.match(/(\d+)/);
+      const count = countMatch ? Math.min(parseInt(countMatch[1]), 20) : 10;
+      return await queryRecentTransactions(count);
+    }
+    // Transactions by account
+    const txAccountMatch = lowerQuery.match(/(?:from|by|for)\s*(?:account\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (txAccountMatch) {
+      return await queryAccountTransactions(txAccountMatch[1]);
+    }
+    // Transaction types
+    if (lowerQuery.includes('type')) {
+      return await queryTransactionTypes();
+    }
+    // Per second check
+    if (lowerQuery.includes('per second') || lowerQuery.includes('tps')) {
+      return await queryTPS();
+    }
+    // Daily count
+    return await queryDailyTransactions();
+  }
+
+  // Topic/HCS queries
+  if (lowerQuery.includes('topic') || lowerQuery.includes('hcs') || lowerQuery.includes('message')) {
+    const topicMatch = lowerQuery.match(/topic\s*(?:id\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (topicMatch) {
+      return await queryTopicMessages(topicMatch[1]);
+    }
+  }
+
+  // Contract queries
+  if (lowerQuery.includes('contract') || lowerQuery.includes('smart contract')) {
+    const contractMatch = lowerQuery.match(/(\d+\.\d+\.\d+|\d+)/);
+    if (contractMatch) {
+      return await queryContractInfo(contractMatch[1]);
+    }
+    if (lowerQuery.includes('top') || lowerQuery.includes('popular')) {
+      return await queryTopContracts();
+    }
+  }
+
+  // Staking queries
+  if (lowerQuery.includes('stak') || lowerQuery.includes('node')) {
+    if (lowerQuery.includes('node') && (lowerQuery.includes('list') || lowerQuery.includes('all') || lowerQuery.includes('top'))) {
+      return await queryNodeStakes();
+    }
+    return await queryStakingInfo();
+  }
 
   // HBAR Price
-  if (lowerQuery.includes('price') && (lowerQuery.includes('hbar') || lowerQuery.includes('hedera'))) {
+  if (lowerQuery.includes('price') || lowerQuery.includes('cost') || lowerQuery.includes('worth')) {
     return await queryHbarPrice();
   }
 
   // Market Cap
-  if (lowerQuery.includes('market cap') || lowerQuery.includes('marketcap')) {
+  if (lowerQuery.includes('market') || lowerQuery.includes('cap') || lowerQuery.includes('mcap')) {
     return await queryMarketCap();
   }
 
   // TPS
-  if (lowerQuery.includes('tps') || (lowerQuery.includes('transactions') && lowerQuery.includes('second'))) {
+  if (lowerQuery.includes('tps') || lowerQuery.includes('per second') || lowerQuery.includes('throughput')) {
     return await queryTPS();
   }
 
-  // Account lookup
-  const accountMatch = lowerQuery.match(/account\s*(0\.0\.\d+|\d+)/i) ||
-                       lowerQuery.match(/(0\.0\.\d+)/);
-  if (accountMatch) {
-    let accountId = accountMatch[1];
-    if (!accountId.startsWith('0.0.')) {
-      accountId = '0.0.' + accountId;
+  // Account count queries
+  if (lowerQuery.includes('account')) {
+    if (lowerQuery.includes('new') || lowerQuery.includes('created')) {
+      return await queryNewAccounts();
     }
-    return await queryAccountInfo(accountId);
-  }
-
-  // Balance lookup
-  if (lowerQuery.includes('balance') && lowerQuery.match(/0\.0\.\d+/)) {
-    const match = lowerQuery.match(/0\.0\.\d+/);
-    return await queryAccountInfo(match[0]);
-  }
-
-  // Transaction count today
-  if (lowerQuery.includes('transaction') && (lowerQuery.includes('today') || lowerQuery.includes('24h') || lowerQuery.includes('daily'))) {
-    return await queryDailyTransactions();
-  }
-
-  // Total accounts
-  if (lowerQuery.includes('total') && lowerQuery.includes('account')) {
+    if (lowerQuery.includes('active')) {
+      return await queryActiveAccounts();
+    }
+    // Total accounts catch-all
     return await queryTotalAccounts();
   }
 
-  // New accounts
-  if (lowerQuery.includes('new') && lowerQuery.includes('account')) {
-    return await queryNewAccounts();
-  }
-
-  // Active accounts
-  if (lowerQuery.includes('active') && lowerQuery.includes('account')) {
-    return await queryActiveAccounts();
-  }
-
   // Network fees
-  if (lowerQuery.includes('fee') || lowerQuery.includes('fees')) {
+  if (lowerQuery.includes('fee')) {
     return await queryNetworkFees();
   }
 
-  // HBAR released/supply
+  // HBAR supply
   if (lowerQuery.includes('released') || lowerQuery.includes('supply') || lowerQuery.includes('circulation')) {
     return await queryHbarReleased();
   }
 
   // Consensus time
-  if (lowerQuery.includes('consensus') && lowerQuery.includes('time')) {
+  if (lowerQuery.includes('consensus') || lowerQuery.includes('finality')) {
     return await queryConsensusTime();
   }
 
   // Top accounts/rich list
-  if ((lowerQuery.includes('top') || lowerQuery.includes('rich') || lowerQuery.includes('largest')) &&
-      (lowerQuery.includes('account') || lowerQuery.includes('holder') || lowerQuery.includes('balance'))) {
+  if (lowerQuery.includes('rich') || lowerQuery.includes('whale') || lowerQuery.includes('holder') ||
+      (lowerQuery.includes('top') && lowerQuery.includes('account'))) {
     return await queryTopAccounts();
   }
 
-  // Generic fallback
-  return `I understand you're asking about: "<strong>${query}</strong>"<br><br>` +
-         `I can help you with:<br>` +
-         `• <strong>HBAR price</strong> and market cap<br>` +
-         `• <strong>Account lookups</strong> (e.g., "Show me account 0.0.98")<br>` +
-         `• <strong>Transaction counts</strong> and network TPS<br>` +
-         `• <strong>Account statistics</strong> (total, new, active)<br>` +
-         `• <strong>Network fees</strong> and consensus time<br>` +
-         `• <strong>HBAR supply</strong> information<br><br>` +
-         `Try asking something like "What is the HBAR price?" or "Show me account 0.0.98"`;
+  // Network overview
+  if (lowerQuery.includes('network') || lowerQuery.includes('stats') || lowerQuery.includes('overview')) {
+    return await queryNetworkOverview();
+  }
+
+  // Try to execute as a general search
+  return await tryGeneralQuery(originalQuery);
+}
+
+// Show schema help
+function showSchemaHelp() {
+  return `<strong>Hedera Data Chat - Available Queries:</strong><br><br>` +
+         `<strong>Accounts:</strong><br>` +
+         `• "Show account 0.0.98" - Get account details, balance, staking<br>` +
+         `• "How many accounts exist?" - Total account count<br>` +
+         `• "New accounts today" - Recently created accounts<br>` +
+         `• "Top 10 richest accounts" - Largest HBAR holders<br><br>` +
+         `<strong>Tokens:</strong><br>` +
+         `• "Token 0.0.456858" - Get token info (SAUCE, etc.)<br>` +
+         `• "Top tokens" - Most popular tokens<br>` +
+         `• "Token balance for account 0.0.123" - Token holdings<br><br>` +
+         `<strong>NFTs:</strong><br>` +
+         `• "NFTs owned by 0.0.123" - Account's NFT holdings<br>` +
+         `• "Top NFT collections" - Popular collections<br><br>` +
+         `<strong>Transactions:</strong><br>` +
+         `• "Recent transactions" - Latest network activity<br>` +
+         `• "Transactions by 0.0.98" - Account transactions<br>` +
+         `• "How many transactions today?" - 24h count<br><br>` +
+         `<strong>Network:</strong><br>` +
+         `• "HBAR price" / "Market cap"<br>` +
+         `• "Network TPS" / "Consensus time"<br>` +
+         `• "Network fees" / "HBAR supply"<br>` +
+         `• "Network overview" - Full stats<br>` +
+         `• "Node stakes" - Staking info<br><br>` +
+         `<strong>Topics/HCS:</strong><br>` +
+         `• "Messages from topic 0.0.123"<br><br>` +
+         `<strong>Advanced:</strong><br>` +
+         `• You can also paste raw GraphQL queries!`;
+}
+
+// Try to execute raw GraphQL
+async function executeRawGraphQL(query) {
+  try {
+    // Extract GraphQL from the message
+    const graphqlMatch = query.match(/\{[\s\S]*\}/);
+    if (!graphqlMatch) {
+      return 'Could not parse GraphQL query. Please ensure it contains a valid query block like: { entity(limit: 5) { num balance } }';
+    }
+
+    const graphqlQuery = graphqlMatch[0];
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+      body: JSON.stringify({ query: graphqlQuery })
+    });
+    const result = await response.json();
+
+    if (result.errors) {
+      return `<strong>GraphQL Error:</strong><br><pre style="color:#ef4444;font-size:0.85rem;white-space:pre-wrap;">${JSON.stringify(result.errors, null, 2)}</pre>`;
+    }
+
+    return `<strong>Query Result:</strong><br><pre style="font-size:0.85rem;white-space:pre-wrap;max-height:300px;overflow:auto;">${JSON.stringify(result.data, null, 2)}</pre>`;
+  } catch (error) {
+    return `Error executing query: ${error.message}`;
+  }
+}
+
+// Detailed account query
+async function queryAccountDetailed(accountNum) {
+  if (!accountNum.includes('.')) {
+    accountNum = parseInt(accountNum);
+  } else {
+    accountNum = parseInt(accountNum.split('.').pop());
+  }
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountDetailed($num: bigint!) {
+        entity(where: {num: {_eq: $num}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+          num balance memo created_timestamp deleted
+          staked_node_id staked_account_id stake_period_start pending_reward decline_reward
+          auto_renew_period expiration_timestamp evm_address
+        }
+        entity_stake(where: {id: {_eq: $num}}) {
+          staked_to_me
+        }
+        token_account(where: {account_id: {_eq: $num}}, limit: 10, order_by: {balance: desc}) {
+          token_id balance
+          token { name symbol decimals type }
+        }
+      }`,
+      variables: { num: accountNum }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.entity?.[0]) {
+    return `Account <strong>0.0.${accountNum}</strong> was not found.`;
+  }
+
+  const acc = result.data.entity[0];
+  const balance = (acc.balance / 1e8);
+  const usd = window.hbarPrice ? (balance * window.hbarPrice) : null;
+  const created = new Date(acc.created_timestamp / 1e6).toLocaleDateString();
+  const stakedToMe = result.data.entity_stake?.[0]?.staked_to_me / 1e8 || 0;
+  const tokens = result.data.token_account || [];
+
+  let html = `<strong>Account 0.0.${acc.num}</strong><br><br>`;
+  html += `Balance: <span class="data-value">${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} HBAR</span>`;
+  if (usd) html += ` (~$${usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
+  html += `<br>Created: <span class="data-value">${created}</span>`;
+  if (acc.memo) html += `<br>Memo: ${acc.memo}`;
+  if (acc.evm_address) html += `<br>EVM Address: <span class="data-value" style="font-size:0.85rem;">${acc.evm_address}</span>`;
+
+  if (acc.staked_node_id !== null || acc.staked_account_id) {
+    html += `<br><br><strong>Staking:</strong><br>`;
+    if (acc.staked_node_id !== null) html += `Staked to Node: <span class="data-value">${acc.staked_node_id}</span><br>`;
+    if (acc.staked_account_id) html += `Staked to Account: <span class="data-value">0.0.${acc.staked_account_id}</span><br>`;
+    html += `Pending Reward: <span class="data-value">${(acc.pending_reward / 1e8).toFixed(4)} HBAR</span>`;
+  }
+
+  if (stakedToMe > 0) {
+    html += `<br>Staked TO this account: <span class="data-value">${stakedToMe.toLocaleString()} HBAR</span>`;
+  }
+
+  if (tokens.length > 0) {
+    html += `<br><br><strong>Token Holdings (Top ${tokens.length}):</strong><br>`;
+    tokens.forEach(t => {
+      const tokenBalance = t.token?.decimals ? t.balance / Math.pow(10, t.token.decimals) : t.balance;
+      html += `• ${t.token?.name || 'Unknown'} (${t.token?.symbol || t.token_id}): <span class="data-value">${tokenBalance.toLocaleString()}</span><br>`;
+    });
+  }
+
+  return html;
+}
+
+// Token info query
+async function queryTokenInfo(tokenId) {
+  if (!tokenId.includes('.')) {
+    tokenId = `0.0.${tokenId}`;
+  }
+  const tokenNum = parseInt(tokenId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetToken($id: bigint!) {
+        token(where: {token_id: {_eq: $id}}, limit: 1) {
+          token_id name symbol type decimals total_supply max_supply
+          treasury_account_id created_timestamp pause_status freeze_default
+          metadata
+        }
+      }`,
+      variables: { id: tokenNum }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.token?.[0]) {
+    return `Token <strong>${tokenId}</strong> was not found.`;
+  }
+
+  const t = result.data.token[0];
+  const supply = t.decimals ? t.total_supply / Math.pow(10, t.decimals) : t.total_supply;
+
+  let html = `<strong>Token ${t.name || tokenId}</strong><br><br>`;
+  html += `Symbol: <span class="data-value">${t.symbol || 'N/A'}</span><br>`;
+  html += `Type: <span class="data-value">${t.type || 'FUNGIBLE_COMMON'}</span><br>`;
+  html += `Token ID: <span class="data-value">0.0.${t.token_id}</span><br>`;
+  html += `Decimals: <span class="data-value">${t.decimals || 0}</span><br>`;
+  html += `Total Supply: <span class="data-value">${supply.toLocaleString()}</span><br>`;
+  if (t.max_supply) html += `Max Supply: <span class="data-value">${(t.max_supply / Math.pow(10, t.decimals || 0)).toLocaleString()}</span><br>`;
+  html += `Treasury: <span class="data-value">0.0.${t.treasury_account_id}</span><br>`;
+  html += `Created: <span class="data-value">${new Date(t.created_timestamp / 1e6).toLocaleDateString()}</span>`;
+
+  return html;
+}
+
+// Top tokens query
+async function queryTopTokens() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        token(where: {type: {_eq: "FUNGIBLE_COMMON"}, total_supply: {_gt: "0"}}, order_by: {created_timestamp: desc}, limit: 10) {
+          token_id name symbol total_supply decimals treasury_account_id
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.token?.length) {
+    return 'Unable to fetch token list.';
+  }
+
+  let html = `<strong>Recent Tokens:</strong><br><br>`;
+  result.data.token.forEach((t, i) => {
+    const supply = t.decimals ? t.total_supply / Math.pow(10, t.decimals) : t.total_supply;
+    html += `${i + 1}. <span class="data-value">${t.name || 'Unknown'}</span> (${t.symbol || '?'})<br>`;
+    html += `   ID: 0.0.${t.token_id} | Supply: ${supply.toLocaleString()}<br>`;
+  });
+
+  return html;
+}
+
+// Token count
+async function queryTokenCount() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { token_aggregate { aggregate { count } } }`
+    })
+  });
+  const result = await response.json();
+  const count = result.data?.token_aggregate?.aggregate?.count || 'N/A';
+  return `There are <span class="data-value">${count.toLocaleString()}</span> <strong>tokens</strong> on the Hedera network.`;
+}
+
+// NFT info
+async function queryNFTInfo(tokenId, serial) {
+  if (!tokenId.includes('.')) tokenId = parseInt(tokenId);
+  else tokenId = parseInt(tokenId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetNFT($tokenId: bigint!, $serial: bigint!) {
+        nft(where: {token_id: {_eq: $tokenId}, serial_number: {_eq: $serial}}, limit: 1) {
+          token_id serial_number account_id metadata created_timestamp deleted spender
+          token { name symbol }
+        }
+      }`,
+      variables: { tokenId, serial: parseInt(serial) }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.nft?.[0]) {
+    return `NFT not found.`;
+  }
+
+  const n = result.data.nft[0];
+  let html = `<strong>NFT: ${n.token?.name || 'Unknown'} #${n.serial_number}</strong><br><br>`;
+  html += `Token ID: <span class="data-value">0.0.${n.token_id}</span><br>`;
+  html += `Serial: <span class="data-value">${n.serial_number}</span><br>`;
+  html += `Owner: <span class="data-value">0.0.${n.account_id}</span><br>`;
+  if (n.metadata) html += `Metadata: <span class="data-value" style="font-size:0.85rem;word-break:break-all;">${n.metadata}</span><br>`;
+  html += `Created: <span class="data-value">${new Date(n.created_timestamp / 1e6).toLocaleDateString()}</span>`;
+
+  return html;
+}
+
+// Account NFTs
+async function queryAccountNFTs(accountId) {
+  if (!accountId.includes('.')) accountId = parseInt(accountId);
+  else accountId = parseInt(accountId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountNFTs($accountId: bigint!) {
+        nft(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}, limit: 20, order_by: {created_timestamp: desc}) {
+          token_id serial_number metadata
+          token { name symbol }
+        }
+        nft_aggregate(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}) {
+          aggregate { count }
+        }
+      }`,
+      variables: { accountId }
+    })
+  });
+  const result = await response.json();
+
+  const total = result.data?.nft_aggregate?.aggregate?.count || 0;
+  const nfts = result.data?.nft || [];
+
+  let html = `<strong>NFTs owned by 0.0.${accountId}</strong><br>`;
+  html += `Total: <span class="data-value">${total}</span> NFTs<br><br>`;
+
+  if (nfts.length === 0) {
+    html += 'No NFTs found.';
+  } else {
+    nfts.forEach(n => {
+      html += `• ${n.token?.name || 'Unknown'} #${n.serial_number} (0.0.${n.token_id})<br>`;
+    });
+    if (total > 20) html += `<br><em>Showing first 20 of ${total}</em>`;
+  }
+
+  return html;
+}
+
+// Top NFT collections
+async function queryTopNFTCollections() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        token(where: {type: {_eq: "NON_FUNGIBLE_UNIQUE"}}, order_by: {total_supply: desc}, limit: 10) {
+          token_id name symbol total_supply treasury_account_id
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.token?.length) {
+    return 'Unable to fetch NFT collections.';
+  }
+
+  let html = `<strong>Top NFT Collections by Supply:</strong><br><br>`;
+  result.data.token.forEach((t, i) => {
+    html += `${i + 1}. <span class="data-value">${t.name || 'Unknown'}</span><br>`;
+    html += `   ID: 0.0.${t.token_id} | Supply: ${t.total_supply.toLocaleString()}<br>`;
+  });
+
+  return html;
+}
+
+// NFT stats
+async function queryNFTStats() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        collections: token_aggregate(where: {type: {_eq: "NON_FUNGIBLE_UNIQUE"}}) { aggregate { count } }
+        nfts: nft_aggregate { aggregate { count } }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  const collections = result.data?.collections?.aggregate?.count || 'N/A';
+  const nfts = result.data?.nfts?.aggregate?.count || 'N/A';
+
+  return `<strong>NFT Statistics:</strong><br><br>` +
+         `Total Collections: <span class="data-value">${collections.toLocaleString()}</span><br>` +
+         `Total NFTs Minted: <span class="data-value">${nfts.toLocaleString()}</span>`;
+}
+
+// Recent transactions
+async function queryRecentTransactions(count = 10) {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetRecentTx($limit: Int!) {
+        transaction(order_by: {consensus_timestamp: desc}, limit: $limit) {
+          consensus_timestamp type result payer_account_id charged_tx_fee memo
+        }
+      }`,
+      variables: { limit: count }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.transaction?.length) {
+    return 'Unable to fetch recent transactions.';
+  }
+
+  let html = `<strong>Last ${count} Transactions:</strong><br><br>`;
+  result.data.transaction.forEach(tx => {
+    const time = new Date(tx.consensus_timestamp / 1e9 * 1000).toLocaleTimeString();
+    const fee = (tx.charged_tx_fee / 1e8).toFixed(4);
+    html += `• <span class="data-value">${tx.type}</span> by 0.0.${tx.payer_account_id}<br>`;
+    html += `  ${time} | Fee: ${fee} HBAR | ${tx.result}<br>`;
+  });
+
+  return html;
+}
+
+// Account transactions
+async function queryAccountTransactions(accountId) {
+  if (!accountId.includes('.')) accountId = parseInt(accountId);
+  else accountId = parseInt(accountId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountTx($accountId: bigint!) {
+        transaction(where: {payer_account_id: {_eq: $accountId}}, order_by: {consensus_timestamp: desc}, limit: 10) {
+          consensus_timestamp type result charged_tx_fee memo
+        }
+      }`,
+      variables: { accountId }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.transaction?.length) {
+    return `No recent transactions found for account 0.0.${accountId}.`;
+  }
+
+  let html = `<strong>Recent Transactions by 0.0.${accountId}:</strong><br><br>`;
+  result.data.transaction.forEach(tx => {
+    const time = new Date(tx.consensus_timestamp / 1e9 * 1000).toLocaleString();
+    html += `• <span class="data-value">${tx.type}</span> - ${tx.result}<br>`;
+    html += `  ${time}<br>`;
+  });
+
+  return html;
+}
+
+// Transaction types breakdown
+async function queryTransactionTypes() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { ecosystem_transaction_count_by_type(order_by: {count: desc}, limit: 15) { type count } }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.ecosystem_transaction_count_by_type?.length) {
+    return 'Unable to fetch transaction type breakdown.';
+  }
+
+  let html = `<strong>Transaction Types (All Time):</strong><br><br>`;
+  result.data.ecosystem_transaction_count_by_type.forEach(t => {
+    html += `• ${t.type}: <span class="data-value">${t.count.toLocaleString()}</span><br>`;
+  });
+
+  return html;
+}
+
+// Topic messages
+async function queryTopicMessages(topicId) {
+  if (!topicId.includes('.')) topicId = parseInt(topicId);
+  else topicId = parseInt(topicId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetTopicMessages($topicId: bigint!) {
+        topic_message(where: {topic_id: {_eq: $topicId}}, order_by: {sequence_number: desc}, limit: 10) {
+          sequence_number message consensus_timestamp payer_account_id
+        }
+      }`,
+      variables: { topicId }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.topic_message?.length) {
+    return `No messages found for topic 0.0.${topicId}.`;
+  }
+
+  let html = `<strong>Recent Messages from Topic 0.0.${topicId}:</strong><br><br>`;
+  result.data.topic_message.forEach(m => {
+    const time = new Date(m.consensus_timestamp / 1e9 * 1000).toLocaleString();
+    let msg = m.message || '';
+    // Try to decode if base64
+    try {
+      msg = atob(msg);
+    } catch(e) {}
+    html += `#${m.sequence_number}: <span class="data-value">${msg.substring(0, 100)}${msg.length > 100 ? '...' : ''}</span><br>`;
+    html += `<small>${time} by 0.0.${m.payer_account_id}</small><br><br>`;
+  });
+
+  return html;
+}
+
+// Contract info
+async function queryContractInfo(contractId) {
+  if (!contractId.includes('.')) contractId = parseInt(contractId);
+  else contractId = parseInt(contractId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetContract($id: bigint!) {
+        contract(where: {id: {_eq: $id}}, limit: 1) {
+          id evm_address file_id created_timestamp
+        }
+        entity(where: {num: {_eq: $id}, type: {_eq: "CONTRACT"}}, limit: 1) {
+          balance memo
+        }
+      }`,
+      variables: { id: contractId }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.contract?.[0] && !result.data?.entity?.[0]) {
+    return `Contract 0.0.${contractId} not found.`;
+  }
+
+  const c = result.data.contract?.[0] || {};
+  const e = result.data.entity?.[0] || {};
+
+  let html = `<strong>Contract 0.0.${contractId}</strong><br><br>`;
+  if (c.evm_address) html += `EVM Address: <span class="data-value" style="font-size:0.85rem;">${c.evm_address}</span><br>`;
+  if (e.balance) html += `Balance: <span class="data-value">${(e.balance / 1e8).toLocaleString()} HBAR</span><br>`;
+  if (e.memo) html += `Memo: ${e.memo}<br>`;
+  if (c.created_timestamp) html += `Created: <span class="data-value">${new Date(c.created_timestamp / 1e6).toLocaleDateString()}</span>`;
+
+  return html;
+}
+
+// Top contracts
+async function queryTopContracts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        entity(where: {type: {_eq: "CONTRACT"}}, order_by: {balance: desc}, limit: 10) {
+          num balance memo
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.entity?.length) {
+    return 'Unable to fetch top contracts.';
+  }
+
+  let html = `<strong>Top Contracts by Balance:</strong><br><br>`;
+  result.data.entity.forEach((c, i) => {
+    const balance = (c.balance / 1e8).toLocaleString();
+    html += `${i + 1}. <span class="data-value">0.0.${c.num}</span> - ${balance} HBAR`;
+    if (c.memo) html += ` (${c.memo})`;
+    html += `<br>`;
+  });
+
+  return html;
+}
+
+// Node stakes
+async function queryNodeStakes() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        node_stake(order_by: {stake: desc}, limit: 30) {
+          node_id stake stake_rewarded min_stake max_stake
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.node_stake?.length) {
+    return 'Unable to fetch node stakes.';
+  }
+
+  let html = `<strong>Network Node Stakes:</strong><br><br>`;
+  result.data.node_stake.forEach(n => {
+    const stake = (n.stake / 1e8 / 1e9).toFixed(2);
+    html += `Node ${n.node_id}: <span class="data-value">${stake}B HBAR</span> staked<br>`;
+  });
+
+  return html;
+}
+
+// General query fallback
+async function tryGeneralQuery(query) {
+  // Try to find any numbers that might be entity IDs
+  const numMatch = query.match(/\d+/);
+  if (numMatch) {
+    // Try as account first
+    const accountResult = await queryAccountDetailed(numMatch[0]);
+    if (!accountResult.includes('not found')) {
+      return accountResult;
+    }
+  }
+
+  return showSchemaHelp();
+}
+
+// Additional query functions
+async function queryStakingInfo() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        network_stake(order_by: {consensus_timestamp: desc}, limit: 1) {
+          stake_total staking_period
+        }
+        node_stake_aggregate { aggregate { count } }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  const total = result.data?.network_stake?.[0]?.stake_total / 1e8 / 1e9 || 0;
+  const nodes = result.data?.node_stake_aggregate?.aggregate?.count || 0;
+
+  return `<strong>Hedera Staking Info:</strong><br><br>` +
+         `Total Network Stake: <span class="data-value">${total.toFixed(2)} billion HBAR</span><br>` +
+         `Active Nodes: <span class="data-value">${nodes}</span><br><br>` +
+         `<small>Hedera uses native staking with no slashing risk. Say "node stakes" to see individual node stakes.</small>`;
+}
+
+async function queryNetworkOverview() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+      body: JSON.stringify({
+        query: `query {
+          price: ecosystem_metric(where: {name: {_eq: "avg_usd_conversion"}, period: {_eq: "minute"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          marketCap: ecosystem_metric(where: {name: {_eq: "hbar_market_cap"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          totalAccounts: ecosystem_metric(where: {name: {_eq: "total_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          transactions: ecosystem_metric(where: {name: {_eq: "new_transactions"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          consensus: ecosystem_metric(where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          released: ecosystem_metric(where: {name: {_eq: "hbar_total_released"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+        }`
+      })
+    });
+    const result = await response.json();
+
+    const price = result.data?.price?.[0]?.total / 100000 || 0;
+    const marketCap = result.data?.marketCap?.[0]?.total / 100 / 1e9 || 0;
+    const accounts = result.data?.totalAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+    const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+    const consensus = result.data?.consensus?.[0]?.total / 1e9 || 0;
+    const released = result.data?.released?.[0]?.total / 1e8 / 1e9 || 0;
+    const tps = document.getElementById('tps')?.textContent || 'N/A';
+
+    return `<strong>Hedera Network Overview:</strong><br><br>` +
+           `HBAR Price: <span class="data-value">$${price.toFixed(5)}</span><br>` +
+           `Market Cap: <span class="data-value">$${marketCap.toFixed(2)}B</span><br>` +
+           `Total Accounts: <span class="data-value">${accounts}</span><br>` +
+           `24h Transactions: <span class="data-value">${txs}</span><br>` +
+           `Current TPS: <span class="data-value">${tps}</span><br>` +
+           `Consensus Time: <span class="data-value">${consensus.toFixed(2)}s</span><br>` +
+           `HBAR in Circulation: <span class="data-value">${released.toFixed(2)}B</span>`;
+  } catch (error) {
+    return 'Unable to fetch network overview at this time.';
+  }
 }
 
 // Query functions
