@@ -937,6 +937,216 @@
     }
   }
 
+  /* Hedera Data Chat Styles */
+  .chat-container {
+    width:95%;
+    max-width:900px;
+    margin:0 auto;
+  }
+  .chat-input-wrapper {
+    position:relative;
+    width:100%;
+    margin-bottom:2rem;
+  }
+  .chat-input {
+    width:100%;
+    padding:1.5rem 2rem;
+    padding-right:5rem;
+    border:2px solid #30363d;
+    border-radius:16px;
+    background:rgba(10,10,10,0.9);
+    color:white;
+    font-size:1.2rem;
+    font-family:inherit;
+    transition:all 0.3s ease;
+    caret-color:#8b5cf6;
+  }
+  .chat-input:focus {
+    outline:none;
+    border-color:#8b5cf6;
+    box-shadow:0 0 30px rgba(139,92,246,0.3);
+  }
+  .chat-input::placeholder {
+    color:transparent;
+  }
+  .chat-placeholder {
+    position:absolute;
+    top:50%;
+    left:2rem;
+    transform:translateY(-50%);
+    color:#6b7280;
+    font-size:1.2rem;
+    pointer-events:none;
+    display:flex;
+    align-items:center;
+    transition:opacity 0.3s ease;
+  }
+  .chat-placeholder.hidden {
+    opacity:0;
+  }
+  .chat-cursor {
+    display:inline-block;
+    width:2px;
+    height:1.4rem;
+    background:#8b5cf6;
+    margin-left:2px;
+    animation:chatBlink 1s step-end infinite;
+  }
+  @keyframes chatBlink {
+    0%, 100% { opacity:1; }
+    50% { opacity:0; }
+  }
+  .chat-send-btn {
+    position:absolute;
+    right:1rem;
+    top:50%;
+    transform:translateY(-50%);
+    padding:0.8rem 1.2rem;
+    background:#8b5cf6;
+    border:none;
+    border-radius:12px;
+    color:white;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.3s ease;
+  }
+  .chat-send-btn:hover {
+    background:#7c3aed;
+    transform:translateY(-50%) scale(1.05);
+  }
+  .chat-send-btn:disabled {
+    background:#4b5563;
+    cursor:not-allowed;
+    transform:translateY(-50%);
+  }
+  .chat-response-area {
+    background:rgba(10,10,10,0.9);
+    border-radius:16px;
+    border:1px solid #30363d;
+    min-height:200px;
+    max-height:500px;
+    overflow-y:auto;
+    padding:2rem;
+  }
+  .chat-response-area::-webkit-scrollbar {
+    width:6px;
+  }
+  .chat-response-area::-webkit-scrollbar-track {
+    background:rgba(255,255,255,0.05);
+    border-radius:3px;
+  }
+  .chat-response-area::-webkit-scrollbar-thumb {
+    background:rgba(139,92,246,0.5);
+    border-radius:3px;
+  }
+  .chat-message {
+    margin-bottom:1.5rem;
+    animation:chatFadeIn 0.3s ease;
+  }
+  @keyframes chatFadeIn {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .chat-message.user {
+    text-align:right;
+  }
+  .chat-message.user .chat-bubble {
+    background:rgba(139,92,246,0.2);
+    border:1px solid #8b5cf6;
+    display:inline-block;
+    text-align:left;
+  }
+  .chat-message.assistant .chat-bubble {
+    background:rgba(0,212,255,0.1);
+    border:1px solid rgba(0,212,255,0.3);
+  }
+  .chat-bubble {
+    padding:1rem 1.5rem;
+    border-radius:12px;
+    max-width:85%;
+    display:inline-block;
+  }
+  .chat-bubble-label {
+    font-size:0.75rem;
+    opacity:0.6;
+    margin-bottom:0.5rem;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .chat-bubble-content {
+    font-size:1rem;
+    line-height:1.6;
+    color:white;
+  }
+  .chat-bubble-content strong {
+    color:#8b5cf6;
+  }
+  .chat-bubble-content .data-value {
+    color:#00d4ff;
+    font-weight:600;
+  }
+  .chat-loading {
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    color:#8b949e;
+    font-size:0.9rem;
+  }
+  .chat-loading-dots {
+    display:flex;
+    gap:4px;
+  }
+  .chat-loading-dots span {
+    width:6px;
+    height:6px;
+    background:#8b5cf6;
+    border-radius:50%;
+    animation:chatLoadingDot 1.4s infinite ease-in-out both;
+  }
+  .chat-loading-dots span:nth-child(1) { animation-delay:-0.32s; }
+  .chat-loading-dots span:nth-child(2) { animation-delay:-0.16s; }
+  @keyframes chatLoadingDot {
+    0%, 80%, 100% { transform:scale(0); }
+    40% { transform:scale(1); }
+  }
+  .chat-welcome {
+    text-align:center;
+    padding:2rem;
+    color:#8b949e;
+  }
+  .chat-welcome h3 {
+    font-size:1.3rem;
+    color:white;
+    margin-bottom:1rem;
+  }
+  .chat-welcome p {
+    font-size:0.95rem;
+    line-height:1.6;
+  }
+  .chat-example-queries {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5rem;
+    justify-content:center;
+    margin-top:1.5rem;
+  }
+  .chat-example-btn {
+    padding:0.5rem 1rem;
+    background:rgba(139,92,246,0.15);
+    border:1px solid rgba(139,92,246,0.3);
+    border-radius:20px;
+    color:#8b5cf6;
+    font-size:0.85rem;
+    cursor:pointer;
+    transition:all 0.2s ease;
+  }
+  .chat-example-btn:hover {
+    background:rgba(139,92,246,0.3);
+    border-color:#8b5cf6;
+    color:white;
+  }
+
   /* Mobile Responsive Styles */
   @media (max-width: 768px) {
     /* Fix h2 titles - allow wrapping and reduce size on mobile */
@@ -1281,6 +1491,7 @@
     <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
     <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
     <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
+    <a href="#hedera-chat" onclick="scrollToSection('hedera-chat'); return false;">Hedera Data Chat</a>
   </nav>
 
   <!-- 3D HBAR Coin Canvas (behind everything) - HIDDEN FOR NOW -->
@@ -1535,7 +1746,39 @@
       </div>
     </div>
   </section>
-  
+
+  <!-- Hedera Data Chat Section -->
+  <section class="section" id="hedera-chat" style="min-height:100vh;height:auto;padding:4rem 0;">
+    <div class="gradient-orb" style="top:-200px;left:-200px;background:radial-gradient(circle,rgba(139,92,246,0.2),transparent);"></div>
+    <h2>Hedera Data Chat</h2>
+    <p style="font-size:1.1rem;opacity:0.7;margin-bottom:2rem;text-align:center;">Ask questions about the Hedera network in plain English</p>
+
+    <div class="chat-container">
+      <div class="chat-input-wrapper">
+        <input type="text" class="chat-input" id="chatInput" autocomplete="off">
+        <div class="chat-placeholder" id="chatPlaceholder">
+          <span id="chatPlaceholderText"></span>
+          <span class="chat-cursor"></span>
+        </div>
+        <button type="button" class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Ask</button>
+      </div>
+
+      <div class="chat-response-area" id="chatResponseArea">
+        <div class="chat-welcome" id="chatWelcome">
+          <h3>Welcome to Hedera Data Chat</h3>
+          <p>I can help you query real-time data from the Hedera network.<br>Ask me about accounts, balances, transactions, network stats, and more!</p>
+          <div class="chat-example-queries">
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">What is the current HBAR price?</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">How many transactions today?</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">Show me account 0.0.98</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">What's the network TPS?</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">How many total accounts exist?</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="final" style="background:transparent;text-align:center;">
     <h2 class="gradient-title">The Future is Hedera</h2>
     <p style="font-size:1.5rem;opacity:0.7;margin-top:2rem;">Powered by Hgraph API</p>
@@ -5248,6 +5491,517 @@ function scrollToSection(sectionId) {
       behavior: 'smooth'
     });
   }
+}
+
+// ============================================
+// Hedera Data Chat - Natural Language Query
+// ============================================
+
+const chatExampleQueries = [
+  "What is the current HBAR price?",
+  "How many transactions happened today?",
+  "Show me the balance of account 0.0.98",
+  "What's the current network TPS?",
+  "How many total accounts exist on Hedera?",
+  "What is the market cap of HBAR?",
+  "Show me the top account balances",
+  "How many new accounts were created today?",
+  "What are the 24h network fees?",
+  "How much HBAR has been released?"
+];
+
+let currentExampleIndex = 0;
+let isTypingExample = false;
+let typingTimeout = null;
+
+// Initialize chat placeholder animation
+function initChatPlaceholder() {
+  const chatInput = document.getElementById('chatInput');
+  const placeholder = document.getElementById('chatPlaceholder');
+
+  if (!chatInput || !placeholder) return;
+
+  // Hide placeholder when input has value or is focused
+  chatInput.addEventListener('input', () => {
+    placeholder.classList.toggle('hidden', chatInput.value.length > 0);
+  });
+
+  chatInput.addEventListener('focus', () => {
+    if (chatInput.value.length === 0) {
+      // Keep showing but stop animation
+    }
+  });
+
+  // Handle Enter key
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendChatMessage();
+    }
+  });
+
+  // Start typing animation
+  typeNextExample();
+}
+
+function typeNextExample() {
+  const placeholderText = document.getElementById('chatPlaceholderText');
+  const chatInput = document.getElementById('chatInput');
+
+  if (!placeholderText || !chatInput) return;
+  if (chatInput.value.length > 0) {
+    // If user has typed, wait and check again
+    typingTimeout = setTimeout(typeNextExample, 2000);
+    return;
+  }
+
+  const example = chatExampleQueries[currentExampleIndex];
+  let charIndex = 0;
+
+  isTypingExample = true;
+  placeholderText.textContent = '';
+
+  function typeChar() {
+    if (chatInput.value.length > 0) {
+      isTypingExample = false;
+      return;
+    }
+
+    if (charIndex < example.length) {
+      placeholderText.textContent = example.substring(0, charIndex + 1);
+      charIndex++;
+      typingTimeout = setTimeout(typeChar, 50 + Math.random() * 30);
+    } else {
+      // Finished typing, wait then erase
+      isTypingExample = false;
+      typingTimeout = setTimeout(eraseExample, 3000);
+    }
+  }
+
+  typeChar();
+}
+
+function eraseExample() {
+  const placeholderText = document.getElementById('chatPlaceholderText');
+  const chatInput = document.getElementById('chatInput');
+
+  if (!placeholderText || !chatInput) return;
+  if (chatInput.value.length > 0) {
+    typingTimeout = setTimeout(typeNextExample, 2000);
+    return;
+  }
+
+  let text = placeholderText.textContent;
+
+  function eraseChar() {
+    if (chatInput.value.length > 0) {
+      return;
+    }
+
+    if (text.length > 0) {
+      text = text.substring(0, text.length - 1);
+      placeholderText.textContent = text;
+      typingTimeout = setTimeout(eraseChar, 20);
+    } else {
+      // Move to next example
+      currentExampleIndex = (currentExampleIndex + 1) % chatExampleQueries.length;
+      typingTimeout = setTimeout(typeNextExample, 500);
+    }
+  }
+
+  eraseChar();
+}
+
+function useExampleQuery(btn) {
+  const chatInput = document.getElementById('chatInput');
+  const placeholder = document.getElementById('chatPlaceholder');
+
+  chatInput.value = btn.textContent;
+  placeholder.classList.add('hidden');
+  chatInput.focus();
+}
+
+async function sendChatMessage() {
+  const chatInput = document.getElementById('chatInput');
+  const responseArea = document.getElementById('chatResponseArea');
+  const welcome = document.getElementById('chatWelcome');
+  const sendBtn = document.getElementById('chatSendBtn');
+
+  const query = chatInput.value.trim();
+  if (!query) return;
+
+  // Hide welcome message
+  if (welcome) welcome.style.display = 'none';
+
+  // Disable send button
+  sendBtn.disabled = true;
+
+  // Add user message
+  addChatMessage('user', query);
+
+  // Clear input
+  chatInput.value = '';
+  document.getElementById('chatPlaceholder').classList.remove('hidden');
+
+  // Add loading message
+  const loadingId = addLoadingMessage();
+
+  try {
+    // Parse the natural language query and execute
+    const result = await processNaturalLanguageQuery(query);
+
+    // Remove loading message
+    removeLoadingMessage(loadingId);
+
+    // Add assistant response
+    addChatMessage('assistant', result);
+  } catch (error) {
+    removeLoadingMessage(loadingId);
+    addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+  }
+
+  // Re-enable send button
+  sendBtn.disabled = false;
+
+  // Scroll to bottom
+  responseArea.scrollTop = responseArea.scrollHeight;
+}
+
+function addChatMessage(role, content) {
+  const responseArea = document.getElementById('chatResponseArea');
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `chat-message ${role}`;
+
+  const bubbleDiv = document.createElement('div');
+  bubbleDiv.className = 'chat-bubble';
+
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'chat-bubble-label';
+  labelDiv.textContent = role === 'user' ? 'You' : 'Hedera Data';
+
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'chat-bubble-content';
+  contentDiv.innerHTML = content;
+
+  bubbleDiv.appendChild(labelDiv);
+  bubbleDiv.appendChild(contentDiv);
+  messageDiv.appendChild(bubbleDiv);
+  responseArea.appendChild(messageDiv);
+
+  responseArea.scrollTop = responseArea.scrollHeight;
+}
+
+function addLoadingMessage() {
+  const responseArea = document.getElementById('chatResponseArea');
+  const id = 'loading-' + Date.now();
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'chat-message assistant';
+  messageDiv.id = id;
+
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">
+      <div class="chat-loading">
+        <div class="chat-loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span>Querying Hedera network...</span>
+      </div>
+    </div>
+  `;
+
+  responseArea.appendChild(messageDiv);
+  responseArea.scrollTop = responseArea.scrollHeight;
+
+  return id;
+}
+
+function removeLoadingMessage(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// Natural language query processor
+async function processNaturalLanguageQuery(query) {
+  const lowerQuery = query.toLowerCase();
+
+  // HBAR Price
+  if (lowerQuery.includes('price') && (lowerQuery.includes('hbar') || lowerQuery.includes('hedera'))) {
+    return await queryHbarPrice();
+  }
+
+  // Market Cap
+  if (lowerQuery.includes('market cap') || lowerQuery.includes('marketcap')) {
+    return await queryMarketCap();
+  }
+
+  // TPS
+  if (lowerQuery.includes('tps') || (lowerQuery.includes('transactions') && lowerQuery.includes('second'))) {
+    return await queryTPS();
+  }
+
+  // Account lookup
+  const accountMatch = lowerQuery.match(/account\s*(0\.0\.\d+|\d+)/i) ||
+                       lowerQuery.match(/(0\.0\.\d+)/);
+  if (accountMatch) {
+    let accountId = accountMatch[1];
+    if (!accountId.startsWith('0.0.')) {
+      accountId = '0.0.' + accountId;
+    }
+    return await queryAccountInfo(accountId);
+  }
+
+  // Balance lookup
+  if (lowerQuery.includes('balance') && lowerQuery.match(/0\.0\.\d+/)) {
+    const match = lowerQuery.match(/0\.0\.\d+/);
+    return await queryAccountInfo(match[0]);
+  }
+
+  // Transaction count today
+  if (lowerQuery.includes('transaction') && (lowerQuery.includes('today') || lowerQuery.includes('24h') || lowerQuery.includes('daily'))) {
+    return await queryDailyTransactions();
+  }
+
+  // Total accounts
+  if (lowerQuery.includes('total') && lowerQuery.includes('account')) {
+    return await queryTotalAccounts();
+  }
+
+  // New accounts
+  if (lowerQuery.includes('new') && lowerQuery.includes('account')) {
+    return await queryNewAccounts();
+  }
+
+  // Active accounts
+  if (lowerQuery.includes('active') && lowerQuery.includes('account')) {
+    return await queryActiveAccounts();
+  }
+
+  // Network fees
+  if (lowerQuery.includes('fee') || lowerQuery.includes('fees')) {
+    return await queryNetworkFees();
+  }
+
+  // HBAR released/supply
+  if (lowerQuery.includes('released') || lowerQuery.includes('supply') || lowerQuery.includes('circulation')) {
+    return await queryHbarReleased();
+  }
+
+  // Consensus time
+  if (lowerQuery.includes('consensus') && lowerQuery.includes('time')) {
+    return await queryConsensusTime();
+  }
+
+  // Top accounts/rich list
+  if ((lowerQuery.includes('top') || lowerQuery.includes('rich') || lowerQuery.includes('largest')) &&
+      (lowerQuery.includes('account') || lowerQuery.includes('holder') || lowerQuery.includes('balance'))) {
+    return await queryTopAccounts();
+  }
+
+  // Generic fallback
+  return `I understand you're asking about: "<strong>${query}</strong>"<br><br>` +
+         `I can help you with:<br>` +
+         `• <strong>HBAR price</strong> and market cap<br>` +
+         `• <strong>Account lookups</strong> (e.g., "Show me account 0.0.98")<br>` +
+         `• <strong>Transaction counts</strong> and network TPS<br>` +
+         `• <strong>Account statistics</strong> (total, new, active)<br>` +
+         `• <strong>Network fees</strong> and consensus time<br>` +
+         `• <strong>HBAR supply</strong> information<br><br>` +
+         `Try asking something like "What is the HBAR price?" or "Show me account 0.0.98"`;
+}
+
+// Query functions
+async function queryHbarPrice() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { price: ecosystem_metric(where: {name: {_eq: "avg_usd_conversion"}, period: {_eq: "minute"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const price = result.data?.price?.[0]?.total / 100000 || 0;
+  return `The current <strong>HBAR price</strong> is <span class="data-value">$${price.toFixed(5)}</span>`;
+}
+
+async function queryMarketCap() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { marketCap: ecosystem_metric(where: {name: {_eq: "hbar_market_cap"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const marketCap = result.data?.marketCap?.[0]?.total / 100 / 1e9 || 0;
+  return `The <strong>HBAR market cap</strong> is <span class="data-value">$${marketCap.toFixed(2)} billion</span>`;
+}
+
+async function queryTPS() {
+  const tps = document.getElementById('tps')?.textContent || 'N/A';
+  return `The current <strong>network TPS</strong> (transactions per second) is <span class="data-value">${tps}</span><br><small>(Live 30-second rolling average)</small>`;
+}
+
+async function queryAccountInfo(accountId) {
+  const accountNum = parseInt(accountId.replace('0.0.', ''));
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccount($accountNum: bigint!) {
+        entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+          num
+          balance
+          created_timestamp
+          memo
+        }
+      }`,
+      variables: { accountNum }
+    })
+  });
+  const result = await response.json();
+
+  if (result.data?.entity?.[0]) {
+    const account = result.data.entity[0];
+    const balance = (account.balance / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const created = new Date(account.created_timestamp / 1e6).toLocaleDateString();
+    const usdValue = window.hbarPrice ? (account.balance / 1e8 * window.hbarPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+
+    let response = `<strong>Account ${accountId}</strong><br><br>`;
+    response += `Balance: <span class="data-value">${balance} HBAR</span>`;
+    if (window.hbarPrice) response += ` (~$${usdValue})`;
+    response += `<br>Created: <span class="data-value">${created}</span>`;
+    if (account.memo) response += `<br>Memo: ${account.memo}`;
+    return response;
+  }
+
+  return `Account <strong>${accountId}</strong> was not found on the Hedera network.`;
+}
+
+async function queryDailyTransactions() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { transactions: ecosystem_metric(where: {name: {_eq: "new_transactions"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There have been <span class="data-value">${txs}</span> <strong>transactions in the last 24 hours</strong> on the Hedera network.`;
+}
+
+async function queryTotalAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { total: ecosystem_metric(where: {name: {_eq: "total_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const total = result.data?.total?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There are <span class="data-value">${total}</span> <strong>total accounts</strong> on the Hedera network.`;
+}
+
+async function queryNewAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { newAccounts: ecosystem_metric(where: {name: {_eq: "new_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const newAccts = result.data?.newAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+  return `<span class="data-value">${newAccts}</span> <strong>new accounts</strong> were created in the last 24 hours.`;
+}
+
+async function queryActiveAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { active: ecosystem_metric(where: {name: {_eq: "active_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const active = result.data?.active?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There are <span class="data-value">${active}</span> <strong>active accounts</strong> on the Hedera network (last 24 hours).`;
+}
+
+async function queryNetworkFees() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { fees: ecosystem_metric(where: {name: {_eq: "network_fee"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const fees = result.data?.fees?.[0]?.total / 1e8 || 0;
+  const usdValue = window.hbarPrice ? (fees * window.hbarPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+  return `<strong>24-hour network fees</strong>: <span class="data-value">${fees.toLocaleString()} HBAR</span>` +
+         (window.hbarPrice ? ` (~$${usdValue})` : '');
+}
+
+async function queryHbarReleased() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { released: ecosystem_metric(where: {name: {_eq: "hbar_total_released"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const released = result.data?.released?.[0]?.total / 1e8 / 1e9 || 0;
+  return `<span class="data-value">${released.toFixed(2)} billion HBAR</span> have been <strong>released into circulation</strong>.`;
+}
+
+async function queryConsensusTime() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { consensus: ecosystem_metric(where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const time = result.data?.consensus?.[0]?.total / 1e9 || 0;
+  return `The average <strong>time to consensus</strong> is <span class="data-value">${time.toFixed(2)} seconds</span>.<br><small>Hedera achieves near-instant finality!</small>`;
+}
+
+async function queryTopAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { entity(where: {type: {_eq: "ACCOUNT"}}, order_by: {balance: desc_nulls_last}, limit: 5) { num, balance, memo } }`
+    })
+  });
+  const result = await response.json();
+
+  if (result.data?.entity?.length) {
+    let response = `<strong>Top 5 HBAR Holders:</strong><br><br>`;
+    result.data.entity.forEach((account, index) => {
+      const balance = (account.balance / 1e8 / 1e9).toFixed(2);
+      response += `${index + 1}. <span class="data-value">0.0.${account.num}</span> - ${balance}B HBAR`;
+      if (account.memo) response += ` (${account.memo})`;
+      response += `<br>`;
+    });
+    return response;
+  }
+
+  return 'Unable to fetch top accounts at this time.';
+}
+
+// Initialize chat when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initChatPlaceholder);
+} else {
+  initChatPlaceholder();
 }
 
 
