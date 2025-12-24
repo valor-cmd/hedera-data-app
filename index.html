@@ -162,6 +162,7 @@
     left:50%;
     transform:translateX(-50%);
     display:flex;
+    flex-wrap:wrap;
     justify-content:space-between;
     width:auto;
     max-width:1200px;
@@ -188,6 +189,18 @@
   }
   .nav-menu a:hover {
     color:white;
+  }
+  .nav-menu a.chat-nav-link {
+    font-weight:bold;
+    text-shadow:0 0 10px rgba(139,92,246,0.6), 0 0 20px rgba(139,92,246,0.4);
+    flex-basis:100%;
+    text-align:center;
+    margin-top:1.5rem;
+    padding:0;
+  }
+  .nav-menu a.chat-nav-link:hover {
+    color:white;
+    text-shadow:0 0 10px rgba(255,255,255,0.6), 0 0 20px rgba(255,255,255,0.4);
   }
 
   h2 {
@@ -1491,7 +1504,7 @@
     <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
     <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
     <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
-    <a href="#hedera-chat" onclick="scrollToSection('hedera-chat'); return false;">Hedera Data Chat</a>
+    <a href="#hedera-chat" onclick="scrollToSection('hedera-chat'); return false;" class="chat-nav-link">Hedera Data Chat</a>
   </nav>
 
   <!-- 3D HBAR Coin Canvas (behind everything) - HIDDEN FOR NOW -->
@@ -5513,6 +5526,7 @@ const chatExampleQueries = [
 let currentExampleIndex = 0;
 let isTypingExample = false;
 let typingTimeout = null;
+let animationPaused = false;
 
 // Initialize chat placeholder animation
 function initChatPlaceholder() {
@@ -5527,8 +5541,19 @@ function initChatPlaceholder() {
   });
 
   chatInput.addEventListener('focus', () => {
-    if (chatInput.value.length === 0) {
-      // Keep showing but stop animation
+    // Pause animation and hide placeholder when focused
+    animationPaused = true;
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+    placeholder.classList.add('hidden');
+  });
+
+  chatInput.addEventListener('blur', () => {
+    // Only resume if input is empty and animation was paused by focus
+    if (chatInput.value.length === 0 && animationPaused) {
+      // Don't resume here - let sendChatMessage handle it after response
     }
   });
 
@@ -5543,11 +5568,28 @@ function initChatPlaceholder() {
   typeNextExample();
 }
 
+function resumeAnimation() {
+  const placeholder = document.getElementById('chatPlaceholder');
+  const chatInput = document.getElementById('chatInput');
+
+  if (!placeholder || !chatInput) return;
+
+  animationPaused = false;
+  if (chatInput.value.length === 0 && document.activeElement !== chatInput) {
+    placeholder.classList.remove('hidden');
+    // Clear any existing text and start fresh
+    const placeholderText = document.getElementById('chatPlaceholderText');
+    if (placeholderText) placeholderText.textContent = '';
+    typeNextExample();
+  }
+}
+
 function typeNextExample() {
   const placeholderText = document.getElementById('chatPlaceholderText');
   const chatInput = document.getElementById('chatInput');
 
   if (!placeholderText || !chatInput) return;
+  if (animationPaused) return;
   if (chatInput.value.length > 0) {
     // If user has typed, wait and check again
     typingTimeout = setTimeout(typeNextExample, 2000);
@@ -5561,7 +5603,7 @@ function typeNextExample() {
   placeholderText.textContent = '';
 
   function typeChar() {
-    if (chatInput.value.length > 0) {
+    if (animationPaused || chatInput.value.length > 0) {
       isTypingExample = false;
       return;
     }
@@ -5585,6 +5627,7 @@ function eraseExample() {
   const chatInput = document.getElementById('chatInput');
 
   if (!placeholderText || !chatInput) return;
+  if (animationPaused) return;
   if (chatInput.value.length > 0) {
     typingTimeout = setTimeout(typeNextExample, 2000);
     return;
@@ -5593,7 +5636,7 @@ function eraseExample() {
   let text = placeholderText.textContent;
 
   function eraseChar() {
-    if (chatInput.value.length > 0) {
+    if (animationPaused || chatInput.value.length > 0) {
       return;
     }
 
@@ -5638,9 +5681,8 @@ async function sendChatMessage() {
   // Add user message
   addChatMessage('user', query);
 
-  // Clear input
+  // Clear input (don't show placeholder yet - resumeAnimation will handle it)
   chatInput.value = '';
-  document.getElementById('chatPlaceholder').classList.remove('hidden');
 
   // Add loading message
   const loadingId = addLoadingMessage();
@@ -5664,6 +5706,9 @@ async function sendChatMessage() {
 
   // Scroll to bottom
   responseArea.scrollTop = responseArea.scrollHeight;
+
+  // Resume animation after response is generated
+  resumeAnimation();
 }
 
 function addChatMessage(role, content) {
