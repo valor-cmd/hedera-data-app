@@ -5872,12 +5872,28 @@ async function processNaturalLanguageQuery(query) {
                            lowerQuery.match(/(?:from|by|for|has|made)\s*(?:account\s*)?(\d+\.\d+\.\d+|\d+)/i);
     if (txAccountMatch) {
       const accountId = txAccountMatch[1] || txAccountMatch[0];
-      // Determine time period
-      let period = 'day';
-      if (lowerQuery.includes('year')) period = 'year';
-      else if (lowerQuery.includes('month')) period = 'month';
-      else if (lowerQuery.includes('week')) period = 'week';
-      else if (lowerQuery.includes('hour')) period = 'hour';
+      // Parse time period with optional number (e.g., "12 months", "2 weeks", "30 days")
+      const timeMatch = lowerQuery.match(/(\d+)\s*(second|minute|hour|day|week|month|year)s?/i);
+      let period = { unit: 'day', count: 1 };
+
+      if (timeMatch) {
+        period.count = parseInt(timeMatch[1]);
+        period.unit = timeMatch[2].toLowerCase();
+      } else if (lowerQuery.includes('year')) {
+        period = { unit: 'year', count: 1 };
+      } else if (lowerQuery.includes('month')) {
+        period = { unit: 'month', count: 1 };
+      } else if (lowerQuery.includes('week')) {
+        period = { unit: 'week', count: 1 };
+      } else if (lowerQuery.includes('day')) {
+        period = { unit: 'day', count: 1 };
+      } else if (lowerQuery.includes('hour')) {
+        period = { unit: 'hour', count: 1 };
+      } else if (lowerQuery.includes('minute')) {
+        period = { unit: 'minute', count: 1 };
+      } else if (lowerQuery.includes('second')) {
+        period = { unit: 'second', count: 1 };
+      }
       return await queryAccountTransactionCount(accountId, period);
     }
     // How many / count queries for network-wide
@@ -6426,36 +6442,57 @@ async function queryAccountTransactions(accountId) {
   return html;
 }
 
-async function queryAccountTransactionCount(accountId, period = 'day') {
+async function queryAccountTransactionCount(accountId, period = { unit: 'day', count: 1 }) {
   if (typeof accountId === 'string' && !accountId.includes('.')) accountId = parseInt(accountId);
   else if (typeof accountId === 'string') accountId = parseInt(accountId.split('.').pop());
 
+  // Handle legacy string format
+  if (typeof period === 'string') {
+    period = { unit: period, count: 1 };
+  }
+
+  const { unit, count } = period;
+
   // Calculate timestamp for the time period
   const now = Date.now();
-  let startTime;
+  let milliseconds;
   let periodLabel;
 
-  switch (period) {
+  switch (unit) {
+    case 'second':
+      milliseconds = count * 1000;
+      periodLabel = count === 1 ? 'the last second' : `the last ${count} seconds`;
+      break;
+    case 'minute':
+      milliseconds = count * 60 * 1000;
+      periodLabel = count === 1 ? 'the last minute' : `the last ${count} minutes`;
+      break;
     case 'hour':
-      startTime = (now - 60 * 60 * 1000) * 1000000; // 1 hour ago in nanoseconds
-      periodLabel = 'the last hour';
+      milliseconds = count * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last hour' : `the last ${count} hours`;
+      break;
+    case 'day':
+      milliseconds = count * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last 24 hours' : `the last ${count} days`;
       break;
     case 'week':
-      startTime = (now - 7 * 24 * 60 * 60 * 1000) * 1000000; // 7 days ago
-      periodLabel = 'the last week';
+      milliseconds = count * 7 * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last week' : `the last ${count} weeks`;
       break;
     case 'month':
-      startTime = (now - 30 * 24 * 60 * 60 * 1000) * 1000000; // 30 days ago
-      periodLabel = 'the last month';
+      milliseconds = count * 30 * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last month' : `the last ${count} months`;
       break;
     case 'year':
-      startTime = (now - 365 * 24 * 60 * 60 * 1000) * 1000000; // 365 days ago
-      periodLabel = 'the last year';
+      milliseconds = count * 365 * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last year' : `the last ${count} years`;
       break;
     default:
-      startTime = (now - 24 * 60 * 60 * 1000) * 1000000; // 24 hours ago
+      milliseconds = 24 * 60 * 60 * 1000;
       periodLabel = 'the last 24 hours';
   }
+
+  const startTime = (now - milliseconds) * 1000000; // Convert to nanoseconds
 
   const response = await fetch(HGRAPH_API, {
     method: 'POST',
