@@ -548,7 +548,7 @@
   .back-btn {
     position:absolute;
     top:1rem;
-    right:1.5rem;
+    left:1.5rem;
     padding:0.5rem 1.2rem;
     background:rgba(139,92,246,0.2);
     border:1px solid #8b5cf6;
@@ -562,13 +562,6 @@
   }
   .back-btn:hover {
     background:rgba(139,92,246,0.4);
-    transform:translateX(4px);
-  }
-  #yourRankBtn {
-    right:auto;
-    left:1.5rem;
-  }
-  #yourRankBtn:hover {
     transform:translateX(-4px);
   }
   .richlist-table {
@@ -1525,7 +1518,7 @@
       <!-- Top 50 List -->
       <div class="richlist-table-container">
         <button type="button" class="back-btn" id="backToTop50">← Back to Top 50</button>
-        <button type="button" class="back-btn" id="yourRankBtn" style="display:none;">→ Your Rank</button>
+        <button type="button" class="back-btn" id="yourRankBtn" style="display:none;">← Your Rank</button>
         <h3 class="richlist-subtitle">Top 50 HBAR Holders</h3>
         <div class="loading" id="richlistLoading">Loading...</div>
         <div class="richlist-table" id="richlistTable"></div>
