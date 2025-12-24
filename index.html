@@ -162,8 +162,8 @@
     left:50%;
     transform:translateX(-50%);
     display:flex;
-    flex-wrap:wrap;
-    justify-content:space-between;
+    flex-direction:column;
+    align-items:center;
     width:auto;
     max-width:1200px;
     z-index:99;
@@ -171,6 +171,14 @@
     opacity:0;
     animation:navFadeIn 1s ease-in forwards;
     animation-delay:1.5s;
+  }
+  .nav-row {
+    display:flex;
+    justify-content:space-between;
+    white-space:nowrap;
+  }
+  .nav-row a {
+    font-size:clamp(0.9rem, 1.8vw, 1.8rem);
   }
   @keyframes navFadeIn {
     from { opacity:0; }
@@ -182,7 +190,7 @@
     font-size:1.8rem;
     font-family:'Styrene', system-ui, sans-serif;
     font-weight:300;
-    transition:color 0.3s ease;
+    transition:color 0.3s ease, text-shadow 0.3s ease;
     cursor:pointer;
     white-space:nowrap;
     padding:0 2rem;
@@ -192,8 +200,8 @@
   }
   .nav-menu a.chat-nav-link {
     font-weight:bold;
+    font-size:clamp(0.9rem, 1.8vw, 1.8rem);
     text-shadow:0 0 10px rgba(139,92,246,0.6), 0 0 20px rgba(139,92,246,0.4);
-    flex-basis:100%;
     text-align:center;
     margin-top:1.5rem;
     padding:0;
@@ -1500,10 +1508,12 @@
 
   <!-- Desktop Navigation Menu -->
   <nav class="nav-menu">
-    <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
-    <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
-    <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
-    <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
+    <div class="nav-row">
+      <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
+      <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
+      <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
+      <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
+    </div>
     <a href="#hedera-chat" onclick="scrollToSection('hedera-chat'); return false;" class="chat-nav-link">Hedera Data Chat</a>
   </nav>
 
@@ -5852,10 +5862,20 @@ async function processNaturalLanguageQuery(query) {
     if (txHashMatch) {
       return await queryTransactionByHash(txHashMatch[1]);
     }
-    // Recent transactions
-    if (lowerQuery.includes('recent') || lowerQuery.includes('latest') || lowerQuery.includes('last')) {
+    // How many / count queries - check this BEFORE "recent/latest/last"
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
+      return await queryDailyTransactions();
+    }
+    // Recent transactions (show individual transactions)
+    if (lowerQuery.includes('recent') || lowerQuery.includes('latest') || lowerQuery.includes('show')) {
       const countMatch = lowerQuery.match(/(\d+)/);
       const count = countMatch ? Math.min(parseInt(countMatch[1]), 20) : 10;
+      return await queryRecentTransactions(count);
+    }
+    // "last X transactions" - show individual ones
+    const lastCountMatch = lowerQuery.match(/last\s+(\d+)/i);
+    if (lastCountMatch) {
+      const count = Math.min(parseInt(lastCountMatch[1]), 20);
       return await queryRecentTransactions(count);
     }
     // Transactions by account
@@ -5871,7 +5891,7 @@ async function processNaturalLanguageQuery(query) {
     if (lowerQuery.includes('per second') || lowerQuery.includes('tps')) {
       return await queryTPS();
     }
-    // Daily count
+    // Daily count as fallback (includes "last day", "today", "24 hours", etc.)
     return await queryDailyTransactions();
   }
 
