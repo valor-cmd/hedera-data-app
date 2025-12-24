@@ -502,6 +502,36 @@
     -webkit-text-fill-color:transparent;
   }
 
+  /* Chart Currency Toggle */
+  .chart-currency-toggle {
+    display:flex;
+    justify-content:center;
+    gap:0.5rem;
+    margin-bottom:1.5rem;
+    padding-bottom:1rem;
+    border-bottom:1px solid rgba(48,54,61,0.5);
+  }
+  .chart-currency-btn {
+    padding:0.5rem 1.2rem;
+    font-size:0.85rem;
+    border-radius:20px;
+    border:1px solid #30363d;
+    background:transparent;
+    color:#8b949e;
+    cursor:pointer;
+    font-weight:600;
+    transition:all 0.3s ease;
+  }
+  .chart-currency-btn:hover {
+    border-color:#8b5cf6;
+    color:white;
+  }
+  .chart-currency-btn.active {
+    background:rgba(139,92,246,0.3);
+    border-color:#8b5cf6;
+    color:white;
+  }
+
   .richlist-subtitle {
     font-size:1.5rem;
     font-weight:700;
@@ -1350,12 +1380,16 @@
 
     <!-- Chart/Text View (Hidden by default) -->
     <div class="network-chart-view" id="networkChartView">
+      <div class="chart-currency-toggle">
+        <button type="button" class="chart-currency-btn" id="networkChartUsdBtn" onclick="toggleNetworkChartCurrency('usd')">USD</button>
+        <button type="button" class="chart-currency-btn active" id="networkChartHbarBtn" onclick="toggleNetworkChartCurrency('hbar')">HBAR</button>
+      </div>
       <div class="chart-row"><span class="chart-label">HBAR Price</span><span class="chart-value" id="chartHbarPrice">---</span></div>
       <div class="chart-row"><span class="chart-label">Market Cap</span><span class="chart-value" id="chartMarketCap">---</span></div>
       <div class="chart-row"><span class="chart-label">Network TPS</span><span class="chart-value" id="chartTps">---</span></div>
       <div class="chart-row"><span class="chart-label">Consensus Time</span><span class="chart-value" id="chartConsensusTime">---</span></div>
-      <div class="chart-row"><span class="chart-label">24h Network Fees</span><span class="chart-value" id="chartNetworkFees">---</span></div>
-      <div class="chart-row"><span class="chart-label">HBAR Released</span><span class="chart-value" id="chartHbarReleased">---</span></div>
+      <div class="chart-row" id="chartNetworkFeesRow"><span class="chart-label">24h Network Fees</span><span class="chart-value" id="chartNetworkFees">---</span></div>
+      <div class="chart-row" id="chartHbarReleasedRow"><span class="chart-label">HBAR Released</span><span class="chart-value" id="chartHbarReleased">---</span></div>
       <div class="chart-row"><span class="chart-label">Active Accounts</span><span class="chart-value" id="chartActiveAccounts">---</span></div>
       <div class="chart-row"><span class="chart-label">Total Accounts</span><span class="chart-value" id="chartTotalAccounts">---</span></div>
       <div class="chart-row"><span class="chart-label">24h New Accounts</span><span class="chart-value" id="chartNewAccounts">---</span></div>
@@ -1455,6 +1489,10 @@
 
     <!-- Chart/Text View for User Data (Hidden by default) -->
     <div class="network-chart-view" id="userChartView">
+      <div class="chart-currency-toggle">
+        <button type="button" class="chart-currency-btn" id="userChartUsdBtn" onclick="toggleUserChartCurrency('usd')">USD</button>
+        <button type="button" class="chart-currency-btn active" id="userChartHbarBtn" onclick="toggleUserChartCurrency('hbar')">HBAR</button>
+      </div>
       <div class="chart-row"><span class="chart-label">Created</span><span class="chart-value" id="chartCreated">---</span></div>
       <div class="chart-row"><span class="chart-label">Account ID</span><span class="chart-value" id="chartAccountId">---</span></div>
       <div class="chart-row"><span class="chart-label">Balance</span><span class="chart-value" id="chartBalance">---</span></div>
@@ -3066,8 +3104,12 @@ async function updateConsensusAndFees() {
         ? `${(result.data.consensusTime[0].total / 1000000000).toFixed(2)}s`
         : 'N/A';
 
-      const networkFees = result.data.networkFees?.[0]
-        ? `${(result.data.networkFees[0].total / 100000000).toLocaleString(undefined, {
+      // Store raw HBAR value for currency toggle
+      const networkFeesRaw = result.data.networkFees?.[0]?.total / 100000000 || 0;
+      window.networkFeesHbar = networkFeesRaw;
+
+      const networkFees = networkFeesRaw
+        ? `${networkFeesRaw.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
           })} ℏ`
@@ -3139,8 +3181,12 @@ async function updateHbarAndAccounts() {
     const result = await response.json();
 
     if (result.data) {
-      const hbarReleased = result.data.hbarReleased?.[0]
-        ? `${(result.data.hbarReleased[0].total / 100000000 / 1000000000).toFixed(2)}B ℏ`
+      // Store raw HBAR value for currency toggle (in HBAR, not tinybars)
+      const hbarReleasedRaw = result.data.hbarReleased?.[0]?.total / 100000000 || 0;
+      window.hbarReleasedAmount = hbarReleasedRaw;
+
+      const hbarReleased = hbarReleasedRaw
+        ? `${(hbarReleasedRaw / 1000000000).toFixed(2)}B ℏ`
         : 'N/A';
 
       const active = result.data.activeAccounts?.[0]?.total?.toLocaleString() || 'N/A';
@@ -4881,9 +4927,17 @@ const originalUpdateFunctions = {};
 setInterval(() => {
   if (isChartView) {
     syncChartValues();
+    // Re-apply currency conversion if USD is selected
+    if (networkChartCurrency === 'usd') {
+      updateNetworkChartCurrencyValues();
+    }
   }
   if (isUserChartView) {
     syncUserChartValues();
+    // Re-apply currency conversion if USD is selected
+    if (userChartCurrency === 'usd') {
+      updateUserChartCurrencyValues();
+    }
   }
 }, 1000);
 
@@ -4943,6 +4997,120 @@ function syncUserChartValues() {
   const chartStakedToAccountRow = document.getElementById('chartStakedToAccountRow');
   if (stakedToAccountCard && chartStakedToAccountRow) {
     chartStakedToAccountRow.style.display = stakedToAccountCard.style.display === 'none' ? 'none' : 'flex';
+  }
+}
+
+// Chart Currency Toggle - Network Stats
+let networkChartCurrency = 'hbar';
+
+function toggleNetworkChartCurrency(currency) {
+  networkChartCurrency = currency;
+
+  // Update button states
+  document.getElementById('networkChartUsdBtn').classList.toggle('active', currency === 'usd');
+  document.getElementById('networkChartHbarBtn').classList.toggle('active', currency === 'hbar');
+
+  // Update values based on currency
+  updateNetworkChartCurrencyValues();
+}
+
+function updateNetworkChartCurrencyValues() {
+  const hbarPrice = window.hbarPrice || 0;
+
+  // Network Fees - convert if needed
+  const networkFeesEl = document.getElementById('chartNetworkFees');
+  const networkFeesHbar = window.networkFeesHbar || 0;
+  if (networkFeesEl && networkFeesHbar) {
+    if (networkChartCurrency === 'usd') {
+      const usdValue = networkFeesHbar * hbarPrice;
+      networkFeesEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      networkFeesEl.textContent = networkFeesHbar.toLocaleString() + ' ℏ';
+    }
+  }
+
+  // HBAR Released - convert if needed
+  const hbarReleasedEl = document.getElementById('chartHbarReleased');
+  const hbarReleased = window.hbarReleasedAmount || 0;
+  if (hbarReleasedEl && hbarReleased) {
+    if (networkChartCurrency === 'usd') {
+      const usdValue = hbarReleased * hbarPrice;
+      if (usdValue >= 1e12) {
+        hbarReleasedEl.textContent = '$' + (usdValue / 1e12).toFixed(2) + 'T';
+      } else if (usdValue >= 1e9) {
+        hbarReleasedEl.textContent = '$' + (usdValue / 1e9).toFixed(2) + 'B';
+      } else {
+        hbarReleasedEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+    } else {
+      if (hbarReleased >= 1e9) {
+        hbarReleasedEl.textContent = (hbarReleased / 1e9).toFixed(2) + 'B ℏ';
+      } else {
+        hbarReleasedEl.textContent = hbarReleased.toLocaleString() + ' ℏ';
+      }
+    }
+  }
+}
+
+// Chart Currency Toggle - User Data
+let userChartCurrency = 'hbar';
+
+function toggleUserChartCurrency(currency) {
+  userChartCurrency = currency;
+
+  // Update button states
+  document.getElementById('userChartUsdBtn').classList.toggle('active', currency === 'usd');
+  document.getElementById('userChartHbarBtn').classList.toggle('active', currency === 'hbar');
+
+  // Update values based on currency
+  updateUserChartCurrencyValues();
+}
+
+function updateUserChartCurrencyValues() {
+  const hbarPrice = window.hbarPrice || 0;
+
+  // Balance - use existing global variable
+  const balanceEl = document.getElementById('chartBalance');
+  if (balanceEl && globalBalanceHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalBalanceHbar * hbarPrice;
+      balanceEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      balanceEl.textContent = globalBalanceHbar.toFixed(2) + ' HBAR';
+    }
+  }
+
+  // Total Staked - use existing global variable
+  const stakedEl = document.getElementById('chartStakedBalance');
+  if (stakedEl && globalStakedHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalStakedHbar * hbarPrice;
+      stakedEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      stakedEl.textContent = globalStakedHbar.toFixed(2) + ' HBAR';
+    }
+  }
+
+  // Received Rewards - use existing global variable
+  const rewardsEl = document.getElementById('chartReceivedRewards');
+  if (rewardsEl && globalRewardsHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalRewardsHbar * hbarPrice;
+      rewardsEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      rewardsEl.textContent = globalRewardsHbar.toFixed(2) + ' HBAR';
+    }
+  }
+
+  // Staked to Account - use existing global variable
+  const stakedToEl = document.getElementById('chartStakedToAccount');
+  if (stakedToEl && globalStakedToAccountHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalStakedToAccountHbar * hbarPrice;
+      stakedToEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      stakedToEl.textContent = globalStakedToAccountHbar.toFixed(2) + ' HBAR';
+    }
   }
 }
 
