@@ -5562,9 +5562,9 @@ function initChatPlaceholder() {
   });
 
   chatInput.addEventListener('blur', () => {
-    // Only resume if input is empty and animation was paused by focus
-    if (chatInput.value.length === 0 && animationPaused) {
-      // Don't resume here - let sendChatMessage handle it after response
+    // Resume animation if input is empty when user clicks outside
+    if (chatInput.value.length === 0) {
+      resumeAnimation();
     }
   });
 
@@ -5874,7 +5874,8 @@ async function processNaturalLanguageQuery(query) {
       const accountId = txAccountMatch[1] || txAccountMatch[0];
       // Determine time period
       let period = 'day';
-      if (lowerQuery.includes('month')) period = 'month';
+      if (lowerQuery.includes('year')) period = 'year';
+      else if (lowerQuery.includes('month')) period = 'month';
       else if (lowerQuery.includes('week')) period = 'week';
       else if (lowerQuery.includes('hour')) period = 'hour';
       return await queryAccountTransactionCount(accountId, period);
@@ -6446,6 +6447,10 @@ async function queryAccountTransactionCount(accountId, period = 'day') {
     case 'month':
       startTime = (now - 30 * 24 * 60 * 60 * 1000) * 1000000; // 30 days ago
       periodLabel = 'the last month';
+      break;
+    case 'year':
+      startTime = (now - 365 * 24 * 60 * 60 * 1000) * 1000000; // 365 days ago
+      periodLabel = 'the last year';
       break;
     default:
       startTime = (now - 24 * 60 * 60 * 1000) * 1000000; // 24 hours ago
