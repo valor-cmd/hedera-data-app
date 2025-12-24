@@ -467,12 +467,12 @@
   /* Network Stats Chart/Text View */
   .network-chart-view {
     display:none;
-    width:100%;
-    max-width:800px;
+    width:95%;
+    max-width:1200px;
     margin:0 auto;
     padding:2rem;
-    background:rgba(10,10,10,0.8);
-    border-radius:24px;
+    background:rgba(10,10,10,0.9);
+    border-radius:16px;
     border:1px solid #30363d;
     backdrop-filter:blur(12px);
   }
@@ -497,9 +497,7 @@
   .chart-value {
     font-size:1.3rem;
     font-weight:700;
-    background:linear-gradient(90deg,#00d4ff,#8b5cf6);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+    color:white;
   }
 
   /* Chart Currency Toggle */
@@ -1381,8 +1379,8 @@
     <!-- Chart/Text View (Hidden by default) -->
     <div class="network-chart-view" id="networkChartView">
       <div class="chart-currency-toggle">
-        <button type="button" class="chart-currency-btn" id="networkChartUsdBtn" onclick="toggleNetworkChartCurrency('usd')">USD</button>
         <button type="button" class="chart-currency-btn active" id="networkChartHbarBtn" onclick="toggleNetworkChartCurrency('hbar')">HBAR</button>
+        <button type="button" class="chart-currency-btn" id="networkChartUsdBtn" onclick="toggleNetworkChartCurrency('usd')">USD</button>
       </div>
       <div class="chart-row"><span class="chart-label">HBAR Price</span><span class="chart-value" id="chartHbarPrice">---</span></div>
       <div class="chart-row"><span class="chart-label">Market Cap</span><span class="chart-value" id="chartMarketCap">---</span></div>
@@ -1490,8 +1488,8 @@
     <!-- Chart/Text View for User Data (Hidden by default) -->
     <div class="network-chart-view" id="userChartView">
       <div class="chart-currency-toggle">
-        <button type="button" class="chart-currency-btn" id="userChartUsdBtn" onclick="toggleUserChartCurrency('usd')">USD</button>
         <button type="button" class="chart-currency-btn active" id="userChartHbarBtn" onclick="toggleUserChartCurrency('hbar')">HBAR</button>
+        <button type="button" class="chart-currency-btn" id="userChartUsdBtn" onclick="toggleUserChartCurrency('usd')">USD</button>
       </div>
       <div class="chart-row"><span class="chart-label">Created</span><span class="chart-value" id="chartCreated">---</span></div>
       <div class="chart-row"><span class="chart-label">Account ID</span><span class="chart-value" id="chartAccountId">---</span></div>
