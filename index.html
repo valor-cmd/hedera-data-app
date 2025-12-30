@@ -162,7 +162,8 @@
     left:50%;
     transform:translateX(-50%);
     display:flex;
-    justify-content:space-between;
+    flex-direction:column;
+    align-items:center;
     width:auto;
     max-width:1200px;
     z-index:99;
@@ -170,6 +171,15 @@
     opacity:0;
     animation:navFadeIn 1s ease-in forwards;
     animation-delay:1.5s;
+  }
+  .nav-row {
+    display:flex;
+    justify-content:space-between;
+    white-space:nowrap;
+  }
+  .nav-menu .nav-row a {
+    font-size:clamp(0.9rem, 1.8vw, 1.8rem);
+    padding:0 clamp(0.5rem, 2vw, 2rem);
   }
   @keyframes navFadeIn {
     from { opacity:0; }
@@ -181,13 +191,25 @@
     font-size:1.8rem;
     font-family:'Styrene', system-ui, sans-serif;
     font-weight:300;
-    transition:color 0.3s ease;
+    transition:color 0.3s ease, text-shadow 0.3s ease;
     cursor:pointer;
     white-space:nowrap;
     padding:0 2rem;
   }
   .nav-menu a:hover {
     color:white;
+  }
+  .nav-menu a.chat-nav-link {
+    font-weight:bold;
+    font-size:clamp(0.9rem, 1.8vw, 1.8rem);
+    text-shadow:0 0 10px rgba(139,92,246,0.6), 0 0 20px rgba(139,92,246,0.4);
+    text-align:center;
+    margin-top:3rem;
+    padding:0;
+  }
+  .nav-menu a.chat-nav-link:hover {
+    color:white;
+    text-shadow:0 0 10px rgba(255,255,255,0.6), 0 0 20px rgba(255,255,255,0.4);
   }
 
   h2 {
@@ -937,6 +959,216 @@
     }
   }
 
+  /* Hedera Data Chat Styles */
+  .chat-container {
+    width:95%;
+    max-width:900px;
+    margin:0 auto;
+  }
+  .chat-input-wrapper {
+    position:relative;
+    width:100%;
+    margin-bottom:2rem;
+  }
+  .chat-input {
+    width:100%;
+    padding:1.5rem 2rem;
+    padding-right:5rem;
+    border:2px solid #30363d;
+    border-radius:16px;
+    background:rgba(10,10,10,0.9);
+    color:white;
+    font-size:1.2rem;
+    font-family:inherit;
+    transition:all 0.3s ease;
+    caret-color:#8b5cf6;
+  }
+  .chat-input:focus {
+    outline:none;
+    border-color:#8b5cf6;
+    box-shadow:0 0 30px rgba(139,92,246,0.3);
+  }
+  .chat-input::placeholder {
+    color:transparent;
+  }
+  .chat-placeholder {
+    position:absolute;
+    top:50%;
+    left:2rem;
+    transform:translateY(-50%);
+    color:#6b7280;
+    font-size:1.2rem;
+    pointer-events:none;
+    display:flex;
+    align-items:center;
+    transition:opacity 0.3s ease;
+  }
+  .chat-placeholder.hidden {
+    opacity:0;
+  }
+  .chat-cursor {
+    display:inline-block;
+    width:2px;
+    height:1.4rem;
+    background:#8b5cf6;
+    margin-left:2px;
+    animation:chatBlink 1s step-end infinite;
+  }
+  @keyframes chatBlink {
+    0%, 100% { opacity:1; }
+    50% { opacity:0; }
+  }
+  .chat-send-btn {
+    position:absolute;
+    right:1rem;
+    top:50%;
+    transform:translateY(-50%);
+    padding:0.8rem 1.2rem;
+    background:#8b5cf6;
+    border:none;
+    border-radius:12px;
+    color:white;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.3s ease;
+  }
+  .chat-send-btn:hover {
+    background:#7c3aed;
+    transform:translateY(-50%) scale(1.05);
+  }
+  .chat-send-btn:disabled {
+    background:#4b5563;
+    cursor:not-allowed;
+    transform:translateY(-50%);
+  }
+  .chat-response-area {
+    background:rgba(10,10,10,0.9);
+    border-radius:16px;
+    border:1px solid #30363d;
+    min-height:200px;
+    max-height:500px;
+    overflow-y:auto;
+    padding:2rem;
+  }
+  .chat-response-area::-webkit-scrollbar {
+    width:6px;
+  }
+  .chat-response-area::-webkit-scrollbar-track {
+    background:rgba(255,255,255,0.05);
+    border-radius:3px;
+  }
+  .chat-response-area::-webkit-scrollbar-thumb {
+    background:rgba(139,92,246,0.5);
+    border-radius:3px;
+  }
+  .chat-message {
+    margin-bottom:1.5rem;
+    animation:chatFadeIn 0.3s ease;
+  }
+  @keyframes chatFadeIn {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .chat-message.user {
+    text-align:right;
+  }
+  .chat-message.user .chat-bubble {
+    background:rgba(139,92,246,0.2);
+    border:1px solid #8b5cf6;
+    display:inline-block;
+    text-align:left;
+  }
+  .chat-message.assistant .chat-bubble {
+    background:rgba(0,212,255,0.1);
+    border:1px solid rgba(0,212,255,0.3);
+  }
+  .chat-bubble {
+    padding:1rem 1.5rem;
+    border-radius:12px;
+    max-width:85%;
+    display:inline-block;
+  }
+  .chat-bubble-label {
+    font-size:0.75rem;
+    opacity:0.6;
+    margin-bottom:0.5rem;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .chat-bubble-content {
+    font-size:1rem;
+    line-height:1.6;
+    color:white;
+  }
+  .chat-bubble-content strong {
+    color:#8b5cf6;
+  }
+  .chat-bubble-content .data-value {
+    color:#00d4ff;
+    font-weight:600;
+  }
+  .chat-loading {
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    color:#8b949e;
+    font-size:0.9rem;
+  }
+  .chat-loading-dots {
+    display:flex;
+    gap:4px;
+  }
+  .chat-loading-dots span {
+    width:6px;
+    height:6px;
+    background:#8b5cf6;
+    border-radius:50%;
+    animation:chatLoadingDot 1.4s infinite ease-in-out both;
+  }
+  .chat-loading-dots span:nth-child(1) { animation-delay:-0.32s; }
+  .chat-loading-dots span:nth-child(2) { animation-delay:-0.16s; }
+  @keyframes chatLoadingDot {
+    0%, 80%, 100% { transform:scale(0); }
+    40% { transform:scale(1); }
+  }
+  .chat-welcome {
+    text-align:center;
+    padding:2rem;
+    color:#8b949e;
+  }
+  .chat-welcome h3 {
+    font-size:1.3rem;
+    color:white;
+    margin-bottom:1rem;
+  }
+  .chat-welcome p {
+    font-size:0.95rem;
+    line-height:1.6;
+  }
+  .chat-example-queries {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5rem;
+    justify-content:center;
+    margin-top:1.5rem;
+  }
+  .chat-example-btn {
+    padding:0.5rem 1rem;
+    background:rgba(139,92,246,0.15);
+    border:1px solid rgba(139,92,246,0.3);
+    border-radius:20px;
+    color:#8b5cf6;
+    font-size:0.85rem;
+    cursor:pointer;
+    transition:all 0.2s ease;
+  }
+  .chat-example-btn:hover {
+    background:rgba(139,92,246,0.3);
+    border-color:#8b5cf6;
+    color:white;
+  }
+
   /* Mobile Responsive Styles */
   @media (max-width: 768px) {
     /* Fix h2 titles - allow wrapping and reduce size on mobile */
@@ -1118,16 +1350,17 @@
       display:none !important;
     }
 
-    /* Hide toggle switches on mobile - cards only */
+    /* Mobile: Show toggle switches with swapped positions (Chart left, Cards right) */
     #networkViewToggle,
     #userDataViewToggle {
-      display:none !important;
+      display:flex !important;
+      flex-direction:row-reverse;
     }
 
-    /* Hide chart views on mobile */
-    .network-chart-view,
-    #userChartView {
-      display:none !important;
+    /* Mobile: Chart views can be shown (will be default) */
+    .network-chart-view.active,
+    #userChartView.active {
+      display:block !important;
     }
 
     #topLeftCoin {
@@ -1277,10 +1510,13 @@
 
   <!-- Desktop Navigation Menu -->
   <nav class="nav-menu">
-    <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
-    <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
-    <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
-    <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
+    <div class="nav-row">
+      <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
+      <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
+      <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
+      <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
+    </div>
+    <a href="#hedera-chat" onclick="scrollToSection('hedera-chat'); return false;" class="chat-nav-link">Hedera Data Chat</a>
   </nav>
 
   <!-- 3D HBAR Coin Canvas (behind everything) - HIDDEN FOR NOW -->
@@ -1535,7 +1771,39 @@
       </div>
     </div>
   </section>
-  
+
+  <!-- Hedera Data Chat Section -->
+  <section class="section" id="hedera-chat" style="min-height:100vh;height:auto;padding:4rem 0;">
+    <div class="gradient-orb" style="top:-200px;left:-200px;background:radial-gradient(circle,rgba(139,92,246,0.2),transparent);"></div>
+    <h2>Hedera Data Chat</h2>
+    <p style="font-size:1.1rem;opacity:0.7;margin-bottom:2rem;text-align:center;">Ask questions about the Hedera network in plain English</p>
+
+    <div class="chat-container">
+      <div class="chat-input-wrapper">
+        <input type="text" class="chat-input" id="chatInput" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
+        <div class="chat-placeholder" id="chatPlaceholder">
+          <span id="chatPlaceholderText"></span>
+          <span class="chat-cursor"></span>
+        </div>
+        <button type="button" class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Ask</button>
+      </div>
+
+      <div class="chat-response-area" id="chatResponseArea">
+        <div class="chat-welcome" id="chatWelcome">
+          <h3>Welcome to Hedera Data Chat</h3>
+          <p>I can help you query real-time data from the Hedera network.<br>Ask me about accounts, balances, transactions, network stats, and more!</p>
+          <div class="chat-example-queries">
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">What is the current HBAR price?</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">How many transactions today?</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">Show me account 0.0.98</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">What's the network TPS?</button>
+            <button type="button" class="chat-example-btn" onclick="useExampleQuery(this)">How many total accounts exist?</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="final" style="background:transparent;text-align:center;">
     <h2 class="gradient-title">The Future is Hedera</h2>
     <p style="font-size:1.5rem;opacity:0.7;margin-top:2rem;">Powered by Hgraph API</p>
@@ -5004,6 +5272,51 @@ function syncUserChartValues() {
   }
 }
 
+// Mobile: Set chart view as default (runs on page load)
+if (window.innerWidth <= 768) {
+  // Wait for DOM to be ready, then switch to chart view
+  const initMobileChartView = () => {
+    // Network Stats - switch to chart view
+    isChartView = true;
+    const toggle = document.getElementById('viewToggleSwitch');
+    const cardsView = document.getElementById('networkCardsView');
+    const chartView = document.getElementById('networkChartView');
+    const cardsLabel = document.getElementById('cardsLabel');
+    const chartLabel = document.getElementById('chartLabel');
+
+    if (toggle && cardsView && chartView) {
+      toggle.classList.add('chart-active');
+      cardsView.style.display = 'none';
+      chartView.classList.add('active');
+      if (cardsLabel) cardsLabel.classList.remove('active');
+      if (chartLabel) chartLabel.classList.add('active');
+      syncChartValues();
+    }
+
+    // User Data - switch to chart view
+    isUserChartView = true;
+    const userToggle = document.getElementById('userViewToggleSwitch');
+    const userCardsView = document.getElementById('userCardsView');
+    const userChartView = document.getElementById('userChartView');
+    const userCardsLabel = document.getElementById('userCardsLabel');
+    const userChartLabel = document.getElementById('userChartLabel');
+
+    if (userToggle && userCardsView && userChartView) {
+      userToggle.classList.add('chart-active');
+      userCardsView.style.display = 'none';
+      userChartView.classList.add('active');
+      if (userCardsLabel) userCardsLabel.classList.remove('active');
+      if (userChartLabel) userChartLabel.classList.add('active');
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileChartView);
+  } else {
+    initMobileChartView();
+  }
+}
+
 // Card Currency Toggle - Network Fees
 let networkFeesCurrency = 'hbar';
 
@@ -5248,6 +5561,1588 @@ function scrollToSection(sectionId) {
       behavior: 'smooth'
     });
   }
+}
+
+// ============================================
+// Hedera Data Chat - Natural Language Query
+// ============================================
+
+// OpenAI Configuration (via secure backend proxy)
+const OPENAI_PROXY_URL = '/api/openai'; // Backend proxy endpoint
+const OPENAI_MODEL = 'gpt-4';
+
+// Conversation history for context
+let conversationHistory = [];
+const MAX_HISTORY = 10; // Keep last 10 messages for context
+
+// System prompt for the LLM
+const HEDERA_SYSTEM_PROMPT = `You are a helpful assistant for the Hedera network dashboard. You help users query and understand data from the Hedera blockchain.
+
+You have access to real-time Hedera network data through the Hgraph API. When users ask questions, you'll receive the actual data from the network and should explain it clearly.
+
+Key Hedera concepts:
+- HBAR is the native cryptocurrency (1 HBAR = 100,000,000 tinybars)
+- Account IDs are in format 0.0.XXXXX (shard.realm.num)
+- Hedera uses hashgraph consensus with ~3-5 second finality
+- The network supports tokens (fungible), NFTs, smart contracts, and HCS (Hedera Consensus Service) topics
+
+When answering:
+- Be concise but informative
+- If data is provided, reference specific numbers
+- For follow-up questions, use context from the conversation
+- If you can't answer something, suggest what data the user could ask for
+
+Available query types: account info, token info, NFT holdings, transaction counts, network stats (TPS, price, market cap), staking info, and more.`;
+
+const chatExampleQueries = [
+  "What is the current HBAR price?",
+  "How many transactions happened today?",
+  "Show me the balance of account 0.0.98",
+  "What's the current network TPS?",
+  "How many total accounts exist on Hedera?",
+  "What is the market cap of HBAR?",
+  "Show me the top account balances",
+  "How many new accounts were created today?",
+  "What are the 24h network fees?",
+  "How much HBAR has been released?"
+];
+
+let currentExampleIndex = 0;
+let isTypingExample = false;
+let typingTimeout = null;
+let animationPaused = false;
+
+// Initialize chat placeholder animation
+function initChatPlaceholder() {
+  const chatInput = document.getElementById('chatInput');
+  const placeholder = document.getElementById('chatPlaceholder');
+
+  if (!chatInput || !placeholder) return;
+
+  // Hide placeholder when input has value or is focused
+  chatInput.addEventListener('input', () => {
+    placeholder.classList.toggle('hidden', chatInput.value.length > 0);
+  });
+
+  chatInput.addEventListener('focus', () => {
+    // Pause animation and hide placeholder when focused
+    animationPaused = true;
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+    placeholder.classList.add('hidden');
+  });
+
+  chatInput.addEventListener('blur', () => {
+    // Resume animation if input is empty when user clicks outside
+    if (chatInput.value.length === 0) {
+      resumeAnimation();
+    }
+  });
+
+  // Handle Enter key
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendChatMessage();
+    }
+  });
+
+  // Start typing animation
+  typeNextExample();
+}
+
+function resumeAnimation() {
+  const placeholder = document.getElementById('chatPlaceholder');
+  const chatInput = document.getElementById('chatInput');
+  const placeholderText = document.getElementById('chatPlaceholderText');
+
+  if (!placeholder || !chatInput || !placeholderText) return;
+
+  // Clear any existing timeout
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+  }
+
+  animationPaused = false;
+
+  // Only resume if input is empty and not focused
+  if (chatInput.value.length === 0 && document.activeElement !== chatInput) {
+    placeholder.classList.remove('hidden');
+    // Clear any existing text and start fresh
+    placeholderText.textContent = '';
+    // Small delay before starting animation
+    typingTimeout = setTimeout(typeNextExample, 300);
+  }
+}
+
+function typeNextExample() {
+  const placeholderText = document.getElementById('chatPlaceholderText');
+  const chatInput = document.getElementById('chatInput');
+
+  if (!placeholderText || !chatInput) return;
+  if (animationPaused) return;
+  if (chatInput.value.length > 0) {
+    // If user has typed, wait and check again
+    typingTimeout = setTimeout(typeNextExample, 2000);
+    return;
+  }
+
+  const example = chatExampleQueries[currentExampleIndex];
+  let charIndex = 0;
+
+  isTypingExample = true;
+  placeholderText.textContent = '';
+
+  function typeChar() {
+    if (animationPaused || chatInput.value.length > 0) {
+      isTypingExample = false;
+      return;
+    }
+
+    if (charIndex < example.length) {
+      placeholderText.textContent = example.substring(0, charIndex + 1);
+      charIndex++;
+      typingTimeout = setTimeout(typeChar, 50 + Math.random() * 30);
+    } else {
+      // Finished typing, wait then erase
+      isTypingExample = false;
+      typingTimeout = setTimeout(eraseExample, 3000);
+    }
+  }
+
+  typeChar();
+}
+
+function eraseExample() {
+  const placeholderText = document.getElementById('chatPlaceholderText');
+  const chatInput = document.getElementById('chatInput');
+
+  if (!placeholderText || !chatInput) return;
+  if (animationPaused) return;
+  if (chatInput.value.length > 0) {
+    typingTimeout = setTimeout(typeNextExample, 2000);
+    return;
+  }
+
+  let text = placeholderText.textContent;
+
+  function eraseChar() {
+    if (animationPaused || chatInput.value.length > 0) {
+      return;
+    }
+
+    if (text.length > 0) {
+      text = text.substring(0, text.length - 1);
+      placeholderText.textContent = text;
+      typingTimeout = setTimeout(eraseChar, 20);
+    } else {
+      // Move to next example
+      currentExampleIndex = (currentExampleIndex + 1) % chatExampleQueries.length;
+      typingTimeout = setTimeout(typeNextExample, 500);
+    }
+  }
+
+  eraseChar();
+}
+
+function useExampleQuery(btn) {
+  const chatInput = document.getElementById('chatInput');
+  const placeholder = document.getElementById('chatPlaceholder');
+
+  chatInput.value = btn.textContent;
+  placeholder.classList.add('hidden');
+  chatInput.focus();
+}
+
+// Call OpenAI API via secure backend proxy
+async function callOpenAI(userMessage, hgraphData = null) {
+  try {
+    // Build messages array with conversation history
+    const messages = [
+      { role: 'system', content: HEDERA_SYSTEM_PROMPT }
+    ];
+
+    // Add conversation history for context
+    conversationHistory.forEach(msg => {
+      messages.push(msg);
+    });
+
+    // Add current user message with any Hgraph data
+    let currentMessage = userMessage;
+    if (hgraphData) {
+      currentMessage = `User question: "${userMessage}"\n\nHere is the relevant data from the Hedera network:\n${hgraphData}\n\nPlease provide a helpful response based on this data. If the user is asking a follow-up question, use the conversation context.`;
+    }
+    messages.push({ role: 'user', content: currentMessage });
+
+    const response = await fetch(OPENAI_PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: messages,
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('OpenAI proxy error:', response.status, errorData);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error('OpenAI API error:', data.error);
+      return null;
+    }
+
+    const assistantMessage = data.choices?.[0]?.message?.content;
+
+    if (!assistantMessage) {
+      return null;
+    }
+
+    // Update conversation history
+    conversationHistory.push({ role: 'user', content: userMessage });
+    conversationHistory.push({ role: 'assistant', content: assistantMessage });
+
+    // Keep history limited
+    while (conversationHistory.length > MAX_HISTORY * 2) {
+      conversationHistory.shift();
+    }
+
+    return assistantMessage;
+  } catch (error) {
+    console.error('OpenAI proxy error:', error);
+    return null;
+  }
+}
+
+// Check if query is a follow-up question
+function isFollowUpQuestion(query) {
+  const followUpIndicators = [
+    'what about', 'how about', 'and what', 'also', 'tell me more',
+    'more info', 'more details', 'explain', 'why', 'what does that mean',
+    'can you', 'could you', 'what else', 'anything else', 'compare',
+    'that account', 'this account', 'the same', 'their', 'its', 'those',
+    'what if', 'how come', 'is that', 'are they', 'do they', 'does it'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return followUpIndicators.some(indicator => lowerQuery.includes(indicator)) ||
+         (conversationHistory.length > 0 && query.split(' ').length < 6);
+}
+
+async function sendChatMessage() {
+  const chatInput = document.getElementById('chatInput');
+  const responseArea = document.getElementById('chatResponseArea');
+  const welcome = document.getElementById('chatWelcome');
+  const sendBtn = document.getElementById('chatSendBtn');
+
+  const query = chatInput.value.trim();
+  if (!query) return;
+
+  // Hide welcome message
+  if (welcome) welcome.style.display = 'none';
+
+  // Disable send button
+  sendBtn.disabled = true;
+
+  // Add user message
+  addChatMessage('user', query);
+
+  // Clear input (don't show placeholder yet - resumeAnimation will handle it)
+  chatInput.value = '';
+
+  // Add loading message
+  const loadingId = addLoadingMessage();
+
+  try {
+    // First, get data from Hgraph API using existing pattern matching
+    const hgraphResult = await processNaturalLanguageQuery(query);
+
+    // Check if this is a follow-up or question that benefits from LLM
+    const isFollowUp = isFollowUpQuestion(query);
+
+    let finalResult;
+    let usedOpenAI = false;
+
+    if (isFollowUp || query.includes('?')) {
+      // Try OpenAI to enhance the response or handle follow-ups
+      try {
+        const llmResponse = await callOpenAI(query, hgraphResult);
+        if (llmResponse) {
+          finalResult = llmResponse;
+          usedOpenAI = true;
+        }
+      } catch (openaiError) {
+        console.warn('OpenAI fallback triggered:', openaiError.message);
+      }
+    }
+
+    // Fallback to Hgraph result if OpenAI wasn't used or failed
+    if (!usedOpenAI) {
+      finalResult = hgraphResult;
+      // Store in history for context even without OpenAI
+      conversationHistory.push({ role: 'user', content: query });
+      conversationHistory.push({ role: 'assistant', content: hgraphResult });
+      while (conversationHistory.length > MAX_HISTORY * 2) {
+        conversationHistory.shift();
+      }
+    }
+
+    // Remove loading message
+    removeLoadingMessage(loadingId);
+
+    // Add assistant response
+    addChatMessage('assistant', finalResult);
+  } catch (error) {
+    removeLoadingMessage(loadingId);
+    // Final fallback - try to at least show Hgraph data
+    try {
+      const fallbackResult = await processNaturalLanguageQuery(query);
+      addChatMessage('assistant', fallbackResult);
+    } catch (fallbackError) {
+      addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+    }
+  }
+
+  // Re-enable send button
+  sendBtn.disabled = false;
+
+  // Scroll to bottom
+  responseArea.scrollTop = responseArea.scrollHeight;
+
+  // Blur input and resume animation after response is generated
+  chatInput.blur();
+  resumeAnimation();
+}
+
+function addChatMessage(role, content) {
+  const responseArea = document.getElementById('chatResponseArea');
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `chat-message ${role}`;
+
+  const bubbleDiv = document.createElement('div');
+  bubbleDiv.className = 'chat-bubble';
+
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'chat-bubble-label';
+  labelDiv.textContent = role === 'user' ? 'You' : 'Hedera Data';
+
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'chat-bubble-content';
+  contentDiv.innerHTML = content;
+
+  bubbleDiv.appendChild(labelDiv);
+  bubbleDiv.appendChild(contentDiv);
+  messageDiv.appendChild(bubbleDiv);
+  responseArea.appendChild(messageDiv);
+
+  responseArea.scrollTop = responseArea.scrollHeight;
+}
+
+function addLoadingMessage() {
+  const responseArea = document.getElementById('chatResponseArea');
+  const id = 'loading-' + Date.now();
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'chat-message assistant';
+  messageDiv.id = id;
+
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">
+      <div class="chat-loading">
+        <div class="chat-loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span>Querying Hedera network...</span>
+      </div>
+    </div>
+  `;
+
+  responseArea.appendChild(messageDiv);
+  responseArea.scrollTop = responseArea.scrollHeight;
+
+  return id;
+}
+
+function removeLoadingMessage(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// Hgraph GraphQL Schema Reference for intelligent query generation
+const HGRAPH_SCHEMA = {
+  tables: {
+    entity: ['id', 'num', 'realm', 'shard', 'type', 'balance', 'memo', 'created_timestamp', 'deleted', 'expiration_timestamp', 'auto_renew_period', 'key', 'public_key', 'evm_address', 'staked_node_id', 'staked_account_id', 'stake_period_start', 'pending_reward', 'decline_reward'],
+    transaction: ['id', 'consensus_timestamp', 'type', 'result', 'payer_account_id', 'node_account_id', 'charged_tx_fee', 'max_fee', 'memo', 'scheduled', 'nonce', 'transaction_hash', 'valid_start_ns'],
+    token: ['token_id', 'name', 'symbol', 'type', 'decimals', 'total_supply', 'max_supply', 'treasury_account_id', 'created_timestamp', 'freeze_default', 'pause_status', 'supply_type', 'metadata'],
+    nft: ['token_id', 'serial_number', 'account_id', 'metadata', 'created_timestamp', 'modified_timestamp', 'deleted', 'spender'],
+    token_account: ['token_id', 'account_id', 'balance', 'associated', 'created_timestamp', 'freeze_status', 'kyc_status'],
+    token_transfer: ['token_id', 'account_id', 'amount', 'consensus_timestamp', 'is_approval'],
+    crypto_transfer: ['entity_id', 'amount', 'consensus_timestamp', 'is_approval', 'payer_account_id'],
+    topic_message: ['topic_id', 'consensus_timestamp', 'message', 'sequence_number', 'payer_account_id'],
+    contract: ['id', 'evm_address', 'file_id', 'created_timestamp', 'runtime_bytecode'],
+    ecosystem_metric: ['name', 'period', 'total', 'start_date', 'end_date', 'description'],
+    entity_stake: ['id', 'staked_to_me', 'staked_node_id_start'],
+    network_stake: ['consensus_timestamp', 'stake_total', 'staking_period'],
+    node_stake: ['node_id', 'stake', 'stake_rewarded', 'stake_not_rewarded', 'min_stake', 'max_stake']
+  },
+  metricNames: ['avg_usd_conversion', 'hbar_market_cap', 'total_accounts', 'active_accounts', 'new_accounts', 'new_transactions', 'network_fee', 'hbar_total_released', 'avg_time_to_consensus', 'total_staked']
+};
+
+// Natural language query processor - comprehensive pattern matching
+async function processNaturalLanguageQuery(query) {
+  const lowerQuery = query.toLowerCase();
+  const originalQuery = query;
+
+  // Check for raw GraphQL query
+  if (lowerQuery.includes('query') && (lowerQuery.includes('{') || lowerQuery.includes('graphql'))) {
+    return await executeRawGraphQL(originalQuery);
+  }
+
+  // Help/schema queries
+  if (lowerQuery.includes('help') || lowerQuery.includes('what can') || lowerQuery.includes('schema') || lowerQuery.includes('available')) {
+    return showSchemaHelp();
+  }
+
+  // NFT queries - check BEFORE account queries so "NFTs for 0.0.X" works
+  if (lowerQuery.includes('nft')) {
+    const nftMatch = lowerQuery.match(/(\d+\.\d+\.\d+|\d+).*?(?:serial|#)\s*(\d+)/i);
+    if (nftMatch) {
+      return await queryNFTInfo(nftMatch[1], nftMatch[2]);
+    }
+    if (lowerQuery.includes('collection') || lowerQuery.includes('top')) {
+      return await queryTopNFTCollections();
+    }
+    // NFTs owned by account - match account ID anywhere in query
+    const nftAccountMatch = lowerQuery.match(/(0\.0\.\d+)/i) ||
+                            lowerQuery.match(/(?:owned by|held by|for account|account|does)\s*(\d+\.\d+\.\d+|\d+)/i);
+    if (nftAccountMatch) {
+      const accountId = nftAccountMatch[1] || nftAccountMatch[0];
+      return await queryAccountNFTs(accountId);
+    }
+    // General NFT stats if no account specified
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total')) {
+      return await queryNFTStats();
+    }
+  }
+
+  // Token queries - check BEFORE account queries so "tokens for 0.0.X" works
+  if (lowerQuery.includes('token') && !lowerQuery.includes('nft')) {
+    const tokenIdMatch = lowerQuery.match(/token\s*(?:id\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (tokenIdMatch) {
+      return await queryTokenInfo(tokenIdMatch[1]);
+    }
+    if (lowerQuery.includes('top') || lowerQuery.includes('popular') || lowerQuery.includes('list')) {
+      return await queryTopTokens();
+    }
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
+      return await queryTokenCount();
+    }
+  }
+
+  // Transaction queries - check BEFORE account queries so "transactions for 0.0.X" works
+  if (lowerQuery.includes('transaction') || lowerQuery.includes('tx')) {
+    // Specific transaction hash
+    const txHashMatch = lowerQuery.match(/([a-f0-9]{64})/i);
+    if (txHashMatch) {
+      return await queryTransactionByHash(txHashMatch[1]);
+    }
+    // Transactions by/for a specific account - check for account ID in query
+    const txAccountMatch = lowerQuery.match(/(0\.0\.\d+)/i) ||
+                           lowerQuery.match(/(?:from|by|for|has|made)\s*(?:account\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (txAccountMatch) {
+      const accountId = txAccountMatch[1] || txAccountMatch[0];
+      // Parse time period with optional number (e.g., "12 months", "2 weeks", "30 days")
+      const timeMatch = lowerQuery.match(/(\d+)\s*(second|minute|hour|day|week|month|year)s?/i);
+      let period = { unit: 'day', count: 1 };
+
+      if (timeMatch) {
+        period.count = parseInt(timeMatch[1]);
+        period.unit = timeMatch[2].toLowerCase();
+      } else if (lowerQuery.includes('year')) {
+        period = { unit: 'year', count: 1 };
+      } else if (lowerQuery.includes('month')) {
+        period = { unit: 'month', count: 1 };
+      } else if (lowerQuery.includes('week')) {
+        period = { unit: 'week', count: 1 };
+      } else if (lowerQuery.includes('day')) {
+        period = { unit: 'day', count: 1 };
+      } else if (lowerQuery.includes('hour')) {
+        period = { unit: 'hour', count: 1 };
+      } else if (lowerQuery.includes('minute')) {
+        period = { unit: 'minute', count: 1 };
+      } else if (lowerQuery.includes('second')) {
+        period = { unit: 'second', count: 1 };
+      }
+      return await queryAccountTransactionCount(accountId, period);
+    }
+    // How many / count queries for network-wide
+    if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
+      // Check for time period
+      if (lowerQuery.includes('hour')) {
+        return await queryHourlyTransactions();
+      }
+      return await queryDailyTransactions();
+    }
+    // Recent transactions (show individual transactions)
+    if (lowerQuery.includes('recent') || lowerQuery.includes('latest') || lowerQuery.includes('show')) {
+      const countMatch = lowerQuery.match(/(\d+)/);
+      const count = countMatch ? Math.min(parseInt(countMatch[1]), 20) : 10;
+      return await queryRecentTransactions(count);
+    }
+    // "last X transactions" - show individual ones
+    const lastCountMatch = lowerQuery.match(/last\s+(\d+)/i);
+    if (lastCountMatch) {
+      const count = Math.min(parseInt(lastCountMatch[1]), 20);
+      return await queryRecentTransactions(count);
+    }
+    // Transaction types
+    if (lowerQuery.includes('type')) {
+      return await queryTransactionTypes();
+    }
+    // Per second check
+    if (lowerQuery.includes('per second') || lowerQuery.includes('tps')) {
+      return await queryTPS();
+    }
+    // Check for hourly without "how many"
+    if (lowerQuery.includes('hour')) {
+      return await queryHourlyTransactions();
+    }
+    // Daily count as fallback (includes "last day", "today", "24 hours", etc.)
+    return await queryDailyTransactions();
+  }
+
+  // Check for specific account ID (after NFT/token/transaction checks)
+  const accountMatch = lowerQuery.match(/0\.0\.(\d+)/) ||
+                       lowerQuery.match(/account\s*#?\s*(\d+)/i) ||
+                       lowerQuery.match(/account\s+id\s*:?\s*(\d+)/i);
+  if (accountMatch) {
+    let accountNum = accountMatch[1] || accountMatch[0].replace('0.0.', '');
+    return await queryAccountDetailed(accountNum);
+  }
+
+  // Topic/HCS queries
+  if (lowerQuery.includes('topic') || lowerQuery.includes('hcs') || lowerQuery.includes('message')) {
+    const topicMatch = lowerQuery.match(/topic\s*(?:id\s*)?(\d+\.\d+\.\d+|\d+)/i);
+    if (topicMatch) {
+      return await queryTopicMessages(topicMatch[1]);
+    }
+  }
+
+  // Contract queries
+  if (lowerQuery.includes('contract') || lowerQuery.includes('smart contract')) {
+    const contractMatch = lowerQuery.match(/(\d+\.\d+\.\d+|\d+)/);
+    if (contractMatch) {
+      return await queryContractInfo(contractMatch[1]);
+    }
+    if (lowerQuery.includes('top') || lowerQuery.includes('popular')) {
+      return await queryTopContracts();
+    }
+  }
+
+  // Staking queries
+  if (lowerQuery.includes('stak') || lowerQuery.includes('node')) {
+    if (lowerQuery.includes('node') && (lowerQuery.includes('list') || lowerQuery.includes('all') || lowerQuery.includes('top'))) {
+      return await queryNodeStakes();
+    }
+    return await queryStakingInfo();
+  }
+
+  // HBAR Price
+  if (lowerQuery.includes('price') || lowerQuery.includes('cost') || lowerQuery.includes('worth')) {
+    return await queryHbarPrice();
+  }
+
+  // Market Cap
+  if (lowerQuery.includes('market') || lowerQuery.includes('cap') || lowerQuery.includes('mcap')) {
+    return await queryMarketCap();
+  }
+
+  // TPS
+  if (lowerQuery.includes('tps') || lowerQuery.includes('per second') || lowerQuery.includes('throughput')) {
+    return await queryTPS();
+  }
+
+  // Account count queries
+  if (lowerQuery.includes('account')) {
+    if (lowerQuery.includes('new') || lowerQuery.includes('created')) {
+      return await queryNewAccounts();
+    }
+    if (lowerQuery.includes('active')) {
+      return await queryActiveAccounts();
+    }
+    // Total accounts catch-all
+    return await queryTotalAccounts();
+  }
+
+  // Network fees
+  if (lowerQuery.includes('fee')) {
+    return await queryNetworkFees();
+  }
+
+  // HBAR supply
+  if (lowerQuery.includes('released') || lowerQuery.includes('supply') || lowerQuery.includes('circulation')) {
+    return await queryHbarReleased();
+  }
+
+  // Consensus time
+  if (lowerQuery.includes('consensus') || lowerQuery.includes('finality')) {
+    return await queryConsensusTime();
+  }
+
+  // Top accounts/rich list
+  if (lowerQuery.includes('rich') || lowerQuery.includes('whale') || lowerQuery.includes('holder') ||
+      (lowerQuery.includes('top') && lowerQuery.includes('account'))) {
+    return await queryTopAccounts();
+  }
+
+  // Network overview
+  if (lowerQuery.includes('network') || lowerQuery.includes('stats') || lowerQuery.includes('overview')) {
+    return await queryNetworkOverview();
+  }
+
+  // Try to execute as a general search
+  return await tryGeneralQuery(originalQuery);
+}
+
+// Show schema help
+function showSchemaHelp() {
+  return `<strong>Hedera Data Chat - Available Queries:</strong><br><br>` +
+         `<strong>Accounts:</strong><br>` +
+         `• "Show account 0.0.98" - Get account details, balance, staking<br>` +
+         `• "How many accounts exist?" - Total account count<br>` +
+         `• "New accounts today" - Recently created accounts<br>` +
+         `• "Top 10 richest accounts" - Largest HBAR holders<br><br>` +
+         `<strong>Tokens:</strong><br>` +
+         `• "Token 0.0.456858" - Get token info (SAUCE, etc.)<br>` +
+         `• "Top tokens" - Most popular tokens<br>` +
+         `• "Token balance for account 0.0.123" - Token holdings<br><br>` +
+         `<strong>NFTs:</strong><br>` +
+         `• "NFTs owned by 0.0.123" - Account's NFT holdings<br>` +
+         `• "Top NFT collections" - Popular collections<br><br>` +
+         `<strong>Transactions:</strong><br>` +
+         `• "Recent transactions" - Latest network activity<br>` +
+         `• "Transactions by 0.0.98" - Account transactions<br>` +
+         `• "How many transactions today?" - 24h count<br><br>` +
+         `<strong>Network:</strong><br>` +
+         `• "HBAR price" / "Market cap"<br>` +
+         `• "Network TPS" / "Consensus time"<br>` +
+         `• "Network fees" / "HBAR supply"<br>` +
+         `• "Network overview" - Full stats<br>` +
+         `• "Node stakes" - Staking info<br><br>` +
+         `<strong>Topics/HCS:</strong><br>` +
+         `• "Messages from topic 0.0.123"<br><br>` +
+         `<strong>Advanced:</strong><br>` +
+         `• You can also paste raw GraphQL queries!`;
+}
+
+// Try to execute raw GraphQL
+async function executeRawGraphQL(query) {
+  try {
+    // Extract GraphQL from the message
+    const graphqlMatch = query.match(/\{[\s\S]*\}/);
+    if (!graphqlMatch) {
+      return 'Could not parse GraphQL query. Please ensure it contains a valid query block like: { entity(limit: 5) { num balance } }';
+    }
+
+    const graphqlQuery = graphqlMatch[0];
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+      body: JSON.stringify({ query: graphqlQuery })
+    });
+    const result = await response.json();
+
+    if (result.errors) {
+      return `<strong>GraphQL Error:</strong><br><pre style="color:#ef4444;font-size:0.85rem;white-space:pre-wrap;">${JSON.stringify(result.errors, null, 2)}</pre>`;
+    }
+
+    return `<strong>Query Result:</strong><br><pre style="font-size:0.85rem;white-space:pre-wrap;max-height:300px;overflow:auto;">${JSON.stringify(result.data, null, 2)}</pre>`;
+  } catch (error) {
+    return `Error executing query: ${error.message}`;
+  }
+}
+
+// Detailed account query
+async function queryAccountDetailed(accountNum) {
+  if (!accountNum.includes('.')) {
+    accountNum = parseInt(accountNum);
+  } else {
+    accountNum = parseInt(accountNum.split('.').pop());
+  }
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountDetailed($num: bigint!) {
+        entity(where: {num: {_eq: $num}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+          num balance memo created_timestamp deleted
+          staked_node_id staked_account_id stake_period_start pending_reward decline_reward
+          auto_renew_period expiration_timestamp evm_address
+        }
+        entity_stake(where: {id: {_eq: $num}}) {
+          staked_to_me
+        }
+        token_account(where: {account_id: {_eq: $num}}, limit: 10, order_by: {balance: desc}) {
+          token_id balance
+          token { name symbol decimals type }
+        }
+      }`,
+      variables: { num: accountNum }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.entity?.[0]) {
+    return `Account <strong>0.0.${accountNum}</strong> was not found.`;
+  }
+
+  const acc = result.data.entity[0];
+  const balance = (acc.balance / 1e8);
+  const usd = window.hbarPrice ? (balance * window.hbarPrice) : null;
+  const created = new Date(acc.created_timestamp / 1e6).toLocaleDateString();
+  const stakedToMe = result.data.entity_stake?.[0]?.staked_to_me / 1e8 || 0;
+  const tokens = result.data.token_account || [];
+
+  let html = `<strong>Account 0.0.${acc.num}</strong><br><br>`;
+  html += `Balance: <span class="data-value">${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} HBAR</span>`;
+  if (usd) html += ` (~$${usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
+  html += `<br>Created: <span class="data-value">${created}</span>`;
+  if (acc.memo) html += `<br>Memo: ${acc.memo}`;
+  if (acc.evm_address) html += `<br>EVM Address: <span class="data-value" style="font-size:0.85rem;">${acc.evm_address}</span>`;
+
+  if (acc.staked_node_id !== null || acc.staked_account_id) {
+    html += `<br><br><strong>Staking:</strong><br>`;
+    if (acc.staked_node_id !== null) html += `Staked to Node: <span class="data-value">${acc.staked_node_id}</span><br>`;
+    if (acc.staked_account_id) html += `Staked to Account: <span class="data-value">0.0.${acc.staked_account_id}</span><br>`;
+    html += `Pending Reward: <span class="data-value">${(acc.pending_reward / 1e8).toFixed(4)} HBAR</span>`;
+  }
+
+  if (stakedToMe > 0) {
+    html += `<br>Staked TO this account: <span class="data-value">${stakedToMe.toLocaleString()} HBAR</span>`;
+  }
+
+  if (tokens.length > 0) {
+    html += `<br><br><strong>Token Holdings (Top ${tokens.length}):</strong><br>`;
+    tokens.forEach(t => {
+      const tokenBalance = t.token?.decimals ? t.balance / Math.pow(10, t.token.decimals) : t.balance;
+      html += `• ${t.token?.name || 'Unknown'} (${t.token?.symbol || t.token_id}): <span class="data-value">${tokenBalance.toLocaleString()}</span><br>`;
+    });
+  }
+
+  return html;
+}
+
+// Token info query
+async function queryTokenInfo(tokenId) {
+  if (!tokenId.includes('.')) {
+    tokenId = `0.0.${tokenId}`;
+  }
+  const tokenNum = parseInt(tokenId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetToken($id: bigint!) {
+        token(where: {token_id: {_eq: $id}}, limit: 1) {
+          token_id name symbol type decimals total_supply max_supply
+          treasury_account_id created_timestamp pause_status freeze_default
+          metadata
+        }
+      }`,
+      variables: { id: tokenNum }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.token?.[0]) {
+    return `Token <strong>${tokenId}</strong> was not found.`;
+  }
+
+  const t = result.data.token[0];
+  const supply = t.decimals ? t.total_supply / Math.pow(10, t.decimals) : t.total_supply;
+
+  let html = `<strong>Token ${t.name || tokenId}</strong><br><br>`;
+  html += `Symbol: <span class="data-value">${t.symbol || 'N/A'}</span><br>`;
+  html += `Type: <span class="data-value">${t.type || 'FUNGIBLE_COMMON'}</span><br>`;
+  html += `Token ID: <span class="data-value">0.0.${t.token_id}</span><br>`;
+  html += `Decimals: <span class="data-value">${t.decimals || 0}</span><br>`;
+  html += `Total Supply: <span class="data-value">${supply.toLocaleString()}</span><br>`;
+  if (t.max_supply) html += `Max Supply: <span class="data-value">${(t.max_supply / Math.pow(10, t.decimals || 0)).toLocaleString()}</span><br>`;
+  html += `Treasury: <span class="data-value">0.0.${t.treasury_account_id}</span><br>`;
+  html += `Created: <span class="data-value">${new Date(t.created_timestamp / 1e6).toLocaleDateString()}</span>`;
+
+  return html;
+}
+
+// Top tokens query
+async function queryTopTokens() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        token(where: {type: {_eq: "FUNGIBLE_COMMON"}, total_supply: {_gt: "0"}}, order_by: {created_timestamp: desc}, limit: 10) {
+          token_id name symbol total_supply decimals treasury_account_id
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.token?.length) {
+    return 'Unable to fetch token list.';
+  }
+
+  let html = `<strong>Recent Tokens:</strong><br><br>`;
+  result.data.token.forEach((t, i) => {
+    const supply = t.decimals ? t.total_supply / Math.pow(10, t.decimals) : t.total_supply;
+    html += `${i + 1}. <span class="data-value">${t.name || 'Unknown'}</span> (${t.symbol || '?'})<br>`;
+    html += `   ID: 0.0.${t.token_id} | Supply: ${supply.toLocaleString()}<br>`;
+  });
+
+  return html;
+}
+
+// Token count
+async function queryTokenCount() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { token_aggregate { aggregate { count } } }`
+    })
+  });
+  const result = await response.json();
+  const count = result.data?.token_aggregate?.aggregate?.count || 'N/A';
+  return `There are <span class="data-value">${count.toLocaleString()}</span> <strong>tokens</strong> on the Hedera network.`;
+}
+
+// NFT info
+async function queryNFTInfo(tokenId, serial) {
+  if (!tokenId.includes('.')) tokenId = parseInt(tokenId);
+  else tokenId = parseInt(tokenId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetNFT($tokenId: bigint!, $serial: bigint!) {
+        nft(where: {token_id: {_eq: $tokenId}, serial_number: {_eq: $serial}}, limit: 1) {
+          token_id serial_number account_id metadata created_timestamp deleted spender
+          token { name symbol }
+        }
+      }`,
+      variables: { tokenId, serial: parseInt(serial) }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.nft?.[0]) {
+    return `NFT not found.`;
+  }
+
+  const n = result.data.nft[0];
+  let html = `<strong>NFT: ${n.token?.name || 'Unknown'} #${n.serial_number}</strong><br><br>`;
+  html += `Token ID: <span class="data-value">0.0.${n.token_id}</span><br>`;
+  html += `Serial: <span class="data-value">${n.serial_number}</span><br>`;
+  html += `Owner: <span class="data-value">0.0.${n.account_id}</span><br>`;
+  if (n.metadata) html += `Metadata: <span class="data-value" style="font-size:0.85rem;word-break:break-all;">${n.metadata}</span><br>`;
+  html += `Created: <span class="data-value">${new Date(n.created_timestamp / 1e6).toLocaleDateString()}</span>`;
+
+  return html;
+}
+
+// Account NFTs
+async function queryAccountNFTs(accountId) {
+  if (!accountId.includes('.')) accountId = parseInt(accountId);
+  else accountId = parseInt(accountId.split('.').pop());
+
+  // First get the count
+  const countResponse = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetNFTCount($accountId: bigint!) {
+        nft_aggregate(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}) {
+          aggregate { count }
+        }
+      }`,
+      variables: { accountId }
+    })
+  });
+  const countResult = await countResponse.json();
+  const total = countResult.data?.nft_aggregate?.aggregate?.count || 0;
+
+  // Then get all NFTs (up to 500 to be reasonable)
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountNFTs($accountId: bigint!, $limit: Int!) {
+        nft(where: {account_id: {_eq: $accountId}, deleted: {_eq: false}}, limit: $limit, order_by: {created_timestamp: desc}) {
+          token_id serial_number metadata
+          token { name symbol }
+        }
+      }`,
+      variables: { accountId, limit: Math.min(total, 500) }
+    })
+  });
+  const result = await response.json();
+  const nfts = result.data?.nft || [];
+
+  let html = `<strong>NFTs owned by 0.0.${accountId}</strong><br>`;
+  html += `Total: <span class="data-value">${total}</span> NFTs<br><br>`;
+
+  if (nfts.length === 0) {
+    html += 'No NFTs found.';
+  } else {
+    nfts.forEach(n => {
+      html += `• ${n.token?.name || 'Unknown'} #${n.serial_number} (0.0.${n.token_id})<br>`;
+    });
+    if (total > 500) html += `<br><em>Showing first 500 of ${total}</em>`;
+  }
+
+  return html;
+}
+
+// Top NFT collections
+async function queryTopNFTCollections() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        token(where: {type: {_eq: "NON_FUNGIBLE_UNIQUE"}}, order_by: {total_supply: desc}, limit: 10) {
+          token_id name symbol total_supply treasury_account_id
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.token?.length) {
+    return 'Unable to fetch NFT collections.';
+  }
+
+  let html = `<strong>Top NFT Collections by Supply:</strong><br><br>`;
+  result.data.token.forEach((t, i) => {
+    html += `${i + 1}. <span class="data-value">${t.name || 'Unknown'}</span><br>`;
+    html += `   ID: 0.0.${t.token_id} | Supply: ${t.total_supply.toLocaleString()}<br>`;
+  });
+
+  return html;
+}
+
+// NFT stats
+async function queryNFTStats() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        collections: token_aggregate(where: {type: {_eq: "NON_FUNGIBLE_UNIQUE"}}) { aggregate { count } }
+        nfts: nft_aggregate { aggregate { count } }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  const collections = result.data?.collections?.aggregate?.count || 'N/A';
+  const nfts = result.data?.nfts?.aggregate?.count || 'N/A';
+
+  return `<strong>NFT Statistics:</strong><br><br>` +
+         `Total Collections: <span class="data-value">${collections.toLocaleString()}</span><br>` +
+         `Total NFTs Minted: <span class="data-value">${nfts.toLocaleString()}</span>`;
+}
+
+// Recent transactions
+async function queryRecentTransactions(count = 10) {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetRecentTx($limit: Int!) {
+        transaction(order_by: {consensus_timestamp: desc}, limit: $limit) {
+          consensus_timestamp type result payer_account_id charged_tx_fee memo
+        }
+      }`,
+      variables: { limit: count }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.transaction?.length) {
+    return 'Unable to fetch recent transactions.';
+  }
+
+  let html = `<strong>Last ${count} Transactions:</strong><br><br>`;
+  result.data.transaction.forEach(tx => {
+    const time = new Date(tx.consensus_timestamp / 1e9 * 1000).toLocaleTimeString();
+    const fee = (tx.charged_tx_fee / 1e8).toFixed(4);
+    html += `• <span class="data-value">${tx.type}</span> by 0.0.${tx.payer_account_id}<br>`;
+    html += `  ${time} | Fee: ${fee} HBAR | ${tx.result}<br>`;
+  });
+
+  return html;
+}
+
+// Account transactions
+async function queryAccountTransactions(accountId) {
+  if (!accountId.includes('.')) accountId = parseInt(accountId);
+  else accountId = parseInt(accountId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountTx($accountId: bigint!) {
+        transaction(where: {payer_account_id: {_eq: $accountId}}, order_by: {consensus_timestamp: desc}, limit: 10) {
+          consensus_timestamp type result charged_tx_fee memo
+        }
+      }`,
+      variables: { accountId }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.transaction?.length) {
+    return `No recent transactions found for account 0.0.${accountId}.`;
+  }
+
+  let html = `<strong>Recent Transactions by 0.0.${accountId}:</strong><br><br>`;
+  result.data.transaction.forEach(tx => {
+    const time = new Date(tx.consensus_timestamp / 1e9 * 1000).toLocaleString();
+    html += `• <span class="data-value">${tx.type}</span> - ${tx.result}<br>`;
+    html += `  ${time}<br>`;
+  });
+
+  return html;
+}
+
+async function queryAccountTransactionCount(accountId, period = { unit: 'day', count: 1 }) {
+  if (typeof accountId === 'string' && !accountId.includes('.')) accountId = parseInt(accountId);
+  else if (typeof accountId === 'string') accountId = parseInt(accountId.split('.').pop());
+
+  // Handle legacy string format
+  if (typeof period === 'string') {
+    period = { unit: period, count: 1 };
+  }
+
+  const { unit, count } = period;
+
+  // Calculate timestamp for the time period
+  const now = Date.now();
+  let milliseconds;
+  let periodLabel;
+
+  switch (unit) {
+    case 'second':
+      milliseconds = count * 1000;
+      periodLabel = count === 1 ? 'the last second' : `the last ${count} seconds`;
+      break;
+    case 'minute':
+      milliseconds = count * 60 * 1000;
+      periodLabel = count === 1 ? 'the last minute' : `the last ${count} minutes`;
+      break;
+    case 'hour':
+      milliseconds = count * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last hour' : `the last ${count} hours`;
+      break;
+    case 'day':
+      milliseconds = count * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last 24 hours' : `the last ${count} days`;
+      break;
+    case 'week':
+      milliseconds = count * 7 * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last week' : `the last ${count} weeks`;
+      break;
+    case 'month':
+      milliseconds = count * 30 * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last month' : `the last ${count} months`;
+      break;
+    case 'year':
+      milliseconds = count * 365 * 24 * 60 * 60 * 1000;
+      periodLabel = count === 1 ? 'the last year' : `the last ${count} years`;
+      break;
+    default:
+      milliseconds = 24 * 60 * 60 * 1000;
+      periodLabel = 'the last 24 hours';
+  }
+
+  const startTime = (now - milliseconds) * 1000000; // Convert to nanoseconds
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccountTxCount($accountId: bigint!, $startTime: bigint!) {
+        transaction_aggregate(where: {payer_account_id: {_eq: $accountId}, consensus_timestamp: {_gte: $startTime}}) {
+          aggregate { count }
+        }
+      }`,
+      variables: { accountId, startTime: startTime.toString() }
+    })
+  });
+  const result = await response.json();
+
+  const count = result.data?.transaction_aggregate?.aggregate?.count || 0;
+
+  return `Account <strong>0.0.${accountId}</strong> has made <span class="data-value">${count.toLocaleString()}</span> transactions in ${periodLabel}.`;
+}
+
+// Transaction types breakdown
+async function queryTransactionTypes() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { ecosystem_transaction_count_by_type(order_by: {count: desc}, limit: 15) { type count } }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.ecosystem_transaction_count_by_type?.length) {
+    return 'Unable to fetch transaction type breakdown.';
+  }
+
+  let html = `<strong>Transaction Types (All Time):</strong><br><br>`;
+  result.data.ecosystem_transaction_count_by_type.forEach(t => {
+    html += `• ${t.type}: <span class="data-value">${t.count.toLocaleString()}</span><br>`;
+  });
+
+  return html;
+}
+
+// Topic messages
+async function queryTopicMessages(topicId) {
+  if (!topicId.includes('.')) topicId = parseInt(topicId);
+  else topicId = parseInt(topicId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetTopicMessages($topicId: bigint!) {
+        topic_message(where: {topic_id: {_eq: $topicId}}, order_by: {sequence_number: desc}, limit: 10) {
+          sequence_number message consensus_timestamp payer_account_id
+        }
+      }`,
+      variables: { topicId }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.topic_message?.length) {
+    return `No messages found for topic 0.0.${topicId}.`;
+  }
+
+  let html = `<strong>Recent Messages from Topic 0.0.${topicId}:</strong><br><br>`;
+  result.data.topic_message.forEach(m => {
+    const time = new Date(m.consensus_timestamp / 1e9 * 1000).toLocaleString();
+    let msg = m.message || '';
+    // Try to decode if base64
+    try {
+      msg = atob(msg);
+    } catch(e) {}
+    html += `#${m.sequence_number}: <span class="data-value">${msg.substring(0, 100)}${msg.length > 100 ? '...' : ''}</span><br>`;
+    html += `<small>${time} by 0.0.${m.payer_account_id}</small><br><br>`;
+  });
+
+  return html;
+}
+
+// Contract info
+async function queryContractInfo(contractId) {
+  if (!contractId.includes('.')) contractId = parseInt(contractId);
+  else contractId = parseInt(contractId.split('.').pop());
+
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetContract($id: bigint!) {
+        contract(where: {id: {_eq: $id}}, limit: 1) {
+          id evm_address file_id created_timestamp
+        }
+        entity(where: {num: {_eq: $id}, type: {_eq: "CONTRACT"}}, limit: 1) {
+          balance memo
+        }
+      }`,
+      variables: { id: contractId }
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.contract?.[0] && !result.data?.entity?.[0]) {
+    return `Contract 0.0.${contractId} not found.`;
+  }
+
+  const c = result.data.contract?.[0] || {};
+  const e = result.data.entity?.[0] || {};
+
+  let html = `<strong>Contract 0.0.${contractId}</strong><br><br>`;
+  if (c.evm_address) html += `EVM Address: <span class="data-value" style="font-size:0.85rem;">${c.evm_address}</span><br>`;
+  if (e.balance) html += `Balance: <span class="data-value">${(e.balance / 1e8).toLocaleString()} HBAR</span><br>`;
+  if (e.memo) html += `Memo: ${e.memo}<br>`;
+  if (c.created_timestamp) html += `Created: <span class="data-value">${new Date(c.created_timestamp / 1e6).toLocaleDateString()}</span>`;
+
+  return html;
+}
+
+// Top contracts
+async function queryTopContracts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        entity(where: {type: {_eq: "CONTRACT"}}, order_by: {balance: desc}, limit: 10) {
+          num balance memo
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.entity?.length) {
+    return 'Unable to fetch top contracts.';
+  }
+
+  let html = `<strong>Top Contracts by Balance:</strong><br><br>`;
+  result.data.entity.forEach((c, i) => {
+    const balance = (c.balance / 1e8).toLocaleString();
+    html += `${i + 1}. <span class="data-value">0.0.${c.num}</span> - ${balance} HBAR`;
+    if (c.memo) html += ` (${c.memo})`;
+    html += `<br>`;
+  });
+
+  return html;
+}
+
+// Node stakes
+async function queryNodeStakes() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        node_stake(order_by: {stake: desc}, limit: 30) {
+          node_id stake stake_rewarded min_stake max_stake
+        }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  if (!result.data?.node_stake?.length) {
+    return 'Unable to fetch node stakes.';
+  }
+
+  let html = `<strong>Network Node Stakes:</strong><br><br>`;
+  result.data.node_stake.forEach(n => {
+    const stake = (n.stake / 1e8 / 1e9).toFixed(2);
+    html += `Node ${n.node_id}: <span class="data-value">${stake}B HBAR</span> staked<br>`;
+  });
+
+  return html;
+}
+
+// General query fallback
+async function tryGeneralQuery(query) {
+  // Try to find any numbers that might be entity IDs
+  const numMatch = query.match(/\d+/);
+  if (numMatch) {
+    // Try as account first
+    const accountResult = await queryAccountDetailed(numMatch[0]);
+    if (!accountResult.includes('not found')) {
+      return accountResult;
+    }
+  }
+
+  return showSchemaHelp();
+}
+
+// Additional query functions
+async function queryStakingInfo() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query {
+        network_stake(order_by: {consensus_timestamp: desc}, limit: 1) {
+          stake_total staking_period
+        }
+        node_stake_aggregate { aggregate { count } }
+      }`
+    })
+  });
+  const result = await response.json();
+
+  const total = result.data?.network_stake?.[0]?.stake_total / 1e8 / 1e9 || 0;
+  const nodes = result.data?.node_stake_aggregate?.aggregate?.count || 0;
+
+  return `<strong>Hedera Staking Info:</strong><br><br>` +
+         `Total Network Stake: <span class="data-value">${total.toFixed(2)} billion HBAR</span><br>` +
+         `Active Nodes: <span class="data-value">${nodes}</span><br><br>` +
+         `<small>Hedera uses native staking with no slashing risk. Say "node stakes" to see individual node stakes.</small>`;
+}
+
+async function queryNetworkOverview() {
+  try {
+    const response = await fetch(HGRAPH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+      body: JSON.stringify({
+        query: `query {
+          price: ecosystem_metric(where: {name: {_eq: "avg_usd_conversion"}, period: {_eq: "minute"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          marketCap: ecosystem_metric(where: {name: {_eq: "hbar_market_cap"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          totalAccounts: ecosystem_metric(where: {name: {_eq: "total_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          transactions: ecosystem_metric(where: {name: {_eq: "new_transactions"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          consensus: ecosystem_metric(where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+          released: ecosystem_metric(where: {name: {_eq: "hbar_total_released"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total }
+        }`
+      })
+    });
+    const result = await response.json();
+
+    const price = result.data?.price?.[0]?.total / 100000 || 0;
+    const marketCap = result.data?.marketCap?.[0]?.total / 100 / 1e9 || 0;
+    const accounts = result.data?.totalAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+    const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+    const consensus = result.data?.consensus?.[0]?.total / 1e9 || 0;
+    const released = result.data?.released?.[0]?.total / 1e8 / 1e9 || 0;
+    const tps = document.getElementById('tps')?.textContent || 'N/A';
+
+    return `<strong>Hedera Network Overview:</strong><br><br>` +
+           `HBAR Price: <span class="data-value">$${price.toFixed(5)}</span><br>` +
+           `Market Cap: <span class="data-value">$${marketCap.toFixed(2)}B</span><br>` +
+           `Total Accounts: <span class="data-value">${accounts}</span><br>` +
+           `24h Transactions: <span class="data-value">${txs}</span><br>` +
+           `Current TPS: <span class="data-value">${tps}</span><br>` +
+           `Consensus Time: <span class="data-value">${consensus.toFixed(2)}s</span><br>` +
+           `HBAR in Circulation: <span class="data-value">${released.toFixed(2)}B</span>`;
+  } catch (error) {
+    return 'Unable to fetch network overview at this time.';
+  }
+}
+
+// Query functions
+async function queryHbarPrice() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { price: ecosystem_metric(where: {name: {_eq: "avg_usd_conversion"}, period: {_eq: "minute"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const price = result.data?.price?.[0]?.total / 100000 || 0;
+  return `The current <strong>HBAR price</strong> is <span class="data-value">$${price.toFixed(5)}</span>`;
+}
+
+async function queryMarketCap() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { marketCap: ecosystem_metric(where: {name: {_eq: "hbar_market_cap"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const marketCap = result.data?.marketCap?.[0]?.total / 100 / 1e9 || 0;
+  return `The <strong>HBAR market cap</strong> is <span class="data-value">$${marketCap.toFixed(2)} billion</span>`;
+}
+
+async function queryTPS() {
+  const tps = document.getElementById('tps')?.textContent || 'N/A';
+  return `The current <strong>network TPS</strong> (transactions per second) is <span class="data-value">${tps}</span><br><small>(Live 30-second rolling average)</small>`;
+}
+
+async function queryAccountInfo(accountId) {
+  const accountNum = parseInt(accountId.replace('0.0.', ''));
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query GetAccount($accountNum: bigint!) {
+        entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+          num
+          balance
+          created_timestamp
+          memo
+        }
+      }`,
+      variables: { accountNum }
+    })
+  });
+  const result = await response.json();
+
+  if (result.data?.entity?.[0]) {
+    const account = result.data.entity[0];
+    const balance = (account.balance / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const created = new Date(account.created_timestamp / 1e6).toLocaleDateString();
+    const usdValue = window.hbarPrice ? (account.balance / 1e8 * window.hbarPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+
+    let response = `<strong>Account ${accountId}</strong><br><br>`;
+    response += `Balance: <span class="data-value">${balance} HBAR</span>`;
+    if (window.hbarPrice) response += ` (~$${usdValue})`;
+    response += `<br>Created: <span class="data-value">${created}</span>`;
+    if (account.memo) response += `<br>Memo: ${account.memo}`;
+    return response;
+  }
+
+  return `Account <strong>${accountId}</strong> was not found on the Hedera network.`;
+}
+
+async function queryDailyTransactions() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { transactions: ecosystem_metric(where: {name: {_eq: "new_transactions"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There have been <span class="data-value">${txs}</span> <strong>transactions in the last 24 hours</strong> on the Hedera network.`;
+}
+
+async function queryHourlyTransactions() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { transactions: ecosystem_metric(where: {name: {_eq: "new_transactions"}, period: {_eq: "hour"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const txs = result.data?.transactions?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There have been <span class="data-value">${txs}</span> <strong>transactions in the last hour</strong> on the Hedera network.`;
+}
+
+async function queryTotalAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { total: ecosystem_metric(where: {name: {_eq: "total_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const total = result.data?.total?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There are <span class="data-value">${total}</span> <strong>total accounts</strong> on the Hedera network.`;
+}
+
+async function queryNewAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { newAccounts: ecosystem_metric(where: {name: {_eq: "new_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const newAccts = result.data?.newAccounts?.[0]?.total?.toLocaleString() || 'N/A';
+  return `<span class="data-value">${newAccts}</span> <strong>new accounts</strong> were created in the last 24 hours.`;
+}
+
+async function queryActiveAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { active: ecosystem_metric(where: {name: {_eq: "active_accounts"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const active = result.data?.active?.[0]?.total?.toLocaleString() || 'N/A';
+  return `There are <span class="data-value">${active}</span> <strong>active accounts</strong> on the Hedera network (last 24 hours).`;
+}
+
+async function queryNetworkFees() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { fees: ecosystem_metric(where: {name: {_eq: "network_fee"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const fees = result.data?.fees?.[0]?.total / 1e8 || 0;
+  const usdValue = window.hbarPrice ? (fees * window.hbarPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+  return `<strong>24-hour network fees</strong>: <span class="data-value">${fees.toLocaleString()} HBAR</span>` +
+         (window.hbarPrice ? ` (~$${usdValue})` : '');
+}
+
+async function queryHbarReleased() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { released: ecosystem_metric(where: {name: {_eq: "hbar_total_released"}, period: {_eq: "day"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const released = result.data?.released?.[0]?.total / 1e8 / 1e9 || 0;
+  return `<span class="data-value">${released.toFixed(2)} billion HBAR</span> have been <strong>released into circulation</strong>.`;
+}
+
+async function queryConsensusTime() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { consensus: ecosystem_metric(where: {name: {_eq: "avg_time_to_consensus"}, period: {_eq: "hour"}}, order_by: [{end_date: desc_nulls_last}], limit: 1) { total } }`
+    })
+  });
+  const result = await response.json();
+  const time = result.data?.consensus?.[0]?.total / 1e9 || 0;
+  return `The average <strong>time to consensus</strong> is <span class="data-value">${time.toFixed(2)} seconds</span>.<br><small>Hedera achieves near-instant finality!</small>`;
+}
+
+async function queryTopAccounts() {
+  const response = await fetch(HGRAPH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': HGRAPH_KEY },
+    body: JSON.stringify({
+      query: `query { entity(where: {type: {_eq: "ACCOUNT"}}, order_by: {balance: desc_nulls_last}, limit: 5) { num, balance, memo } }`
+    })
+  });
+  const result = await response.json();
+
+  if (result.data?.entity?.length) {
+    let response = `<strong>Top 5 HBAR Holders:</strong><br><br>`;
+    result.data.entity.forEach((account, index) => {
+      const balance = (account.balance / 1e8 / 1e9).toFixed(2);
+      response += `${index + 1}. <span class="data-value">0.0.${account.num}</span> - ${balance}B HBAR`;
+      if (account.memo) response += ` (${account.memo})`;
+      response += `<br>`;
+    });
+    return response;
+  }
+
+  return 'Unable to fetch top accounts at this time.';
+}
+
+// Initialize chat when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initChatPlaceholder);
+} else {
+  initChatPlaceholder();
 }
 
 
