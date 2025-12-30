@@ -10,6 +10,7 @@
     src: url('StyreneB-Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
   }
 
   @font-face {
@@ -17,6 +18,7 @@
     src: url('StyreneB-Medium.otf') format('opentype');
     font-weight: 500;
     font-style: normal;
+    font-display: swap;
   }
 
   @font-face {
@@ -24,6 +26,7 @@
     src: url('StyreneB-Bold.otf') format('opentype');
     font-weight: bold;
     font-style: normal;
+    font-display: swap;
   }
 
   :root { --bg:#000000; --card:#0a0a0a; --accent:#00d4ff; }
@@ -124,6 +127,17 @@
     animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite;
     width:0;
     margin:0 auto;
+    visibility:hidden;
+  }
+  body.loaded #fixed-title {
+    visibility:visible;
+  }
+
+  /* Mobile: Show title immediately without waiting for body.loaded */
+  @media (max-width: 768px) {
+    #fixed-title {
+      visibility:visible !important;
+    }
   }
 
   @keyframes typing {
@@ -135,6 +149,47 @@
     from, to { border-color:transparent; }
     50% { border-color:white; }
   }
+
+  /* Hide mobile coin icon on desktop */
+  #mobileCoinIcon {
+    display:none;
+  }
+
+  /* Desktop Navigation Menu - under Hedera Data */
+  .nav-menu {
+    position:fixed;
+    top:58%;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    justify-content:space-between;
+    width:auto;
+    max-width:1200px;
+    z-index:99;
+    pointer-events:auto;
+    opacity:0;
+    animation:navFadeIn 1s ease-in forwards;
+    animation-delay:1.5s;
+  }
+  @keyframes navFadeIn {
+    from { opacity:0; }
+    to { opacity:1; }
+  }
+  .nav-menu a {
+    color:#8b5cf6;
+    text-decoration:none;
+    font-size:1.8rem;
+    font-family:'Styrene', system-ui, sans-serif;
+    font-weight:300;
+    transition:color 0.3s ease;
+    cursor:pointer;
+    white-space:nowrap;
+    padding:0 2rem;
+  }
+  .nav-menu a:hover {
+    color:white;
+  }
+
   h2 {
     font-family:'Styrene', system-ui, sans-serif;
     font-size:clamp(2.5rem,6vw,5rem);
@@ -221,9 +276,7 @@
   .card-value {
     font-size:2.5rem;
     font-weight:800;
-    background:linear-gradient(#00d4ff,#8b5cf6);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+    color:#8b5cf6;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -289,7 +342,7 @@
   }
   .search-btn {
     padding:1.2rem 3rem;
-    background:linear-gradient(90deg,#00d4ff,#8b5cf6);
+    background:#8b5cf6;
     border:none;
     border-radius:50px;
     color:white;
@@ -304,7 +357,7 @@
   }
   .search-btn:hover {
     transform:scale(1.05);
-    box-shadow:0 10px 40px rgba(0,212,255,0.5);
+    box-shadow:0 10px 40px rgba(139,92,246,0.5);
   }
   .loading {
     display:none;
@@ -363,7 +416,118 @@
   .rank-percentile.top10 { background:linear-gradient(135deg,#cd7f32,#8b4513); color:#fff; }
   .rank-percentile.top25 { background:rgba(139,92,246,0.3); color:#8b5cf6; }
   .rank-percentile.other { background:rgba(0,212,255,0.2); color:#00d4ff; }
-  
+
+  /* Network Stats Toggle Switch (Desktop Only) */
+  .view-toggle-container {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.75rem;
+    margin-bottom:1.5rem;
+  }
+  .view-toggle-label {
+    font-size:0.9rem;
+    font-weight:500;
+    color:#8b949e;
+    transition:color 0.3s ease;
+  }
+  .view-toggle-label.active {
+    color:white;
+  }
+  .view-toggle {
+    position:relative;
+    width:50px;
+    height:26px;
+    background:rgba(139,92,246,0.3);
+    border-radius:13px;
+    cursor:pointer;
+    transition:background 0.3s ease;
+    border:1px solid rgba(139,92,246,0.5);
+  }
+  .view-toggle:hover {
+    background:rgba(139,92,246,0.4);
+  }
+  .view-toggle-knob {
+    position:absolute;
+    top:2px;
+    left:2px;
+    width:20px;
+    height:20px;
+    background:#8b5cf6;
+    border-radius:50%;
+    transition:transform 0.3s ease;
+    box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  }
+  .view-toggle.chart-active .view-toggle-knob {
+    transform:translateX(24px);
+  }
+
+  /* Network Stats Chart/Text View */
+  .network-chart-view {
+    display:none;
+    width:95%;
+    max-width:1200px;
+    margin:0 auto;
+    padding:2rem;
+    background:rgba(10,10,10,0.9);
+    border-radius:16px;
+    border:1px solid #30363d;
+    backdrop-filter:blur(12px);
+  }
+  .network-chart-view.active {
+    display:block;
+  }
+  .chart-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:1rem 0;
+    border-bottom:1px solid rgba(48,54,61,0.5);
+  }
+  .chart-row:last-child {
+    border-bottom:none;
+  }
+  .chart-label {
+    font-size:1.1rem;
+    color:#8b949e;
+    font-weight:500;
+  }
+  .chart-value {
+    font-size:1.3rem;
+    font-weight:700;
+    color:white;
+  }
+
+  /* Chart Currency Toggle */
+  .chart-currency-toggle {
+    display:flex;
+    justify-content:center;
+    gap:0.5rem;
+    margin-bottom:1.5rem;
+    padding-bottom:1rem;
+    border-bottom:1px solid rgba(48,54,61,0.5);
+  }
+  .chart-currency-btn {
+    padding:0.5rem 1.2rem;
+    font-size:0.85rem;
+    border-radius:20px;
+    border:1px solid #30363d;
+    background:transparent;
+    color:#8b949e;
+    cursor:pointer;
+    font-weight:600;
+    transition:all 0.3s ease;
+  }
+  .chart-currency-btn:hover {
+    border-color:#8b5cf6;
+    color:white;
+  }
+  .chart-currency-btn.active {
+    background:rgba(139,92,246,0.3);
+    border-color:#8b5cf6;
+    color:white;
+  }
+
   .richlist-subtitle {
     font-size:1.5rem;
     font-weight:700;
@@ -381,14 +545,14 @@
   }
   .back-btn {
     position:absolute;
-    top:2rem;
-    left:2rem;
-    padding:0.8rem 1.5rem;
+    top:1rem;
+    left:1.5rem;
+    padding:0.5rem 1.2rem;
     background:rgba(139,92,246,0.2);
     border:1px solid #8b5cf6;
-    border-radius:12px;
+    border-radius:20px;
     color:white;
-    font-size:0.9rem;
+    font-size:0.8rem;
     font-weight:600;
     cursor:pointer;
     transition:all 0.3s ease;
@@ -397,13 +561,6 @@
   .back-btn:hover {
     background:rgba(139,92,246,0.4);
     transform:translateX(-4px);
-  }
-  #yourRankBtn {
-    left:auto;
-    right:2rem;
-  }
-  #yourRankBtn:hover {
-    transform:translateX(4px);
   }
   .richlist-table {
     display:flex;
@@ -804,9 +961,9 @@
       height:105px;
     }
 
-    /* User Data section cards: 30% less wide, 85% taller on mobile */
+    /* User Data section cards: HALF width on mobile */
     #userCarousel .card {
-      flex:0 0 84px;
+      flex:0 0 42px;
       height:130px;
     }
 
@@ -822,6 +979,10 @@
 
     .card-value {
       font-size:0.9rem;
+      /* Solid purple instead of gradient on mobile */
+      background:none !important;
+      -webkit-background-clip:unset !important;
+      -webkit-text-fill-color:#8b5cf6 !important;
     }
 
     /* Make Received Rewards font size match other card values on mobile */
@@ -948,38 +1109,45 @@
     #fixed-title {
       top:25%;
       font-size:clamp(3.74rem,8.976vw,8.976rem);
+      /* Ensure typing animation works on mobile */
+      animation:typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite !important;
     }
 
-    /* Make top-left coin 20% smaller and position 10px from top/left on mobile */
+    /* MOBILE: Remove ALL blocking elements immediately via CSS */
+    #loadingOverlay {
+      display:none !important;
+    }
+
+    /* Hide toggle switches on mobile - cards only */
+    #networkViewToggle,
+    #userDataViewToggle {
+      display:none !important;
+    }
+
+    /* Hide chart views on mobile */
+    .network-chart-view,
+    #userChartView {
+      display:none !important;
+    }
+
     #topLeftCoin {
-      position:fixed !important;
-      width:1024px !important;
-      height:1024px !important;
-      top:-432px !important;
-      left:-464px !important;
-      z-index:200 !important;
+      display:none !important;
     }
 
-    /* Adjust clickable overlay to match smaller coin - 20% smaller and 10px from edges */
-    #coinClickArea {
-      position:fixed !important;
-      width:38px !important;
-      height:38px !important;
-      top:10px !important;
-      left:10px !important;
-      z-index:201 !important;
+    #coinCanvas {
+      display:none !important;
     }
 
-    /* Ensure 3D coin canvas is visible on mobile */
     #coin-canvas {
-      display:block !important;
-      position:fixed !important;
-      top:0 !important;
-      left:0 !important;
-      width:100vw !important;
-      height:100vh !important;
-      pointer-events:none !important;
-      z-index:5 !important;
+      display:none !important;
+    }
+
+    #coinClickArea {
+      display:none !important;
+    }
+
+    #mobileCoinIcon {
+      display:none !important;
     }
 
     /* Optimize search boxes and buttons for mobile - stack vertically */
@@ -1001,6 +1169,8 @@
       width:95%;
       max-width:100%;
       margin:0 auto 1rem auto;
+      /* Solid purple instead of gradient on mobile */
+      background:#8b5cf6 !important;
     }
 
     /* Optimize transaction feed for mobile */
@@ -1050,6 +1220,20 @@
       min-width:40px;
     }
 
+    /* Rank result: 30% smaller, "Rank" white, number purple */
+    .rank-number {
+      font-size:2.1rem !important; /* 30% smaller than 3rem */
+      background:none !important;
+      -webkit-background-clip:unset !important;
+      -webkit-text-fill-color:unset !important;
+    }
+    .rank-label {
+      color:white !important;
+    }
+    .rank-value {
+      color:#8b5cf6 !important;
+    }
+
     /* Make richlist back button smaller on mobile and add space above subtitle */
     .back-btn {
       padding:0.5rem 1rem !important;
@@ -1072,18 +1256,69 @@
     #tokenBalancesChart {
       overflow-x:hidden !important;
     }
+
+    /* Hide desktop navigation on mobile */
+    .nav-menu {
+      display:none !important;
+    }
   }
 </style>
-<!-- Three.js for 3D coin - using older version with UMD GLTFLoader -->
-<script src="https://unpkg.com/three@0.137.5/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
+  <!-- MOBILE: Immediate initialization - runs BEFORE any other content -->
+  <script>
+  if (window.innerWidth <= 768) {
+    document.body.classList.add('loaded');
+  }
+  </script>
+
+  <!-- Loading overlay - hidden on mobile via CSS -->
+  <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;z-index:9999;pointer-events:none;"></div>
+
+  <!-- Desktop Navigation Menu -->
+  <nav class="nav-menu">
+    <a href="#network" onclick="scrollToSection('network'); return false;">Network Stats</a>
+    <a href="#live-transactions" onclick="scrollToSection('live-transactions'); return false;">Live Transactions</a>
+    <a href="#user-data" onclick="scrollToSection('user-data'); return false;">User Data</a>
+    <a href="#richlist" onclick="scrollToSection('richlist'); return false;">HBAR Rich List</a>
+  </nav>
+
   <!-- 3D HBAR Coin Canvas (behind everything) - HIDDEN FOR NOW -->
   <canvas id="coinCanvas" style="position:fixed;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;display:none;"></canvas>
 
-  <!-- Small fixed top-left spinning coin -->
+  <!-- Small fixed top-left spinning coin (desktop 3D) -->
   <canvas id="topLeftCoin" style="position:fixed;top:-540px;left:-580px;width:1280px;height:1280px;z-index:200;pointer-events:none!important;cursor:default;opacity:0;transition:opacity 1s ease-in;"></canvas>
+
+  <!-- Mobile: Animated SVG HBAR logo -->
+  <svg id="mobileCoinIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="hbarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <!-- HBAR Logo "H" shape -->
+    <g fill="url(#hbarGradient)" filter="url(#glow)">
+      <!-- Left vertical bar -->
+      <rect x="20" y="25" width="12" height="50" rx="2"/>
+      <!-- Right vertical bar -->
+      <rect x="68" y="25" width="12" height="50" rx="2"/>
+      <!-- Top horizontal bar -->
+      <rect x="32" y="35" width="36" height="8" rx="2"/>
+      <!-- Middle horizontal bar -->
+      <rect x="32" y="46" width="36" height="8" rx="2"/>
+      <!-- Bottom horizontal bar -->
+      <rect x="32" y="57" width="36" height="8" rx="2"/>
+    </g>
+  </svg>
+
   <!-- Clickable overlay for the visible coin area only -->
   <div id="coinClickArea" style="position:fixed;top:36px;left:36px;width:47px;height:47px;z-index:201;cursor:pointer;border-radius:50%;"></div>
 
@@ -1104,21 +1339,62 @@
   <section class="section" id="network">
     <div class="gradient-orb" id="networkOrb" style="background:radial-gradient(circle,rgba(0,212,255,0.3),rgba(139,92,246,0.2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;"></div>
     <h2 style="opacity:0;transform:scale(0.8);">Network Stats</h2>
-    <div class="cards-wrapper">
+
+    <!-- Desktop Only: Toggle Switch -->
+    <div class="view-toggle-container" id="networkViewToggle">
+      <span class="view-toggle-label active" id="cardsLabel">Cards</span>
+      <div class="view-toggle" id="viewToggleSwitch" onclick="toggleNetworkView()">
+        <div class="view-toggle-knob"></div>
+      </div>
+      <span class="view-toggle-label" id="chartLabel">Chart</span>
+    </div>
+
+    <!-- Cards View (Default) -->
+    <div class="cards-wrapper" id="networkCardsView">
       <div class="carousel-scroll">
         <div class="carousel" id="networkCarousel">
           <div class="card"><div class="card-title">HBAR Price</div><div class="card-value" id="hbarPrice">---</div></div>
-          <div class="card"><div class="card-title">Market Cap</div><div class="card-value" id="marketCap">---</div></div>
+          <div class="card"><div class="card-title">Market Cap</div><div class="card-value" id="marketCap">---</div><div style="font-size:0.75rem;opacity:0.6;margin-top:0.5rem;">USD</div></div>
           <div class="card"><div class="card-title">Network TPS</div><div class="card-value" id="tps">---</div><div style="font-size:0.75rem;opacity:0.6;margin-top:0.5rem;">Live (30s window)</div></div>
           <div class="card"><div class="card-title">Consensus Time</div><div class="card-value" id="consensusTime">---</div></div>
-          <div class="card"><div class="card-title">24h Network Fees</div><div class="card-value" id="networkFees">---</div></div>
-          <div class="card"><div class="card-title">HBAR Released</div><div class="card-value" id="hbarReleased">---</div></div>
+          <div class="card" style="position:relative;padding-right:8rem;">
+            <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
+              <button type="button" onclick="toggleNetworkFeesCurrency('hbar')" id="networkFeesHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleNetworkFeesCurrency('usd')" id="networkFeesUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
+            </div>
+            <div class="card-title">24h Network Fees</div><div class="card-value" id="networkFees">---</div>
+          </div>
+          <div class="card" style="position:relative;padding-right:8rem;">
+            <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
+              <button type="button" onclick="toggleHbarReleasedCurrency('hbar')" id="hbarReleasedHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleHbarReleasedCurrency('usd')" id="hbarReleasedUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
+            </div>
+            <div class="card-title">HBAR Released</div><div class="card-value" id="hbarReleased">---</div>
+          </div>
           <div class="card"><div class="card-title">Active Accounts</div><div class="card-value" id="activeAccounts">---</div></div>
           <div class="card"><div class="card-title">Total Accounts</div><div class="card-value" id="totalAccounts">---</div></div>
           <div class="card"><div class="card-title">24h New Accounts</div><div class="card-value" id="newAccounts">---</div></div>
           <div class="card"><div class="card-title">24h Transactions</div><div class="card-value" id="transactions">---</div></div>
         </div>
       </div>
+    </div>
+
+    <!-- Chart/Text View (Hidden by default) -->
+    <div class="network-chart-view" id="networkChartView">
+      <div class="chart-currency-toggle">
+        <button type="button" class="chart-currency-btn active" id="networkChartHbarBtn" onclick="toggleNetworkChartCurrency('hbar')">HBAR</button>
+        <button type="button" class="chart-currency-btn" id="networkChartUsdBtn" onclick="toggleNetworkChartCurrency('usd')">USD</button>
+      </div>
+      <div class="chart-row"><span class="chart-label">HBAR Price</span><span class="chart-value" id="chartHbarPrice">---</span></div>
+      <div class="chart-row"><span class="chart-label">Market Cap</span><span class="chart-value" id="chartMarketCap">---</span></div>
+      <div class="chart-row"><span class="chart-label">Network TPS</span><span class="chart-value" id="chartTps">---</span></div>
+      <div class="chart-row"><span class="chart-label">Consensus Time</span><span class="chart-value" id="chartConsensusTime">---</span></div>
+      <div class="chart-row" id="chartNetworkFeesRow"><span class="chart-label">24h Network Fees</span><span class="chart-value" id="chartNetworkFees">---</span></div>
+      <div class="chart-row" id="chartHbarReleasedRow"><span class="chart-label">HBAR Released</span><span class="chart-value" id="chartHbarReleased">---</span></div>
+      <div class="chart-row"><span class="chart-label">Active Accounts</span><span class="chart-value" id="chartActiveAccounts">---</span></div>
+      <div class="chart-row"><span class="chart-label">Total Accounts</span><span class="chart-value" id="chartTotalAccounts">---</span></div>
+      <div class="chart-row"><span class="chart-label">24h New Accounts</span><span class="chart-value" id="chartNewAccounts">---</span></div>
+      <div class="chart-row"><span class="chart-label">24h Transactions</span><span class="chart-value" id="chartTransactions">---</span></div>
     </div>
   </section>
   
@@ -1156,7 +1432,7 @@
     </div>
   </section>
   
-  <section class="section" id="user">
+  <section class="section" id="user-data">
     <div class="gradient-orb" style="top:-300px;left:-300px;background:radial-gradient(circle,rgba(139,92,246,0.18),transparent);"></div>
     <h2>User Data</h2>
     <div style="text-align:center;margin-bottom:3rem;white-space:nowrap;">
@@ -1164,41 +1440,66 @@
       <button type="button" class="search-btn" onclick="queryAccount(); return false;" style="display:inline-block;vertical-align:middle;">Query Account</button>
       <div class="loading" id="accountLoading">Loading...</div>
     </div>
-    <div class="cards-wrapper">
+
+    <!-- Desktop Only: Toggle Switch for User Data -->
+    <div class="view-toggle-container" id="userDataViewToggle">
+      <span class="view-toggle-label active" id="userCardsLabel">Cards</span>
+      <div class="view-toggle" id="userViewToggleSwitch" onclick="toggleUserDataView()">
+        <div class="view-toggle-knob"></div>
+      </div>
+      <span class="view-toggle-label" id="userChartLabel">Chart</span>
+    </div>
+
+    <!-- Cards View (Default) -->
+    <div class="cards-wrapper" id="userCardsView">
       <div class="carousel-scroll">
         <div class="carousel" id="userCarousel">
           <div class="card"><div class="card-title">Created</div><div class="card-value" id="created">---</div></div>
           <div class="card"><div class="card-title">Account ID</div><div class="card-value" id="accountId">---</div></div>
           <div class="card" style="position:relative;padding-right:8rem;">
             <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
-              <button type="button" onclick="toggleBalanceCurrency('usd')" id="balanceUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
               <button type="button" onclick="toggleBalanceCurrency('hbar')" id="balanceHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleBalanceCurrency('usd')" id="balanceUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
             </div>
             <div class="card-title">Balance</div>
             <div class="card-value" id="balance">---</div>
           </div>
           <div class="card" style="position:relative;padding-right:9rem;justify-content:flex-start;">
             <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
-              <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
               <button type="button" onclick="toggleRewardsCurrency('hbar')" id="rewardsHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleRewardsCurrency('usd')" id="rewardsUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
             </div>
             <div class="card-title" style="overflow:visible;">Total Staked</div>
             <div class="card-value" id="stakedBalance">---</div>
             <div style="margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid rgba(255,255,255,0.1);">
               <div style="font-size:0.75rem;opacity:0.6;margin-bottom:0.3rem;">Received Rewards</div>
-              <div style="font-size:1.4rem;font-weight:700;color:white;" id="receivedRewards">---</div>
+              <div style="font-size:1.4rem;font-weight:700;color:#8b5cf6;" id="receivedRewards">---</div>
             </div>
           </div>
           <div class="card" id="stakedToAccountCard" style="display:none;position:relative;padding-right:8rem;">
             <div style="position:absolute;top:0.75rem;right:1rem;display:flex;gap:0.25rem;z-index:10;">
-              <button type="button" onclick="toggleStakedToAccountCurrency('usd')" id="stakedToAccountUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
               <button type="button" onclick="toggleStakedToAccountCurrency('hbar')" id="stakedToAccountHbarBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #8b5cf6;background:rgba(139,92,246,0.3);color:white;cursor:pointer;font-weight:600;">HBAR</button>
+              <button type="button" onclick="toggleStakedToAccountCurrency('usd')" id="stakedToAccountUsdBtn" style="padding:0.3rem 0.6rem;font-size:0.65rem;border-radius:12px;border:1px solid #30363d;background:transparent;color:white;cursor:pointer;font-weight:600;">USD</button>
             </div>
             <div class="card-title">Staked to Account</div>
             <div class="card-value" id="stakedToAccount">---</div>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Chart/Text View for User Data (Hidden by default) -->
+    <div class="network-chart-view" id="userChartView">
+      <div class="chart-currency-toggle">
+        <button type="button" class="chart-currency-btn active" id="userChartHbarBtn" onclick="toggleUserChartCurrency('hbar')">HBAR</button>
+        <button type="button" class="chart-currency-btn" id="userChartUsdBtn" onclick="toggleUserChartCurrency('usd')">USD</button>
+      </div>
+      <div class="chart-row"><span class="chart-label">Created</span><span class="chart-value" id="chartCreated">---</span></div>
+      <div class="chart-row"><span class="chart-label">Account ID</span><span class="chart-value" id="chartAccountId">---</span></div>
+      <div class="chart-row"><span class="chart-label">Balance</span><span class="chart-value" id="chartBalance">---</span></div>
+      <div class="chart-row"><span class="chart-label">Total Staked</span><span class="chart-value" id="chartStakedBalance">---</span></div>
+      <div class="chart-row"><span class="chart-label">Received Rewards</span><span class="chart-value" id="chartReceivedRewards">---</span></div>
+      <div class="chart-row" id="chartStakedToAccountRow" style="display:none;"><span class="chart-label">Staked to Account</span><span class="chart-value" id="chartStakedToAccount">---</span></div>
     </div>
 
     <!-- Token Balances Chart -->
@@ -1227,7 +1528,7 @@
       <!-- Top 50 List -->
       <div class="richlist-table-container">
         <button type="button" class="back-btn" id="backToTop50">← Back to Top 50</button>
-        <button type="button" class="back-btn" id="yourRankBtn" style="display:none;">→ Your Rank</button>
+        <button type="button" class="back-btn" id="yourRankBtn" style="display:none;">← Your Rank</button>
         <h3 class="richlist-subtitle">Top 50 HBAR Holders</h3>
         <div class="loading" id="richlistLoading">Loading...</div>
         <div class="richlist-table" id="richlistTable"></div>
@@ -1240,69 +1541,257 @@
     <p style="font-size:1.5rem;opacity:0.7;margin-top:2rem;">Powered by Hgraph API</p>
   </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
+// MOBILE PERFORMANCE OPTIMIZATION: Lazy load heavy libraries only on desktop
+const isMobileDevice = window.innerWidth <= 768;
+let gsapLoaded = false;
+let threeJsLoaded = false;
+
+// On desktop: Load GSAP and Three.js
+// On mobile: Skip heavy libraries, use CSS animations instead
+if (!isMobileDevice) {
+  // Load GSAP first (needed for scroll animations)
+  const gsapScript = document.createElement('script');
+  gsapScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
+  gsapScript.async = false;
+  gsapScript.onload = () => {
+    const scrollTriggerScript = document.createElement('script');
+    scrollTriggerScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js';
+    scrollTriggerScript.async = false;
+    scrollTriggerScript.onload = () => {
+      gsapLoaded = true;
+      console.log('✅ GSAP loaded (desktop only)');
+      initGSAPAnimations();
+    };
+    document.head.appendChild(scrollTriggerScript);
+  };
+  document.head.appendChild(gsapScript);
+
+  // Load Three.js (for 3D coin)
+  const threeScript = document.createElement('script');
+  threeScript.src = 'https://unpkg.com/three@0.137.5/build/three.min.js';
+  threeScript.async = true;
+  threeScript.onload = () => {
+    const gltfScript = document.createElement('script');
+    gltfScript.src = 'https://unpkg.com/three@0.137.5/examples/js/loaders/GLTFLoader.js';
+    gltfScript.async = true;
+    gltfScript.onload = () => {
+      threeJsLoaded = true;
+      console.log('✅ Three.js loaded (desktop only)');
+      console.log('🚀 Initializing top-left spinning coin...');
+
+      // Make sure the page is fully loaded before initializing the coin
+      if (document.readyState === 'complete') {
+        if (typeof initTopLeftCoin === 'function') {
+          initTopLeftCoin();
+
+          // Fade in the coin after "Hedera Data" typing animation completes
+          setTimeout(() => {
+            const topLeftCanvas = document.getElementById('topLeftCoin');
+            if (topLeftCanvas) {
+              topLeftCanvas.style.opacity = '1';
+              console.log('✨ Top-left coin fading in...');
+            }
+          }, 1600);
+        }
+      } else {
+        window.addEventListener('load', () => {
+          if (typeof initTopLeftCoin === 'function') {
+            initTopLeftCoin();
+          }
+
+          // Fade in the coin after initialization
+          setTimeout(() => {
+            const topLeftCanvas = document.getElementById('topLeftCoin');
+            if (topLeftCanvas) {
+              topLeftCanvas.style.opacity = '1';
+              console.log('✨ Top-left coin fading in...');
+            }
+          }, 1600);
+        });
+      }
+    };
+    document.head.appendChild(gltfScript);
+  };
+  document.head.appendChild(threeScript);
+} else {
+  // Mobile: No 3D coin - completely remove coin elements to fix touch scrolling
+  console.log('📱 Mobile detected - removing coin elements for better performance');
+
+  // Completely hide and disable all coin-related elements on mobile
+  const topLeftCoin = document.getElementById('topLeftCoin');
+  const coinCanvas = document.getElementById('coinCanvas');
+  const coinClickArea = document.getElementById('coinClickArea');
+  const mobileCoin = document.getElementById('mobileCoinIcon');
+
+  if (topLeftCoin) {
+    topLeftCoin.style.display = 'none';
+    topLeftCoin.remove(); // Remove from DOM completely
+  }
+  if (coinCanvas) {
+    coinCanvas.style.display = 'none';
+    coinCanvas.remove(); // Remove from DOM completely
+  }
+  if (coinClickArea) {
+    coinClickArea.style.display = 'none';
+    coinClickArea.remove(); // Remove from DOM completely - this blocks touch!
+  }
+  if (mobileCoin) {
+    mobileCoin.style.display = 'none';
+    mobileCoin.remove(); // Remove SVG coin too
+  }
+}
+
+// Disable scroll restoration completely
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
+// Immediately force scroll to top
+window.scrollTo(0, 0);
+document.documentElement.scrollTop = 0;
+document.body.scrollTop = 0;
+
+// Function to ensure we're at top and remove overlay
+function ensureTopAndShow() {
+  // Force scroll multiple times to be sure
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  // Keep forcing scroll for 100ms
+  let scrollAttempts = 0;
+  const scrollInterval = setInterval(function() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    scrollAttempts++;
+
+    if (scrollAttempts > 5) {
+      clearInterval(scrollInterval);
+      // Remove overlay to show page
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+      document.body.classList.add('loaded');
+    }
+  }, 20);
+}
+
+// Mobile: Remove overlay immediately without waiting for resources
+// Desktop: Wait for resources to ensure smooth experience
+if (isMobileDevice) {
+  // Mobile: Immediately show page - no delays!
+  window.scrollTo(0, 0);
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.remove(); // Remove from DOM completely
+  }
+  document.body.classList.add('loaded');
+} else {
+  // Desktop: Use original approach with pageshow and load events
+  window.addEventListener('pageshow', ensureTopAndShow);
+  window.addEventListener('load', ensureTopAndShow);
+}
+
 const HGRAPH_API = 'https://mainnet.hedera.api.hgraph.io/v1/graphql';
 const HGRAPH_KEY = 'pk_prod_138b03d98573dd8992cc9af61c748f56e329b09a';
 
-// Disabled GSAP animation - now handled by updateAllScrollEffects() for better control
-// gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
-//   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
-// });
+// GSAP animations (loaded only on desktop via lazy load)
+function initGSAPAnimations() {
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+    console.warn('GSAP not loaded yet');
+    return;
+  }
 
-// Disable ScrollTrigger animations on mobile for smoother scrolling
-const isMobileDevice = window.innerWidth <= 768;
+  // Disabled GSAP animation - now handled by updateAllScrollEffects() for better control
+  // gsap.to("#fixed-title", {opacity:0, filter:"blur(30px)", scale:0.88, ease:"none",
+  //   scrollTrigger: {trigger:"#s1", start:"top top", end:"bottom top", scrub:0.6}
+  // });
 
-if (!isMobileDevice) {
-  gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
-    scrollTrigger: {trigger:"#network", start:"top 70%"}
-  });
-  gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
-    scrollTrigger: {trigger:"#network", start:"top 60%"}
-  });
-} else {
-  // On mobile, just show elements immediately without ScrollTrigger
+  // Only use GSAP if it's loaded
+  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+    gsap.to("#network h2", {opacity:1, scale:1, duration:2, ease:"power4.out",
+      scrollTrigger: {trigger:"#network", start:"top 70%"}
+    });
+    gsap.to("#network .gradient-orb", {opacity:1, scale:1.4, duration:3,
+      scrollTrigger: {trigger:"#network", start:"top 60%"}
+    });
+
+    // Auto-load network data when section comes into view
+    ScrollTrigger.create({
+      trigger: "#network",
+      start: "top 80%",
+      once: true,
+      onEnter: () => {
+        // Ensure carousels are initialized before querying
+        if (!carouselsInitialized) {
+          initCarousels();
+        }
+        queryNetwork();
+
+        // Start live TPS updates
+        startLiveTPSUpdates();
+
+        // Staggered refresh intervals for different stats
+        // HBAR Price & Market Cap - every 8 seconds
+        setInterval(() => updatePriceAndMarketCap(), 8000);
+
+        // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
+        setTimeout(() => {
+          updateConsensusAndFees();
+          setInterval(() => updateConsensusAndFees(), 12000);
+        }, 4000);
+
+        // HBAR Released & Accounts - every 15 seconds (offset by 8s)
+        setTimeout(() => {
+          updateHbarAndAccounts();
+          setInterval(() => updateHbarAndAccounts(), 15000);
+        }, 8000);
+      }
+    });
+  }
+}
+
+// Mobile: Show network section immediately and load data on scroll
+if (isMobileDevice) {
   document.querySelector("#network h2").style.opacity = 1;
   document.querySelector("#network h2").style.transform = 'scale(1)';
   const networkOrb = document.querySelector("#network .gradient-orb");
   if (networkOrb) {
     networkOrb.style.opacity = 1;
   }
-}
 
-// Auto-load network data when section comes into view
-ScrollTrigger.create({
-  trigger: "#network",
-  start: "top 80%",
-  once: true,
-  onEnter: () => {
-    // Ensure carousels are initialized before querying
-    if (!carouselsInitialized) {
-      initCarousels();
+  // Mobile: Simple scroll-based trigger for network data (no GSAP)
+  let networkDataLoaded = false;
+  window.addEventListener('scroll', () => {
+    if (networkDataLoaded) return;
+    const networkSection = document.getElementById('network');
+    if (networkSection) {
+      const rect = networkSection.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.8) {
+        networkDataLoaded = true;
+        if (!carouselsInitialized) {
+          initCarousels();
+        }
+        queryNetwork();
+        startLiveTPSUpdates();
+
+        // Staggered refresh intervals
+        setInterval(() => updatePriceAndMarketCap(), 8000);
+        setTimeout(() => {
+          updateConsensusAndFees();
+          setInterval(() => updateConsensusAndFees(), 12000);
+        }, 4000);
+        setTimeout(() => {
+          updateHbarAndAccounts();
+          setInterval(() => updateHbarAndAccounts(), 15000);
+        }, 8000);
+      }
     }
-    queryNetwork();
-
-    // Start live TPS updates
-    startLiveTPSUpdates();
-
-    // Staggered refresh intervals for different stats
-    // HBAR Price & Market Cap - every 8 seconds
-    setInterval(() => updatePriceAndMarketCap(), 8000);
-
-    // Consensus Time & Network Fees - every 12 seconds (offset by 4s)
-    setTimeout(() => {
-      updateConsensusAndFees();
-      setInterval(() => updateConsensusAndFees(), 12000);
-    }, 4000);
-
-    // HBAR Released & Accounts - every 15 seconds (offset by 8s)
-    setTimeout(() => {
-      updateHbarAndAccounts();
-      setInterval(() => updateHbarAndAccounts(), 15000);
-    }, 8000);
-  }
-});
+  });
+}
 
 // Initialize carousels when DOM is fully ready
 let carouselsInitialized = false;
@@ -2616,17 +3105,21 @@ async function updateConsensusAndFees() {
         ? `${(result.data.consensusTime[0].total / 1000000000).toFixed(2)}s`
         : 'N/A';
 
-      const networkFees = result.data.networkFees?.[0]
-        ? `${(result.data.networkFees[0].total / 100000000).toLocaleString(undefined, {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          })} ℏ`
-        : 'N/A';
+      // Store raw HBAR value for currency toggle
+      const networkFeesRaw = result.data.networkFees?.[0]?.total / 100000000 || 0;
+      window.networkFeesHbar = networkFeesRaw;
 
       // Batch DOM updates with requestAnimationFrame
       requestAnimationFrame(() => {
         document.getElementById('consensusTime').textContent = consensusTime;
-        document.getElementById('networkFees').textContent = networkFees;
+        // Use the display function to respect current currency setting
+        if (typeof updateNetworkFeesCardDisplay === 'function') {
+          updateNetworkFeesCardDisplay();
+        } else {
+          document.getElementById('networkFees').textContent = networkFeesRaw
+            ? `${networkFeesRaw.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})} ℏ`
+            : 'N/A';
+        }
       });
     }
   } catch (error) {
@@ -2689,9 +3182,9 @@ async function updateHbarAndAccounts() {
     const result = await response.json();
 
     if (result.data) {
-      const hbarReleased = result.data.hbarReleased?.[0]
-        ? `${(result.data.hbarReleased[0].total / 100000000 / 1000000000).toFixed(2)}B ℏ`
-        : 'N/A';
+      // Store raw HBAR value for currency toggle (in HBAR, not tinybars)
+      const hbarReleasedRaw = result.data.hbarReleased?.[0]?.total / 100000000 || 0;
+      window.hbarReleasedAmount = hbarReleasedRaw;
 
       const active = result.data.activeAccounts?.[0]?.total?.toLocaleString() || 'N/A';
       const total = result.data.totalAccounts?.[0]?.total?.toLocaleString() || 'N/A';
@@ -2700,7 +3193,14 @@ async function updateHbarAndAccounts() {
 
       // Batch DOM updates with requestAnimationFrame
       requestAnimationFrame(() => {
-        document.getElementById('hbarReleased').textContent = hbarReleased;
+        // Use the display function to respect current currency setting
+        if (typeof updateHbarReleasedCardDisplay === 'function') {
+          updateHbarReleasedCardDisplay();
+        } else {
+          document.getElementById('hbarReleased').textContent = hbarReleasedRaw
+            ? `${(hbarReleasedRaw / 1000000000).toFixed(2)}B ℏ`
+            : 'N/A';
+        }
         document.getElementById('activeAccounts').textContent = active;
         document.getElementById('totalAccounts').textContent = total;
         document.getElementById('newAccounts').textContent = newAccounts;
@@ -3471,14 +3971,30 @@ function stopTransactionFeed() {
 }
 
 // Auto-start transaction feed when section comes into view
-ScrollTrigger.create({
-  trigger: "#live-transactions",
-  start: "top 80%",
-  once: true,
-  onEnter: () => {
-    startTransactionFeed();
+if (typeof ScrollTrigger !== 'undefined') {
+  ScrollTrigger.create({
+    trigger: "#live-transactions",
+    start: "top 80%",
+    once: true,
+    onEnter: () => {
+      startTransactionFeed();
+    }
+  });
+} else {
+  // Mobile fallback: Use IntersectionObserver instead of GSAP
+  const liveTransactionsSection = document.getElementById('live-transactions');
+  if (liveTransactionsSection) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          startTransactionFeed();
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+    observer.observe(liveTransactionsSection);
   }
-});
+}
 
 // Rich List Functions
 async function loadRichList() {
@@ -3673,7 +4189,7 @@ async function checkRank() {
     // Display results
     const resultDiv = document.getElementById('rankResult');
     resultDiv.innerHTML = `
-      <div class="rank-number">Rank #${rank.toLocaleString()}</div>
+      <div class="rank-number"><span class="rank-label">Rank </span><span class="rank-value">#${rank.toLocaleString()}</span></div>
       <div class="rank-balance">${balanceHbar} ℏ</div>
       <div class="rank-percentile ${badgeClass}">${badgeText}</div>
       <p style="margin-top:1rem;opacity:0.7;">Out of ${totalAccounts.toLocaleString()} active accounts</p>
@@ -3804,14 +4320,30 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
 }
 
 // Auto-load rich list when section comes into view
-ScrollTrigger.create({
-  trigger: "#richlist",
-  start: "top 80%",
-  once: true,
-  onEnter: () => {
-    loadRichList();
+if (typeof ScrollTrigger !== 'undefined') {
+  ScrollTrigger.create({
+    trigger: "#richlist",
+    start: "top 80%",
+    once: true,
+    onEnter: () => {
+      loadRichList();
+    }
+  });
+} else {
+  // Mobile fallback: Use IntersectionObserver instead of GSAP
+  const richlistSection = document.getElementById('richlist');
+  if (richlistSection) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          loadRichList();
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+    observer.observe(richlistSection);
   }
-});
+}
 
 // Add event listener for the Check Rank button
 document.getElementById('checkRankBtn').addEventListener('click', (e) => {
@@ -4091,45 +4623,50 @@ function updateCoinOnScroll() {
   // No longer needed - animation loop handles everything
 }
 
-// Initialize on load
-window.addEventListener('load', () => {
-  console.log('🚀 Page loaded, initializing 3D coin...');
-  console.log('THREE exists?', typeof THREE);
-  console.log('THREE.GLTFLoader exists?', typeof THREE?.GLTFLoader);
-  init3DCoin();
-});
+// Main 3D coin removed - only using top-left spinning coin now
+// (Code kept for reference but not initialized)
 
-// Combined scroll update function for coin, HEDERA fade, and network section
+// Combined scroll update function for HEDERA fade and network section
 function updateAllScrollEffects() {
-  // Skip heavy 3D coin updates on mobile for smoother scrolling
   const isMobile = window.innerWidth <= 768;
-
-  if (!isMobile) {
-    updateCoinOnScroll();
-  }
-
   const scrollY = window.scrollY;
   const coinZoomDistance = 300;
   const hederaFadeDistance = 300; // Complete fade+blur at EXACTLY same time as coin - both finish at 300px
 
   // HEDERA title fade+blur - smooth animation, reappears on scroll up
   const hederaTitle = document.getElementById('fixed-title');
+  const navMenu = document.querySelector('.nav-menu');
+
   if (hederaTitle) {
-    // On mobile, don't apply any scroll effects to preserve typing animation
+    // On mobile, fade and blur out quickly when scrolling starts
     if (isMobile) {
-      // Faster fade on mobile (100px instead of 300px) to prevent blocking view
-      if (scrollY > 0) {
-        const mobileFadeDistance = 100;
-        const fadeProgress = Math.min(Math.max(scrollY / mobileFadeDistance, 0), 1.0);
-        const opacity = Math.max(1.0 - fadeProgress, 0);
-        hederaTitle.style.opacity = opacity.toFixed(3);
-        hederaTitle.style.filter = 'none';
+      // Very fast fade on mobile (50px) - disappears almost immediately on scroll
+      const mobileFadeDistance = 50;
+      const fadeProgress = Math.min(Math.max(scrollY / mobileFadeDistance, 0), 1.0);
+      const opacity = Math.max(1.0 - fadeProgress, 0);
+      const blurAmount = fadeProgress * 20; // Add blur on mobile too
+
+      hederaTitle.style.opacity = opacity;
+      hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+      // Completely hide when faded out
+      hederaTitle.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
+
+      // Navigation menu fades/blurs same as title on mobile
+      if (navMenu) {
+        // Override CSS animation to allow complete fade
+        navMenu.style.animation = 'none';
+        navMenu.style.opacity = opacity;
+        navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        navMenu.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
+        // Disable pointer events when faded out
+        navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
       }
     } else {
       // Desktop: full effects
       const fadeProgress = Math.min(Math.max(scrollY / hederaFadeDistance, 0), 1.0);
       const opacity = Math.max(1.0 - fadeProgress, 0);
-      hederaTitle.style.opacity = opacity.toFixed(3);
+
+      hederaTitle.style.opacity = opacity;
 
       // Blur: 0px -> 30px
       const blurAmount = fadeProgress * 30;
@@ -4140,6 +4677,19 @@ function updateAllScrollEffects() {
       hederaTitle.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
       // IMPORTANT: Keep translateY(-50%) to maintain vertical centering
       hederaTitle.style.transform = `translateY(-50%) scale(${scale.toFixed(3)})`;
+      // Completely hide when faded out
+      hederaTitle.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
+
+      // Navigation menu fades/blurs same as title on desktop
+      if (navMenu) {
+        // Override CSS animation to allow complete fade
+        navMenu.style.animation = 'none';
+        navMenu.style.opacity = opacity;
+        navMenu.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        navMenu.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
+        // Disable pointer events when faded out
+        navMenu.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
+      }
     }
   }
 
@@ -4149,8 +4699,17 @@ function updateAllScrollEffects() {
 // Throttle scroll updates with requestAnimationFrame for buttery smooth performance
 let scrollTicking = false;
 let lastScrollY = 0;
+let typingAnimationComplete = false;
+
+// Allow typing animation to complete before applying scroll effects
+setTimeout(() => {
+  typingAnimationComplete = true;
+}, 1600); // Typing is 1.5s, give 100ms buffer
 
 function throttledScrollHandler() {
+  // Don't apply scroll effects until typing animation completes
+  if (!typingAnimationComplete) return;
+
   lastScrollY = window.scrollY;
 
   if (!scrollTicking) {
@@ -4306,46 +4865,391 @@ function animateTopLeftCoin() {
   }
 }
 
-// Initialize top-left coin when page loads
-window.addEventListener('load', () => {
-  console.log('🚀 Initializing top-left spinning coin on page load...');
-  // Small delay to ensure Three.js and main coin are initialized first
-  setTimeout(() => {
-    initTopLeftCoin();
+// Initialize top-left coin - called by lazy loader after Three.js loads (desktop only)
+// Moved to lazy loading section above to avoid loading on mobile
 
-    // Fade in the coin after "Hedera Data" typing animation completes
-    // Typing animation is 1.5s, so fade in at 1.6s
-    setTimeout(() => {
-      const topLeftCanvas = document.getElementById('topLeftCoin');
-      if (topLeftCanvas) {
-        topLeftCanvas.style.opacity = '1';
-        console.log('✨ Top-left coin fading in...');
-      }
-    }, 1600);
-  }, 500);
-});
+// Network Stats View Toggle (Desktop Only)
+let isChartView = false;
 
-// Make coin clickable - scroll to top and restart typing animation
-document.getElementById('coinClickArea').addEventListener('click', () => {
-  console.log('🔝 Coin clicked - scrolling to top and restarting animation...');
+function toggleNetworkView() {
+  isChartView = !isChartView;
 
-  // Smooth scroll to top
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
+  const toggle = document.getElementById('viewToggleSwitch');
+  const cardsView = document.getElementById('networkCardsView');
+  const chartView = document.getElementById('networkChartView');
+  const cardsLabel = document.getElementById('cardsLabel');
+  const chartLabel = document.getElementById('chartLabel');
+
+  if (isChartView) {
+    // Switch to Chart view
+    toggle.classList.add('chart-active');
+    cardsView.style.display = 'none';
+    chartView.classList.add('active');
+    cardsLabel.classList.remove('active');
+    chartLabel.classList.add('active');
+
+    // Sync chart values with card values
+    syncChartValues();
+  } else {
+    // Switch to Cards view
+    toggle.classList.remove('chart-active');
+    cardsView.style.display = '';
+    chartView.classList.remove('active');
+    cardsLabel.classList.add('active');
+    chartLabel.classList.remove('active');
+  }
+}
+
+function syncChartValues() {
+  // Copy values from cards to chart view
+  const mappings = [
+    ['hbarPrice', 'chartHbarPrice'],
+    ['marketCap', 'chartMarketCap'],
+    ['tps', 'chartTps'],
+    ['consensusTime', 'chartConsensusTime'],
+    ['networkFees', 'chartNetworkFees'],
+    ['hbarReleased', 'chartHbarReleased'],
+    ['activeAccounts', 'chartActiveAccounts'],
+    ['totalAccounts', 'chartTotalAccounts'],
+    ['newAccounts', 'chartNewAccounts'],
+    ['transactions', 'chartTransactions']
+  ];
+
+  mappings.forEach(([cardId, chartId]) => {
+    const cardEl = document.getElementById(cardId);
+    const chartEl = document.getElementById(chartId);
+    if (cardEl && chartEl) {
+      chartEl.textContent = cardEl.textContent;
+    }
+  });
+}
+
+// Auto-sync chart values when data updates (if chart view is active)
+const originalUpdateFunctions = {};
+
+// Observe changes to card values and sync to chart
+setInterval(() => {
+  if (isChartView) {
+    syncChartValues();
+    // Re-apply currency conversion if USD is selected
+    if (networkChartCurrency === 'usd') {
+      updateNetworkChartCurrencyValues();
+    }
+  }
+  if (isUserChartView) {
+    syncUserChartValues();
+    // Re-apply currency conversion if USD is selected
+    if (userChartCurrency === 'usd') {
+      updateUserChartCurrencyValues();
+    }
+  }
+}, 1000);
+
+// User Data View Toggle (Desktop Only)
+let isUserChartView = false;
+
+function toggleUserDataView() {
+  isUserChartView = !isUserChartView;
+
+  const toggle = document.getElementById('userViewToggleSwitch');
+  const cardsView = document.getElementById('userCardsView');
+  const chartView = document.getElementById('userChartView');
+  const cardsLabel = document.getElementById('userCardsLabel');
+  const chartLabel = document.getElementById('userChartLabel');
+
+  if (isUserChartView) {
+    // Switch to Chart view
+    toggle.classList.add('chart-active');
+    cardsView.style.display = 'none';
+    chartView.classList.add('active');
+    cardsLabel.classList.remove('active');
+    chartLabel.classList.add('active');
+
+    // Sync chart values with card values
+    syncUserChartValues();
+  } else {
+    // Switch to Cards view
+    toggle.classList.remove('chart-active');
+    cardsView.style.display = '';
+    chartView.classList.remove('active');
+    cardsLabel.classList.add('active');
+    chartLabel.classList.remove('active');
+  }
+}
+
+function syncUserChartValues() {
+  // Copy values from cards to chart view
+  const mappings = [
+    ['created', 'chartCreated'],
+    ['accountId', 'chartAccountId'],
+    ['balance', 'chartBalance'],
+    ['stakedBalance', 'chartStakedBalance'],
+    ['receivedRewards', 'chartReceivedRewards'],
+    ['stakedToAccount', 'chartStakedToAccount']
+  ];
+
+  mappings.forEach(([cardId, chartId]) => {
+    const cardEl = document.getElementById(cardId);
+    const chartEl = document.getElementById(chartId);
+    if (cardEl && chartEl) {
+      chartEl.textContent = cardEl.textContent;
+    }
   });
 
-  // Restart the typing animation
-  const title = document.getElementById('fixed-title');
-  if (title) {
-    // Remove and re-add animation
-    title.style.animation = 'none';
-    // Force reflow
-    void title.offsetWidth;
-    // Restart animation
-    title.style.animation = 'typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite';
+  // Show/hide staked to account row based on card visibility
+  const stakedToAccountCard = document.getElementById('stakedToAccountCard');
+  const chartStakedToAccountRow = document.getElementById('chartStakedToAccountRow');
+  if (stakedToAccountCard && chartStakedToAccountRow) {
+    chartStakedToAccountRow.style.display = stakedToAccountCard.style.display === 'none' ? 'none' : 'flex';
   }
-});
+}
+
+// Card Currency Toggle - Network Fees
+let networkFeesCurrency = 'hbar';
+
+function toggleNetworkFeesCurrency(currency) {
+  networkFeesCurrency = currency;
+
+  // Update button states
+  const hbarBtn = document.getElementById('networkFeesHbarBtn');
+  const usdBtn = document.getElementById('networkFeesUsdBtn');
+  if (hbarBtn && usdBtn) {
+    if (currency === 'hbar') {
+      hbarBtn.style.background = 'rgba(139,92,246,0.3)';
+      hbarBtn.style.borderColor = '#8b5cf6';
+      usdBtn.style.background = 'transparent';
+      usdBtn.style.borderColor = '#30363d';
+    } else {
+      usdBtn.style.background = 'rgba(139,92,246,0.3)';
+      usdBtn.style.borderColor = '#8b5cf6';
+      hbarBtn.style.background = 'transparent';
+      hbarBtn.style.borderColor = '#30363d';
+    }
+  }
+
+  updateNetworkFeesCardDisplay();
+}
+
+function updateNetworkFeesCardDisplay() {
+  const networkFeesEl = document.getElementById('networkFees');
+  const networkFeesHbar = window.networkFeesHbar || 0;
+  const hbarPrice = window.hbarPrice || 0;
+
+  if (networkFeesEl && networkFeesHbar) {
+    if (networkFeesCurrency === 'usd') {
+      const usdValue = networkFeesHbar * hbarPrice;
+      networkFeesEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      networkFeesEl.textContent = networkFeesHbar.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' ℏ';
+    }
+  }
+}
+
+// Card Currency Toggle - HBAR Released
+let hbarReleasedCurrency = 'hbar';
+
+function toggleHbarReleasedCurrency(currency) {
+  hbarReleasedCurrency = currency;
+
+  // Update button states
+  const hbarBtn = document.getElementById('hbarReleasedHbarBtn');
+  const usdBtn = document.getElementById('hbarReleasedUsdBtn');
+  if (hbarBtn && usdBtn) {
+    if (currency === 'hbar') {
+      hbarBtn.style.background = 'rgba(139,92,246,0.3)';
+      hbarBtn.style.borderColor = '#8b5cf6';
+      usdBtn.style.background = 'transparent';
+      usdBtn.style.borderColor = '#30363d';
+    } else {
+      usdBtn.style.background = 'rgba(139,92,246,0.3)';
+      usdBtn.style.borderColor = '#8b5cf6';
+      hbarBtn.style.background = 'transparent';
+      hbarBtn.style.borderColor = '#30363d';
+    }
+  }
+
+  updateHbarReleasedCardDisplay();
+}
+
+function updateHbarReleasedCardDisplay() {
+  const hbarReleasedEl = document.getElementById('hbarReleased');
+  const hbarReleased = window.hbarReleasedAmount || 0;
+  const hbarPrice = window.hbarPrice || 0;
+
+  if (hbarReleasedEl && hbarReleased) {
+    if (hbarReleasedCurrency === 'usd') {
+      const usdValue = hbarReleased * hbarPrice;
+      if (usdValue >= 1e12) {
+        hbarReleasedEl.textContent = '$' + (usdValue / 1e12).toFixed(2) + 'T';
+      } else if (usdValue >= 1e9) {
+        hbarReleasedEl.textContent = '$' + (usdValue / 1e9).toFixed(2) + 'B';
+      } else {
+        hbarReleasedEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+    } else {
+      if (hbarReleased >= 1e9) {
+        hbarReleasedEl.textContent = (hbarReleased / 1e9).toFixed(2) + 'B ℏ';
+      } else {
+        hbarReleasedEl.textContent = hbarReleased.toLocaleString() + ' ℏ';
+      }
+    }
+  }
+}
+
+// Chart Currency Toggle - Network Stats
+let networkChartCurrency = 'hbar';
+
+function toggleNetworkChartCurrency(currency) {
+  networkChartCurrency = currency;
+
+  // Update button states
+  document.getElementById('networkChartUsdBtn').classList.toggle('active', currency === 'usd');
+  document.getElementById('networkChartHbarBtn').classList.toggle('active', currency === 'hbar');
+
+  // Update values based on currency
+  updateNetworkChartCurrencyValues();
+}
+
+function updateNetworkChartCurrencyValues() {
+  const hbarPrice = window.hbarPrice || 0;
+
+  // Network Fees - convert if needed
+  const networkFeesEl = document.getElementById('chartNetworkFees');
+  const networkFeesHbar = window.networkFeesHbar || 0;
+  if (networkFeesEl && networkFeesHbar) {
+    if (networkChartCurrency === 'usd') {
+      const usdValue = networkFeesHbar * hbarPrice;
+      networkFeesEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      networkFeesEl.textContent = networkFeesHbar.toLocaleString() + ' ℏ';
+    }
+  }
+
+  // HBAR Released - convert if needed
+  const hbarReleasedEl = document.getElementById('chartHbarReleased');
+  const hbarReleased = window.hbarReleasedAmount || 0;
+  if (hbarReleasedEl && hbarReleased) {
+    if (networkChartCurrency === 'usd') {
+      const usdValue = hbarReleased * hbarPrice;
+      if (usdValue >= 1e12) {
+        hbarReleasedEl.textContent = '$' + (usdValue / 1e12).toFixed(2) + 'T';
+      } else if (usdValue >= 1e9) {
+        hbarReleasedEl.textContent = '$' + (usdValue / 1e9).toFixed(2) + 'B';
+      } else {
+        hbarReleasedEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+    } else {
+      if (hbarReleased >= 1e9) {
+        hbarReleasedEl.textContent = (hbarReleased / 1e9).toFixed(2) + 'B ℏ';
+      } else {
+        hbarReleasedEl.textContent = hbarReleased.toLocaleString() + ' ℏ';
+      }
+    }
+  }
+}
+
+// Chart Currency Toggle - User Data
+let userChartCurrency = 'hbar';
+
+function toggleUserChartCurrency(currency) {
+  userChartCurrency = currency;
+
+  // Update button states
+  document.getElementById('userChartUsdBtn').classList.toggle('active', currency === 'usd');
+  document.getElementById('userChartHbarBtn').classList.toggle('active', currency === 'hbar');
+
+  // Update values based on currency
+  updateUserChartCurrencyValues();
+}
+
+function updateUserChartCurrencyValues() {
+  const hbarPrice = window.hbarPrice || 0;
+
+  // Balance - use existing global variable
+  const balanceEl = document.getElementById('chartBalance');
+  if (balanceEl && globalBalanceHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalBalanceHbar * hbarPrice;
+      balanceEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      balanceEl.textContent = globalBalanceHbar.toFixed(2) + ' HBAR';
+    }
+  }
+
+  // Total Staked - use existing global variable
+  const stakedEl = document.getElementById('chartStakedBalance');
+  if (stakedEl && globalStakedHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalStakedHbar * hbarPrice;
+      stakedEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      stakedEl.textContent = globalStakedHbar.toFixed(2) + ' HBAR';
+    }
+  }
+
+  // Received Rewards - use existing global variable
+  const rewardsEl = document.getElementById('chartReceivedRewards');
+  if (rewardsEl && globalRewardsHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalRewardsHbar * hbarPrice;
+      rewardsEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      rewardsEl.textContent = globalRewardsHbar.toFixed(2) + ' HBAR';
+    }
+  }
+
+  // Staked to Account - use existing global variable
+  const stakedToEl = document.getElementById('chartStakedToAccount');
+  if (stakedToEl && globalStakedToAccountHbar) {
+    if (userChartCurrency === 'usd') {
+      const usdValue = globalStakedToAccountHbar * hbarPrice;
+      stakedToEl.textContent = '$' + usdValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+      stakedToEl.textContent = globalStakedToAccountHbar.toFixed(2) + ' HBAR';
+    }
+  }
+}
+
+// Make coin clickable - scroll to top and restart typing animation (desktop only)
+const coinClickElement = document.getElementById('coinClickArea');
+if (coinClickElement) {
+  coinClickElement.addEventListener('click', () => {
+    console.log('🔝 Coin clicked - scrolling to top and restarting animation...');
+
+    // Smooth scroll to top
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    // Restart the typing animation
+    const title = document.getElementById('fixed-title');
+    if (title) {
+      // Remove and re-add animation
+      title.style.animation = 'none';
+      // Force reflow
+      void title.offsetWidth;
+      // Restart animation
+      title.style.animation = 'typing 1.5s steps(12, end) forwards, blink-caret 0.75s step-end infinite';
+    }
+  });
+}
+
+// Smooth scroll to section function for navigation menu
+function scrollToSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (section) {
+    const headerOffset = 0; // Adjust if you want offset from top
+    const sectionPosition = section.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = sectionPosition - headerOffset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+  }
+}
+
 
 </script>
 </body>
