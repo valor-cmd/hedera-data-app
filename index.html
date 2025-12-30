@@ -1125,12 +1125,12 @@
       flex-direction:row-reverse;
     }
 
-    /* Mobile: Knob on left = Chart (since labels are reversed), Knob on right = Cards */
-    .view-toggle .view-toggle-knob {
-      transform:translateX(0) !important;
+    /* Mobile: Knob starts on left (toward Chart), moves right when switching to Cards */
+    .view-toggle:not(.chart-active) .view-toggle-knob {
+      transform:translateX(24px) !important;
     }
     .view-toggle.chart-active .view-toggle-knob {
-      transform:translateX(24px) !important;
+      transform:translateX(0) !important;
     }
 
     /* Mobile: Chart views can be shown when active */
