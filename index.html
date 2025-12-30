@@ -1118,16 +1118,17 @@
       display:none !important;
     }
 
-    /* Hide toggle switches on mobile - cards only */
+    /* Mobile: Show toggle switches with swapped positions (Chart left, Cards right) */
     #networkViewToggle,
     #userDataViewToggle {
-      display:none !important;
+      display:flex !important;
+      flex-direction:row-reverse;
     }
 
-    /* Hide chart views on mobile */
-    .network-chart-view,
-    #userChartView {
-      display:none !important;
+    /* Mobile: Chart views can be shown when active */
+    .network-chart-view.active,
+    #userChartView.active {
+      display:block !important;
     }
 
     #topLeftCoin {
@@ -5002,6 +5003,22 @@ function syncUserChartValues() {
   if (stakedToAccountCard && chartStakedToAccountRow) {
     chartStakedToAccountRow.style.display = stakedToAccountCard.style.display === 'none' ? 'none' : 'flex';
   }
+}
+
+// Mobile: Switch to chart view as default after page loads
+if (window.innerWidth <= 768) {
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      // Switch Network Stats to chart view
+      if (typeof toggleNetworkView === 'function' && !isChartView) {
+        toggleNetworkView();
+      }
+      // Switch User Data to chart view
+      if (typeof toggleUserDataView === 'function' && !isUserChartView) {
+        toggleUserDataView();
+      }
+    }, 100);
+  });
 }
 
 // Card Currency Toggle - Network Fees
