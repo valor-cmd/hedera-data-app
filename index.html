@@ -1028,18 +1028,17 @@
       scrollbar-width:none;
     }
 
-    /* Live Transactions map - 16:9 landscape ratio on mobile */
+    /* Live Transactions map - match map's actual viewBox ratio (673:436) on mobile */
     .tx-map-panel {
       height:auto;
-      aspect-ratio:16/9;
+      aspect-ratio:673/436;
       width:100%;
     }
 
-    /* Ensure map and canvas fit properly */
+    /* Ensure map and canvas fill container completely */
     #worldMap, #txCanvas {
       width:100%;
       height:100%;
-      object-fit:contain;
     }
 
     /* Adjust live transactions container */
