@@ -1060,16 +1060,13 @@
     }
 
     /* Fix scroll performance on mobile - optimized for smooth scrolling */
-    body {
-      overflow-x:hidden;
-      overflow-y:scroll;
+    html, body {
+      overflow-x:hidden !important;
+      overflow-y:scroll !important;
       -webkit-overflow-scrolling:touch;
-      touch-action:pan-y;
-    }
-
-    /* Prevent scroll delay - disable double-tap zoom detection */
-    html {
       touch-action:manipulation;
+      overscroll-behavior:contain;
+      scroll-behavior:auto;
     }
 
     /* Ensure sections don't block scrolling */
@@ -1319,6 +1316,11 @@
   <script>
   if (window.innerWidth <= 768) {
     document.body.classList.add('loaded');
+    // CRITICAL: Force enable scrolling immediately on mobile
+    document.documentElement.style.cssText += 'overflow-y:scroll!important;height:auto!important;';
+    document.body.style.cssText += 'overflow-y:scroll!important;height:auto!important;position:static!important;';
+    // Set flag to skip blocking code in main script
+    window.mobileScrollReady = true;
   }
   </script>
 
@@ -1688,10 +1690,12 @@ if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 
-// Immediately force scroll to top
-window.scrollTo(0, 0);
-document.documentElement.scrollTop = 0;
-document.body.scrollTop = 0;
+// Immediately force scroll to top (desktop only - mobile should scroll freely)
+if (!isMobileDevice) {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
 
 // Function to ensure we're at top and remove overlay
 function ensureTopAndShow() {
@@ -1723,8 +1727,7 @@ function ensureTopAndShow() {
 // Mobile: Remove overlay immediately without waiting for resources
 // Desktop: Wait for resources to ensure smooth experience
 if (isMobileDevice) {
-  // Mobile: Immediately show page - no delays!
-  window.scrollTo(0, 0);
+  // Mobile: Immediately show page - no scrollTo to avoid blocking!
   const overlay = document.getElementById('loadingOverlay');
   if (overlay) {
     overlay.remove(); // Remove from DOM completely
@@ -1811,9 +1814,10 @@ if (isMobileDevice) {
   });
 
   // Mobile: Simple scroll-based trigger for network data (no GSAP)
-  // Defer scroll listener setup to prevent blocking initial scroll
+  // Defer scroll listener setup significantly to prevent blocking initial scroll
   let networkDataLoaded = false;
-  setTimeout(function() {
+
+  function setupMobileScrollListener() {
     window.addEventListener('scroll', function() {
       if (networkDataLoaded) return;
       const networkSection = document.getElementById('network');
@@ -1821,9 +1825,6 @@ if (isMobileDevice) {
         const rect = networkSection.getBoundingClientRect();
         if (rect.top < window.innerHeight * 0.8) {
           networkDataLoaded = true;
-          if (!carouselsInitialized) {
-            initCarousels();
-          }
           queryNetwork();
           startLiveTPSUpdates();
 
@@ -1840,7 +1841,14 @@ if (isMobileDevice) {
         }
       }
     }, { passive: true });
-  }, 100);
+  }
+
+  // Use requestIdleCallback to defer until browser is idle
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(setupMobileScrollListener, { timeout: 1000 });
+  } else {
+    setTimeout(setupMobileScrollListener, 300);
+  }
 }
 
 // Initialize carousels when DOM is fully ready
@@ -4857,12 +4865,15 @@ function updateAllScrollEffects() {
 // Throttle scroll updates with requestAnimationFrame for buttery smooth performance
 let scrollTicking = false;
 let lastScrollY = 0;
-let typingAnimationComplete = false;
+// Mobile: Set to true immediately so scroll effects work instantly
+let typingAnimationComplete = window.innerWidth <= 768 ? true : false;
 
-// Allow typing animation to complete before applying scroll effects
-setTimeout(() => {
-  typingAnimationComplete = true;
-}, 1600); // Typing is 1.5s, give 100ms buffer
+// Allow typing animation to complete before applying scroll effects (desktop only)
+if (window.innerWidth > 768) {
+  setTimeout(() => {
+    typingAnimationComplete = true;
+  }, 1600); // Typing is 1.5s, give 100ms buffer
+}
 
 function throttledScrollHandler() {
   // Don't apply scroll effects until typing animation completes
@@ -4880,11 +4891,17 @@ function throttledScrollHandler() {
 }
 
 // Update on scroll - throttled for smooth performance
-// Mobile: Defer to allow immediate first scroll
+// Mobile: Defer significantly to allow immediate first scroll
 if (window.innerWidth <= 768) {
-  setTimeout(function() {
-    window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-  }, 50);
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(function() {
+      window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+    }, { timeout: 1000 });
+  } else {
+    setTimeout(function() {
+      window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+    }, 300);
+  }
 } else {
   window.addEventListener('scroll', throttledScrollHandler, { passive: true });
 }
