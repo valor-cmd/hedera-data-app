@@ -1064,11 +1064,22 @@
       overflow-x:hidden;
       overflow-y:scroll;
       -webkit-overflow-scrolling:touch;
+      touch-action:pan-y;
+    }
+
+    /* Prevent scroll delay - disable double-tap zoom detection */
+    html {
+      touch-action:manipulation;
     }
 
     /* Ensure sections don't block scrolling */
     .section {
       touch-action:pan-y;
+    }
+
+    /* First section is empty - ensure it doesn't block touch */
+    #s1 {
+      pointer-events:none;
     }
 
     /* Disable GPU-intensive effects on mobile for smoother scrolling */
@@ -2089,19 +2100,11 @@ function initCarousels() {
 }
 
 // Run carousel init immediately when DOM is ready, not on window load
-// MOBILE: Defer carousel init to prevent scroll blocking
+// MOBILE: Skip carousel init entirely - charts are the default view
 if (isMobileDevice) {
-  // Mobile: Defer carousel init until after page is interactive
-  window.addEventListener('load', function() {
-    // Use requestIdleCallback if available, otherwise setTimeout
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(function() {
-        initCarousels();
-      }, { timeout: 2000 });
-    } else {
-      setTimeout(initCarousels, 500);
-    }
-  });
+  // Mobile: Don't initialize carousels - they're hidden and charts are shown
+  // This prevents event listeners that could interfere with scrolling
+  carouselsInitialized = true; // Prevent any other code from trying to init
 } else {
   // Desktop: Initialize immediately as before
   if (document.readyState === 'loading') {
@@ -4877,7 +4880,14 @@ function throttledScrollHandler() {
 }
 
 // Update on scroll - throttled for smooth performance
-window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+// Mobile: Defer to allow immediate first scroll
+if (window.innerWidth <= 768) {
+  setTimeout(function() {
+    window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+  }, 50);
+} else {
+  window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+}
 
 // ==========================================
 // Top-Left Fixed Spinning Coin (Separate from main coin)
