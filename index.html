@@ -1142,6 +1142,33 @@
       display:block !important;
     }
 
+    /* Mobile: Default to chart view - hide cards, show charts */
+    #networkCardsView,
+    #userCardsView {
+      display:none !important;
+    }
+    #networkChartView,
+    #userChartView {
+      display:block !important;
+    }
+    /* Mobile: Toggle should show chart as active by default */
+    #networkViewToggle,
+    #userDataViewToggle {
+      /* Knob positioned for chart (left side on mobile) */
+    }
+    #networkViewToggle .view-toggle-knob,
+    #userDataViewToggle .view-toggle-knob {
+      transform:translateX(0) !important;
+    }
+    #networkViewToggle #chartLabel,
+    #userDataViewToggle #userChartLabel {
+      color:white !important;
+    }
+    #networkViewToggle #cardsLabel,
+    #userDataViewToggle #userCardsLabel {
+      color:rgba(255,255,255,0.5) !important;
+    }
+
     #topLeftCoin {
       display:none !important;
     }
@@ -4997,7 +5024,7 @@ function animateTopLeftCoin() {
 // Moved to lazy loading section above to avoid loading on mobile
 
 // Network Stats View Toggle (Desktop Only)
-let isChartView = false;
+let isChartView = window.innerWidth <= 768; // Mobile: default to chart view
 
 function toggleNetworkView() {
   isChartView = !isChartView;
@@ -5074,7 +5101,7 @@ setInterval(() => {
 }, 1000);
 
 // User Data View Toggle (Desktop Only)
-let isUserChartView = false;
+let isUserChartView = window.innerWidth <= 768; // Mobile: default to chart view
 
 function toggleUserDataView() {
   isUserChartView = !isUserChartView;
@@ -5132,21 +5159,8 @@ function syncUserChartValues() {
   }
 }
 
-// Mobile: Switch to chart view as default after page loads
-if (window.innerWidth <= 768) {
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      // Switch Network Stats to chart view
-      if (typeof toggleNetworkView === 'function' && !isChartView) {
-        toggleNetworkView();
-      }
-      // Switch User Data to chart view
-      if (typeof toggleUserDataView === 'function' && !isUserChartView) {
-        toggleUserDataView();
-      }
-    }, 100);
-  });
-}
+// Mobile: Chart view is now the CSS default - no JS toggle needed
+// State variables isChartView and isUserChartView are initialized to true on mobile
 
 // Card Currency Toggle - Network Fees
 let networkFeesCurrency = 'hbar';
