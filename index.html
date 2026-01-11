@@ -1060,23 +1060,15 @@
     }
 
     /* Fix scroll performance on mobile - optimized for smooth scrolling */
-    html, body {
-      overflow-x:hidden !important;
-      overflow-y:scroll !important;
+    body {
+      overflow-x:hidden;
+      overflow-y:scroll;
       -webkit-overflow-scrolling:touch;
-      touch-action:manipulation;
-      overscroll-behavior:contain;
-      scroll-behavior:auto;
     }
 
     /* Ensure sections don't block scrolling */
     .section {
       touch-action:pan-y;
-    }
-
-    /* First section is empty - ensure it doesn't block touch */
-    #s1 {
-      pointer-events:none;
     }
 
     /* Disable GPU-intensive effects on mobile for smoother scrolling */
@@ -1316,11 +1308,6 @@
   <script>
   if (window.innerWidth <= 768) {
     document.body.classList.add('loaded');
-    // CRITICAL: Force enable scrolling immediately on mobile
-    document.documentElement.style.cssText += 'overflow-y:scroll!important;height:auto!important;';
-    document.body.style.cssText += 'overflow-y:scroll!important;height:auto!important;position:static!important;';
-    // Set flag to skip blocking code in main script
-    window.mobileScrollReady = true;
   }
   </script>
 
@@ -1727,7 +1714,8 @@ function ensureTopAndShow() {
 // Mobile: Remove overlay immediately without waiting for resources
 // Desktop: Wait for resources to ensure smooth experience
 if (isMobileDevice) {
-  // Mobile: Immediately show page - no scrollTo to avoid blocking!
+  // Mobile: Immediately show page - no delays!
+  window.scrollTo(0, 0);
   const overlay = document.getElementById('loadingOverlay');
   if (overlay) {
     overlay.remove(); // Remove from DOM completely
@@ -1800,55 +1788,41 @@ function initGSAPAnimations() {
 
 // Mobile: Show network section immediately and load data on scroll
 if (isMobileDevice) {
-  // Defer all DOM manipulation to allow immediate scroll
-  requestAnimationFrame(function() {
-    const networkH2 = document.querySelector("#network h2");
-    if (networkH2) {
-      networkH2.style.opacity = 1;
-      networkH2.style.transform = 'scale(1)';
-    }
-    const networkOrb = document.querySelector("#network .gradient-orb");
-    if (networkOrb) {
-      networkOrb.style.opacity = 1;
-    }
-  });
+  document.querySelector("#network h2").style.opacity = 1;
+  document.querySelector("#network h2").style.transform = 'scale(1)';
+  const networkOrb = document.querySelector("#network .gradient-orb");
+  if (networkOrb) {
+    networkOrb.style.opacity = 1;
+  }
 
   // Mobile: Simple scroll-based trigger for network data (no GSAP)
-  // Defer scroll listener setup significantly to prevent blocking initial scroll
   let networkDataLoaded = false;
-
-  function setupMobileScrollListener() {
-    window.addEventListener('scroll', function() {
-      if (networkDataLoaded) return;
-      const networkSection = document.getElementById('network');
-      if (networkSection) {
-        const rect = networkSection.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.8) {
-          networkDataLoaded = true;
-          queryNetwork();
-          startLiveTPSUpdates();
-
-          // Staggered refresh intervals
-          setInterval(() => updatePriceAndMarketCap(), 8000);
-          setTimeout(() => {
-            updateConsensusAndFees();
-            setInterval(() => updateConsensusAndFees(), 12000);
-          }, 4000);
-          setTimeout(() => {
-            updateHbarAndAccounts();
-            setInterval(() => updateHbarAndAccounts(), 15000);
-          }, 8000);
+  window.addEventListener('scroll', () => {
+    if (networkDataLoaded) return;
+    const networkSection = document.getElementById('network');
+    if (networkSection) {
+      const rect = networkSection.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.8) {
+        networkDataLoaded = true;
+        if (!carouselsInitialized) {
+          initCarousels();
         }
-      }
-    }, { passive: true });
-  }
+        queryNetwork();
+        startLiveTPSUpdates();
 
-  // Use requestIdleCallback to defer until browser is idle
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(setupMobileScrollListener, { timeout: 1000 });
-  } else {
-    setTimeout(setupMobileScrollListener, 300);
-  }
+        // Staggered refresh intervals
+        setInterval(() => updatePriceAndMarketCap(), 8000);
+        setTimeout(() => {
+          updateConsensusAndFees();
+          setInterval(() => updateConsensusAndFees(), 12000);
+        }, 4000);
+        setTimeout(() => {
+          updateHbarAndAccounts();
+          setInterval(() => updateHbarAndAccounts(), 15000);
+        }, 8000);
+      }
+    }
+  });
 }
 
 // Initialize carousels when DOM is fully ready
@@ -2108,21 +2082,14 @@ function initCarousels() {
 }
 
 // Run carousel init immediately when DOM is ready, not on window load
-// MOBILE: Skip carousel init entirely - charts are the default view
-if (isMobileDevice) {
-  // Mobile: Don't initialize carousels - they're hidden and charts are shown
-  // This prevents event listeners that could interfere with scrolling
-  carouselsInitialized = true; // Prevent any other code from trying to init
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCarousels);
 } else {
-  // Desktop: Initialize immediately as before
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCarousels);
-  } else {
-    initCarousels();
-  }
-  // Also run on window load as backup
-  window.addEventListener('load', initCarousels);
+  initCarousels();
 }
+
+// Also run on window load as backup
+window.addEventListener('load', initCarousels);
 
 
 async function queryAccount() {
@@ -4865,15 +4832,12 @@ function updateAllScrollEffects() {
 // Throttle scroll updates with requestAnimationFrame for buttery smooth performance
 let scrollTicking = false;
 let lastScrollY = 0;
-// Mobile: Set to true immediately so scroll effects work instantly
-let typingAnimationComplete = window.innerWidth <= 768 ? true : false;
+let typingAnimationComplete = false;
 
-// Allow typing animation to complete before applying scroll effects (desktop only)
-if (window.innerWidth > 768) {
-  setTimeout(() => {
-    typingAnimationComplete = true;
-  }, 1600); // Typing is 1.5s, give 100ms buffer
-}
+// Allow typing animation to complete before applying scroll effects
+setTimeout(() => {
+  typingAnimationComplete = true;
+}, 1600); // Typing is 1.5s, give 100ms buffer
 
 function throttledScrollHandler() {
   // Don't apply scroll effects until typing animation completes
@@ -4891,20 +4855,7 @@ function throttledScrollHandler() {
 }
 
 // Update on scroll - throttled for smooth performance
-// Mobile: Defer significantly to allow immediate first scroll
-if (window.innerWidth <= 768) {
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(function() {
-      window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-    }, { timeout: 1000 });
-  } else {
-    setTimeout(function() {
-      window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-    }, 300);
-  }
-} else {
-  window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-}
+window.addEventListener('scroll', throttledScrollHandler, { passive: true });
 
 // ==========================================
 // Top-Left Fixed Spinning Coin (Separate from main coin)
