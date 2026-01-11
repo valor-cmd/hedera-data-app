@@ -29,7 +29,7 @@
     font-display: swap;
   }
 
-  :root { --bg:#000000; --card:#0a0a0a; --accent:#00d4ff; }
+  :root { --bg:#000000; --card:#0a0a0a; --accent:#8b5cf6; }
   * { margin:0; padding:0; box-sizing:border-box; }
   html {
     overflow-x:hidden;
@@ -389,7 +389,7 @@
   .rank-number {
     font-size:3rem;
     font-weight:800;
-    background:linear-gradient(135deg,#00d4ff,#8b5cf6);
+    background:linear-gradient(135deg,#a78bfa,#8b5cf6);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
     margin-bottom:0.5rem;
@@ -413,7 +413,7 @@
   .rank-percentile.top5 { background:linear-gradient(135deg,#c0c0c0,#a0a0a0); color:#000; }
   .rank-percentile.top10 { background:linear-gradient(135deg,#cd7f32,#8b4513); color:#fff; }
   .rank-percentile.top25 { background:rgba(139,92,246,0.3); color:#8b5cf6; }
-  .rank-percentile.other { background:rgba(0,212,255,0.2); color:#00d4ff; }
+  .rank-percentile.other { background:rgba(139,92,246,0.2); color:#8b5cf6; }
 
   /* Network Stats Toggle Switch (Desktop Only) */
   .view-toggle-container {
@@ -594,9 +594,9 @@
     transform:translateX(4px);
   }
   .richlist-row.user-account {
-    border:2px solid #00d4ff;
-    background:rgba(0,212,255,0.15);
-    box-shadow:0 0 20px rgba(0,212,255,0.3);
+    border:2px solid #8b5cf6;
+    background:rgba(139,92,246,0.15);
+    box-shadow:0 0 20px rgba(139,92,246,0.3);
   }
   .richlist-rank {
     font-size:1.2rem;
@@ -626,7 +626,7 @@
   }
   .account-name {
     font-size:0.85rem;
-    color:#00d4ff;
+    color:#8b5cf6;
     font-family:system-ui,-apple-system,sans-serif;
     font-weight:500;
     white-space:nowrap;
@@ -1340,7 +1340,7 @@
     <defs>
       <linearGradient id="hbarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
       </linearGradient>
       <filter id="glow">
         <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
@@ -3701,7 +3701,7 @@ class HbarParticle {
     ctx.scale(this.size / 1942, this.size / 1942);
     
     // White HBAR logo with glow
-    ctx.shadowColor = '#00d4ff';
+    ctx.shadowColor = '#8b5cf6';
     ctx.shadowBlur = 20;
     ctx.fillStyle = '#ffffff';
     ctx.fill(new Path2D(this.logoPath));
@@ -4363,7 +4363,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum, isHypothetical 
           hypotheticalRow.innerHTML = `
             <div class="richlist-rank">#${userRank}</div>
             <div class="richlist-address">
-              <div class="account-id" style="color:#00d4ff;">If you held ${hypotheticalFormatted} ℏ</div>
+              <div class="account-id" style="color:#8b5cf6;">If you held ${hypotheticalFormatted} ℏ</div>
             </div>
             <div class="richlist-balance">
               ${hypotheticalFormatted} ℏ
@@ -4420,7 +4420,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum, isHypothetical 
         hypotheticalRow.innerHTML = `
           <div class="richlist-rank">#${userRank}</div>
           <div class="richlist-address">
-            <div class="account-id" style="color:#00d4ff;">If you held ${hypotheticalFormatted} ℏ</div>
+            <div class="account-id" style="color:#8b5cf6;">If you held ${hypotheticalFormatted} ℏ</div>
           </div>
           <div class="richlist-balance">
             ${hypotheticalFormatted} ℏ
@@ -4561,7 +4561,7 @@ function init3DCoin() {
   light1.position.set(350, -350, 500);  // 45° angle, very far
   coinScene.add(light1);
 
-  const light2 = new THREE.DirectionalLight(0x00d4ff, 0.8);  // Your site cyan
+  const light2 = new THREE.DirectionalLight(0x8b5cf6, 0.8);  // Purple accent
   light2.position.set(-350, -350, 500);  // 45° angle opposite side
   coinScene.add(light2);
 
@@ -4913,8 +4913,8 @@ function initTopLeftCoin() {
   light1.position.set(350, -350, 500);
   topLeftScene.add(light1);
 
-  // Cyan directional light
-  const light2 = new THREE.DirectionalLight(0x00d4ff, 0.8);
+  // Purple directional light
+  const light2 = new THREE.DirectionalLight(0x8b5cf6, 0.8);
   light2.position.set(-350, -350, 500);
   topLeftScene.add(light2);
 
