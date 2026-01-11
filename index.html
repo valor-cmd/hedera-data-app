@@ -4228,9 +4228,7 @@ async function checkRank() {
     
     // Display results
     const resultDiv = document.getElementById('rankResult');
-    const hypotheticalLabel = isHypothetical ? '<div style="color:#00d4ff;font-size:0.9rem;margin-bottom:0.5rem;">Hypothetical Rank</div>' : '';
     resultDiv.innerHTML = `
-      ${hypotheticalLabel}
       <div class="rank-number"><span class="rank-label">Rank </span><span class="rank-value">#${rank.toLocaleString()}</span></div>
       <div class="rank-balance">${balanceHbar} ℏ</div>
       <div class="rank-percentile ${badgeClass}">${badgeText}</div>
@@ -4293,10 +4291,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum, isHypothetical 
       window.lastQueriedBalance = hypotheticalBalance;
 
       // Update subtitle to show context and show back button, hide your rank button
-      const subtitleText = isHypothetical
-        ? `Your Hypothetical Rank #${userRank.toLocaleString()}`
-        : `Accounts Around Rank #${userRank.toLocaleString()}`;
-      document.querySelector('.richlist-subtitle').textContent = subtitleText;
+      document.querySelector('.richlist-subtitle').textContent = `Your Rank #${userRank.toLocaleString()}`;
       document.getElementById('backToTop50').style.display = 'block';
       document.getElementById('yourRankBtn').style.display = 'none';
 
@@ -4337,8 +4332,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum, isHypothetical 
           hypotheticalRow.innerHTML = `
             <div class="richlist-rank">#${userRank}</div>
             <div class="richlist-address">
-              <div class="account-id" style="color:#00d4ff;">Your Hypothetical Position</div>
-              <div class="account-name" style="color:#00d4ff;opacity:0.7;">If you held this amount</div>
+              <div class="account-id" style="color:#00d4ff;">If you held ${hypotheticalFormatted} ℏ</div>
             </div>
             <div class="richlist-balance">
               ${hypotheticalFormatted} ℏ
@@ -4395,8 +4389,7 @@ async function loadSurroundingAccounts(userRank, userAccountNum, isHypothetical 
         hypotheticalRow.innerHTML = `
           <div class="richlist-rank">#${userRank}</div>
           <div class="richlist-address">
-            <div class="account-id" style="color:#00d4ff;">Your Hypothetical Position</div>
-            <div class="account-name" style="color:#00d4ff;opacity:0.7;">If you held this amount</div>
+            <div class="account-id" style="color:#00d4ff;">If you held ${hypotheticalFormatted} ℏ</div>
           </div>
           <div class="richlist-balance">
             ${hypotheticalFormatted} ℏ
