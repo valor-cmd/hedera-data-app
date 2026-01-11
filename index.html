@@ -1628,31 +1628,21 @@ if (!isMobileDevice) {
   };
   document.head.appendChild(threeScript);
 } else {
-  // Mobile: No 3D coin - completely remove coin elements to fix touch scrolling
+  // Mobile: No 3D coin - defer removal to not block initial scroll
   console.log('📱 Mobile detected - removing coin elements for better performance');
 
-  // Completely hide and disable all coin-related elements on mobile
-  const topLeftCoin = document.getElementById('topLeftCoin');
-  const coinCanvas = document.getElementById('coinCanvas');
-  const coinClickArea = document.getElementById('coinClickArea');
-  const mobileCoin = document.getElementById('mobileCoinIcon');
+  // Defer coin removal to allow immediate scrolling
+  requestAnimationFrame(function() {
+    const topLeftCoin = document.getElementById('topLeftCoin');
+    const coinCanvas = document.getElementById('coinCanvas');
+    const coinClickArea = document.getElementById('coinClickArea');
+    const mobileCoin = document.getElementById('mobileCoinIcon');
 
-  if (topLeftCoin) {
-    topLeftCoin.style.display = 'none';
-    topLeftCoin.remove(); // Remove from DOM completely
-  }
-  if (coinCanvas) {
-    coinCanvas.style.display = 'none';
-    coinCanvas.remove(); // Remove from DOM completely
-  }
-  if (coinClickArea) {
-    coinClickArea.style.display = 'none';
-    coinClickArea.remove(); // Remove from DOM completely - this blocks touch!
-  }
-  if (mobileCoin) {
-    mobileCoin.style.display = 'none';
-    mobileCoin.remove(); // Remove SVG coin too
-  }
+    if (topLeftCoin) topLeftCoin.remove();
+    if (coinCanvas) coinCanvas.remove();
+    if (coinClickArea) coinClickArea.remove();
+    if (mobileCoin) mobileCoin.remove();
+  });
 }
 
 // Disable scroll restoration completely
@@ -1769,41 +1759,50 @@ function initGSAPAnimations() {
 
 // Mobile: Show network section immediately and load data on scroll
 if (isMobileDevice) {
-  document.querySelector("#network h2").style.opacity = 1;
-  document.querySelector("#network h2").style.transform = 'scale(1)';
-  const networkOrb = document.querySelector("#network .gradient-orb");
-  if (networkOrb) {
-    networkOrb.style.opacity = 1;
-  }
-
-  // Mobile: Simple scroll-based trigger for network data (no GSAP)
-  let networkDataLoaded = false;
-  window.addEventListener('scroll', () => {
-    if (networkDataLoaded) return;
-    const networkSection = document.getElementById('network');
-    if (networkSection) {
-      const rect = networkSection.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 0.8) {
-        networkDataLoaded = true;
-        if (!carouselsInitialized) {
-          initCarousels();
-        }
-        queryNetwork();
-        startLiveTPSUpdates();
-
-        // Staggered refresh intervals
-        setInterval(() => updatePriceAndMarketCap(), 8000);
-        setTimeout(() => {
-          updateConsensusAndFees();
-          setInterval(() => updateConsensusAndFees(), 12000);
-        }, 4000);
-        setTimeout(() => {
-          updateHbarAndAccounts();
-          setInterval(() => updateHbarAndAccounts(), 15000);
-        }, 8000);
-      }
+  // Defer all DOM manipulation to allow immediate scroll
+  requestAnimationFrame(function() {
+    const networkH2 = document.querySelector("#network h2");
+    if (networkH2) {
+      networkH2.style.opacity = 1;
+      networkH2.style.transform = 'scale(1)';
+    }
+    const networkOrb = document.querySelector("#network .gradient-orb");
+    if (networkOrb) {
+      networkOrb.style.opacity = 1;
     }
   });
+
+  // Mobile: Simple scroll-based trigger for network data (no GSAP)
+  // Defer scroll listener setup to prevent blocking initial scroll
+  let networkDataLoaded = false;
+  setTimeout(function() {
+    window.addEventListener('scroll', function() {
+      if (networkDataLoaded) return;
+      const networkSection = document.getElementById('network');
+      if (networkSection) {
+        const rect = networkSection.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.8) {
+          networkDataLoaded = true;
+          if (!carouselsInitialized) {
+            initCarousels();
+          }
+          queryNetwork();
+          startLiveTPSUpdates();
+
+          // Staggered refresh intervals
+          setInterval(() => updatePriceAndMarketCap(), 8000);
+          setTimeout(() => {
+            updateConsensusAndFees();
+            setInterval(() => updateConsensusAndFees(), 12000);
+          }, 4000);
+          setTimeout(() => {
+            updateHbarAndAccounts();
+            setInterval(() => updateHbarAndAccounts(), 15000);
+          }, 8000);
+        }
+      }
+    }, { passive: true });
+  }, 100);
 }
 
 // Initialize carousels when DOM is fully ready
@@ -2063,14 +2062,29 @@ function initCarousels() {
 }
 
 // Run carousel init immediately when DOM is ready, not on window load
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initCarousels);
+// MOBILE: Defer carousel init to prevent scroll blocking
+if (isMobileDevice) {
+  // Mobile: Defer carousel init until after page is interactive
+  window.addEventListener('load', function() {
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(function() {
+        initCarousels();
+      }, { timeout: 2000 });
+    } else {
+      setTimeout(initCarousels, 500);
+    }
+  });
 } else {
-  initCarousels();
+  // Desktop: Initialize immediately as before
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCarousels);
+  } else {
+    initCarousels();
+  }
+  // Also run on window load as backup
+  window.addEventListener('load', initCarousels);
 }
-
-// Also run on window load as backup
-window.addEventListener('load', initCarousels);
 
 
 async function queryAccount() {
