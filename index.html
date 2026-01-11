@@ -1526,7 +1526,7 @@
     <div class="richlist-container">
       <!-- Search Section -->
       <div class="richlist-search">
-        <input type="text" id="richlistInput" class="search-box" placeholder="Check your rank · 0.0.123456">
+        <input type="text" id="richlistInput" class="search-box" placeholder="Enter Wallet ID or Amount of HBAR">
         <button type="button" class="search-btn" id="checkRankBtn">Check Rank</button>
         <div class="loading" id="rankLoading">Loading...</div>
         <div id="rankResult" class="rank-result"></div>
@@ -4095,51 +4095,83 @@ async function loadRichList() {
 }
 
 async function checkRank() {
-  const accountInput = document.getElementById('richlistInput').value;
-  const accountNum = parseInt(accountInput.replace('0.0.', ''));
-  
-  if (!accountNum) {
-    alert('Please enter a valid account ID (e.g., 0.0.123456)');
+  const accountInput = document.getElementById('richlistInput').value.trim();
+
+  if (!accountInput) {
+    alert('Please enter a Wallet ID (e.g., 0.0.123456) or an amount of HBAR');
     return;
   }
-  
+
   document.getElementById('rankLoading').classList.add('active');
   document.getElementById('rankResult').classList.remove('active');
-  
+
+  // Determine if input is a wallet ID or HBAR amount
+  const isWalletId = accountInput.includes('0.0.') || /^0\.0\.\d+$/.test(accountInput);
+
+  let balance;
+  let balanceHbar;
+  let accountNum = null;
+  let isHypothetical = false;
+
   try {
-    // First, get the account's balance
-    const accountResponse = await fetch(HGRAPH_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': HGRAPH_KEY
-      },
-      body: JSON.stringify({
-        query: `
-          query GetAccount($accountNum: bigint!) {
-            entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
-              num
-              balance
+    if (isWalletId) {
+      // Wallet ID lookup
+      accountNum = parseInt(accountInput.replace('0.0.', ''));
+
+      if (!accountNum) {
+        alert('Please enter a valid Wallet ID (e.g., 0.0.123456)');
+        return;
+      }
+
+      // Get the account's balance
+      const accountResponse = await fetch(HGRAPH_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': HGRAPH_KEY
+        },
+        body: JSON.stringify({
+          query: `
+            query GetAccount($accountNum: bigint!) {
+              entity(where: {num: {_eq: $accountNum}, type: {_eq: "ACCOUNT"}}, limit: 1) {
+                num
+                balance
+              }
             }
-          }
-        `,
-        variables: { accountNum }
-      })
-    });
-    
-    const accountResult = await accountResponse.json();
-    
-    if (!accountResult.data?.entity?.[0]) {
-      alert('Account not found');
-      return;
+          `,
+          variables: { accountNum }
+        })
+      });
+
+      const accountResult = await accountResponse.json();
+
+      if (!accountResult.data?.entity?.[0]) {
+        alert('Account not found');
+        return;
+      }
+
+      const account = accountResult.data.entity[0];
+      balance = account.balance;
+      balanceHbar = (balance / 100000000).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    } else {
+      // HBAR amount lookup (hypothetical rank)
+      const hbarAmount = parseFloat(accountInput.replace(/,/g, ''));
+
+      if (isNaN(hbarAmount) || hbarAmount <= 0) {
+        alert('Please enter a valid HBAR amount or Wallet ID');
+        return;
+      }
+
+      isHypothetical = true;
+      balance = Math.floor(hbarAmount * 100000000); // Convert to tinybars
+      balanceHbar = hbarAmount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
-    
-    const account = accountResult.data.entity[0];
-    const balance = account.balance;
-    const balanceHbar = (balance / 100000000).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
     
     // Then, count how many accounts have more HBAR
     const rankResponse = await fetch(HGRAPH_API, {
@@ -4196,16 +4228,18 @@ async function checkRank() {
     
     // Display results
     const resultDiv = document.getElementById('rankResult');
+    const hypotheticalLabel = isHypothetical ? '<div style="color:#00d4ff;font-size:0.9rem;margin-bottom:0.5rem;">Hypothetical Rank</div>' : '';
     resultDiv.innerHTML = `
+      ${hypotheticalLabel}
       <div class="rank-number"><span class="rank-label">Rank </span><span class="rank-value">#${rank.toLocaleString()}</span></div>
       <div class="rank-balance">${balanceHbar} ℏ</div>
       <div class="rank-percentile ${badgeClass}">${badgeText}</div>
       <p style="margin-top:1rem;opacity:0.7;">Out of ${totalAccounts.toLocaleString()} active accounts</p>
     `;
     resultDiv.classList.add('active');
-    
+
     // Now load surrounding accounts (24 above, user, 25 below)
-    await loadSurroundingAccounts(rank, accountNum);
+    await loadSurroundingAccounts(rank, accountNum, isHypothetical, balance);
     
   } catch (error) {
     alert('Error checking rank: ' + error.message);
@@ -4214,13 +4248,13 @@ async function checkRank() {
   }
 }
 
-async function loadSurroundingAccounts(userRank, userAccountNum) {
+async function loadSurroundingAccounts(userRank, userAccountNum, isHypothetical = false, hypotheticalBalance = 0) {
   document.getElementById('richlistLoading').classList.add('active');
-  
+
   try {
     // Calculate offset (24 accounts above the user)
     const offset = Math.max(0, userRank - 25); // Start 24 above, or from rank 1 if user is in top 24
-    
+
     const response = await fetch(HGRAPH_API, {
       method: 'POST',
       headers: {
@@ -4245,27 +4279,35 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
         `
       })
     });
-    
+
     const result = await response.json();
-    
+
     if (result.data?.entity) {
       const table = document.getElementById('richlistTable');
       table.innerHTML = '';
-      
+
       // Store rank and account for later use
       window.lastQueriedRank = userRank;
       window.lastQueriedAccount = userAccountNum;
+      window.lastQueriedHypothetical = isHypothetical;
+      window.lastQueriedBalance = hypotheticalBalance;
 
       // Update subtitle to show context and show back button, hide your rank button
-      document.querySelector('.richlist-subtitle').textContent =
-        `Accounts Around Rank #${userRank.toLocaleString()}`;
+      const subtitleText = isHypothetical
+        ? `Your Hypothetical Rank #${userRank.toLocaleString()}`
+        : `Accounts Around Rank #${userRank.toLocaleString()}`;
+      document.querySelector('.richlist-subtitle').textContent = subtitleText;
       document.getElementById('backToTop50').style.display = 'block';
       document.getElementById('yourRankBtn').style.display = 'none';
-      
-      result.data.entity.forEach((account, index) => {
+
+      // For hypothetical, we need to insert the user's hypothetical position
+      const entities = result.data.entity;
+      let hypotheticalInserted = false;
+
+      entities.forEach((account, index) => {
         const rank = offset + index + 1;
         const balanceHbar = account.balance / 100000000;
-        const balance = balanceHbar.toLocaleString(undefined, {
+        const balanceFormatted = balanceHbar.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
@@ -4276,12 +4318,43 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
           maximumFractionDigits: 2
         }) : '-.--';
 
+        // For hypothetical: insert the user's row before accounts with less balance
+        if (isHypothetical && !hypotheticalInserted && account.balance < hypotheticalBalance) {
+          const hypotheticalHbar = hypotheticalBalance / 100000000;
+          const hypotheticalFormatted = hypotheticalHbar.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+          const hypotheticalUsd = window.hbarPrice ? (hypotheticalHbar * window.hbarPrice).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) : '-.--';
+
+          const hypotheticalRow = document.createElement('div');
+          hypotheticalRow.className = 'richlist-row user-account';
+          const isMobileH = window.innerWidth <= 768;
+          const usdLabelH = isMobileH ? '$USD' : 'Value in $USD';
+          hypotheticalRow.innerHTML = `
+            <div class="richlist-rank">#${userRank}</div>
+            <div class="richlist-address">
+              <div class="account-id" style="color:#00d4ff;">Your Hypothetical Position</div>
+              <div class="account-name" style="color:#00d4ff;opacity:0.7;">If you held this amount</div>
+            </div>
+            <div class="richlist-balance">
+              ${hypotheticalFormatted} ℏ
+              <div class="richlist-usd-value" style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">${usdLabelH} ~$${hypotheticalUsd}</div>
+            </div>
+          `;
+          table.appendChild(hypotheticalRow);
+          hypotheticalInserted = true;
+        }
+
         let rankClass = '';
         if (rank === 1) rankClass = 'gold';
         else if (rank === 2) rankClass = 'silver';
         else if (rank === 3) rankClass = 'bronze';
 
-        const isUserAccount = account.num === userAccountNum;
+        const isUserAccount = !isHypothetical && account.num === userAccountNum;
         const userLabel = isUserAccount ? ' (You)' : '';
         const accountName = account.memo ? `<div class="account-name">${account.memo}</div>` : '';
 
@@ -4296,12 +4369,42 @@ async function loadSurroundingAccounts(userRank, userAccountNum) {
             ${accountName}
           </div>
           <div class="richlist-balance">
-            ${balance} ℏ
+            ${balanceFormatted} ℏ
             <div class="richlist-usd-value" style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">${usdLabel} ~$${usdValue}</div>
           </div>
         `;
         table.appendChild(row);
       });
+
+      // If hypothetical wasn't inserted (user would be at the end), add it now
+      if (isHypothetical && !hypotheticalInserted) {
+        const hypotheticalHbar = hypotheticalBalance / 100000000;
+        const hypotheticalFormatted = hypotheticalHbar.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        const hypotheticalUsd = window.hbarPrice ? (hypotheticalHbar * window.hbarPrice).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) : '-.--';
+
+        const hypotheticalRow = document.createElement('div');
+        hypotheticalRow.className = 'richlist-row user-account';
+        const isMobileH = window.innerWidth <= 768;
+        const usdLabelH = isMobileH ? '$USD' : 'Value in $USD';
+        hypotheticalRow.innerHTML = `
+          <div class="richlist-rank">#${userRank}</div>
+          <div class="richlist-address">
+            <div class="account-id" style="color:#00d4ff;">Your Hypothetical Position</div>
+            <div class="account-name" style="color:#00d4ff;opacity:0.7;">If you held this amount</div>
+          </div>
+          <div class="richlist-balance">
+            ${hypotheticalFormatted} ℏ
+            <div class="richlist-usd-value" style="font-size:0.7rem;color:#8b5cf6;margin-top:0.25rem;">${usdLabelH} ~$${hypotheticalUsd}</div>
+          </div>
+        `;
+        table.appendChild(hypotheticalRow);
+      }
 
       // Scroll the user's account into view WITHIN the table only (not the whole page)
       setTimeout(() => {
@@ -4372,8 +4475,13 @@ document.getElementById('backToTop50').addEventListener('click', loadRichList);
 
 // Add event listener for your rank button
 document.getElementById('yourRankBtn').addEventListener('click', () => {
-  if (window.lastQueriedRank && window.lastQueriedAccount) {
-    loadSurroundingAccounts(window.lastQueriedRank, window.lastQueriedAccount);
+  if (window.lastQueriedRank) {
+    loadSurroundingAccounts(
+      window.lastQueriedRank,
+      window.lastQueriedAccount,
+      window.lastQueriedHypothetical || false,
+      window.lastQueriedBalance || 0
+    );
   }
 });
 
