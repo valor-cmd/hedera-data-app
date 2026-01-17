@@ -1308,9 +1308,44 @@
       padding-top:1rem !important;
     }
   }
+
+  /* Ecosystem Map Link - Top Right */
+  .ecosystem-link {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    opacity: 0;
+    animation: fadeInLink 1s ease-out 0.5s forwards;
+    transition: color 0.2s ease;
+  }
+
+  .ecosystem-link:hover {
+    color: #8b5cf6;
+  }
+
+  @keyframes fadeInLink {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .ecosystem-link {
+      top: 15px;
+      right: 15px;
+      font-size: 12px;
+    }
+  }
 </style>
 </head>
 <body>
+  <!-- Ecosystem Map Link -->
+  <a href="ecosystem.html" class="ecosystem-link">Hedera Ecosystem Map →</a>
+
   <!-- MOBILE: Immediate initialization - runs BEFORE any other content -->
   <script>
   if (window.innerWidth <= 768) {
