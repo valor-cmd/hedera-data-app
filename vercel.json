@@ -1,12 +1,16 @@
-  {
-    "routes": [
-      {
-        "src": "/hbar-coin.glb",
-        "dest": "/hbar-coin.glb"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "/index.html"
-      }
-    ]
-  }
+{
+  "routes": [
+    {
+      "src": "/hbar-coin.glb",
+      "dest": "/hbar-coin.glb"
+    },
+    {
+      "src": "/ecosystem.html",
+      "dest": "/ecosystem.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
