@@ -2034,8 +2034,9 @@ svg{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans
 
       grid.innerHTML = items.map(item => {
         const logoSrc = item.logoDataUri || '';
+        const hasWebsite = item.website && item.website.trim() !== '';
         return `
-          <a class="modal-item" href="${item.website || '#'}" target="_blank" rel="noopener noreferrer">
+          <a class="modal-item" ${hasWebsite ? `href="${item.website}" target="_blank" rel="noopener noreferrer"` : 'style="cursor:default;"'}>
             ${logoSrc ? `<img class="modal-item-logo" src="${logoSrc}" alt="${item.entity}">` :
               `<div class="modal-item-logo" style="display:flex;justify-content:center;align-items:center;font-size:20px;color:#8b5cf6;font-weight:bold;">${item.entity.substring(0, 2).toUpperCase()}</div>`}
             <span class="modal-item-name">${item.entity}</span>
